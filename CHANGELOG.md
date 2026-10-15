@@ -1,0 +1,38 @@
+# Changelog
+
+## 0.1.0 (unreleased)
+
+First release of cypher-guardrail, licensed under Apache 2.0. Requires Python 3.11 or later and a FalkorDB graph (a server, or the embedded FalkorDBLite).
+
+### Validators
+
+* **`SyntaxValidator`** asks FalkorDB itself whether a query is valid (`GRAPH.EXPLAIN`, so the query is never run), so whatever the server supports passes: vector functions, `db.idx.*` and `algo.*` procedures, index commands.
+  * Rejects a query that can modify the graph (`cypher_guardrail.Error.WriteQuery`) unless the validator is created with `read_only=False`, which accepts it with `cypher_guardrail.Warning.WriteQuery`. `is_write` and `is_write_async` ask only that question.
+  * Reports `$parameters` that are not provided (`cypher_guardrail.Warning.ParameterNotProvided`). A `CYPHER` header provides its own; the ones a client sends apart from the query are named with `parameters=`.
+  * Reports a variable that carries conflicting labels (`check_multilabeled_nodes`), and an empty or blank query without asking the database.
+* **`SchemaValidator`** checks that the labels, relationship types and paths of a query exist in the graph, and that a path is written in the right direction (`UnknownLabel`, `UnknownRelationshipType`, `UnknownPath`, `WrongDirectionPath`, `VariableLengthPath`). It also checks that a full-text or vector index query procedure has an index to use (`UnknownIndex`). The score is explained in the README.
+* **`PropertiesValidator`** checks that each property exists on the label it is read from (`UnknownPropertyKey`, `InvalidPropertyAccessByLabel`), inferring the label of a variable that has none. With `check_types=True` it warns when a property is compared with a literal of a type that none of its values has (`PropertyTypeMismatch`); this warning does not change the score.
+* **`UNION` and scopes.** Each branch of a `UNION` is validated on its own, and a name that a `WITH` or a `CALL { }` does not carry on is a new variable, as in Cypher.
+* **Names between back-quotes** (labels, relationship types and property keys with a space or a symbol) are read and checked.
+
+### Three ways to validate
+
+* **Online**: the database answers every question (`SchemaValidator(client)`).
+* **Offline**: a `Snapshot`, a JSON summary of the structure of one graph (labels, relationship types, property keys, indexes, label sets, edges and the properties of each label), answers them, with no database (`SchemaValidator(snapshot)`). Capture it with `Snapshot.capture` (`sample=` limits the scans, `types=True` records the types of the values), save and load it with `save` / `load`, or write one by hand with `Snapshot.from_schema`.
+* **Hybrid**: the snapshot answers where it is sure, and the database is asked before a problem is reported (`SchemaValidator(client, snapshot=snapshot)`).
+* **`LiveSnapshot` and `AsyncLiveSnapshot`** keep a snapshot fresh from a live graph: they refresh in the background, compare a fingerprint before they scan, keep a copy on disk, and serve the last good snapshot when a refresh fails.
+
+### Async
+
+* `AsyncSyntaxValidator`, `AsyncSchemaValidator` and `AsyncPropertiesValidator` for the `falkordb.asyncio` client. They run the same validation logic as the sync validators, so results are identical. Independent lookups run together, up to `max_concurrency` (keyword-only, default 8).
+
+### Results
+
+* Every validator returns a verdict or score plus `metadata`: a list of issues, each a dict with a `code`, a `description` and fields that say what it is about, so nothing has to be parsed from text. `cypher_guardrail.issues` has a constant for every code and a `TypedDict` for every kind of issue.
+* Every code starts with `cypher_guardrail.` followed by `Warning` or `Error` (for example `cypher_guardrail.Warning.UnknownLabel`). FalkorDB's own errors keep their names (`FalkorDB.ClientError.Statement.SyntaxError`, `FalkorDB.DatabaseError.Statement.ExecutionFailed`).
+* FalkorDB sends no notifications, so the unknown label, relationship type and property key warnings are derived from `db.labels()`, `db.relationshipTypes()` and `db.propertyKeys()`.
+
+### Documentation and examples
+
+* The scores and the KG Valid Query check are written out in the README. Longer guides are in `docs/` (`usage.md`, `metadata.md`, `snapshots.md`, `async.md`).
+* Runnable examples in `examples/` that need no server (they use FalkorDBLite): a quickstart, offline validation with a snapshot, and async validation.
