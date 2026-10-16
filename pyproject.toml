@@ -1,0 +1,57 @@
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14"]
+build-backend = "uv_build"
+
+[project]
+name = "cypher-guardrail"
+version = "0.1.0"
+description = "Parse and validate cypher queries against a given FalkorDB Knowledge Graph schema. Validates query syntax, schema validity, and property access."
+readme = "README.md"
+authors = [{ name = "Killeroid" }]
+dependencies = [
+    "regex>=2024.11.6",
+    "pandas>=2.2.3",
+    "falkordb>=1.8.0",
+    "redis>=8.0.0,<9",
+]
+requires-python = ">=3.11"
+keywords = ["cypher", "FalkorDB", "validation", "parser", "graph", "database"]
+classifiers=[
+        'Programming Language :: Python :: 3',
+        'Operating System :: OS Independent',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+
+
+[tool.uv.build-backend]
+module-name = "cypher_guardrail"
+
+[dependency-groups]
+dev = [
+    "falkordblite; python_version >= '3.12'",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+    "ty>=0.0.87",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+src = ["src"]
+
+[tool.ruff.lint]
+extend-select = ["B", "I", "UP"]
+
+[tool.ty.environment]
+python = ".venv"
+
+[project.urls]
+Homepage = "https://github.com/Killeroid/cypher-guardrail"
+Documentation = "https://github.com/Killeroid/cypher-guardrail/tree/main/docs"
+Changelog = "https://github.com/Killeroid/cypher-guardrail/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Killeroid/cypher-guardrail/issues"
+Repository = "https://github.com/Killeroid/cypher-guardrail"
