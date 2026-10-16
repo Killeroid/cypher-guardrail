@@ -6,4 +6,10 @@ try:
 except PackageNotFoundError:
     __version__ = "unknown"
 
-__all__ = ["__version__"]
+from cypher_guardrail.snapshot import Snapshot, SnapshotSource
+
+__all__ = [
+    "Snapshot",
+    "SnapshotSource",
+    "__version__",
+]

@@ -1,0 +1,286 @@
+"""Answering the lookups of the logic (``cypher_guardrail._internal.core.io.Lookup``) by asking the database.
+
+Each function here is the *online* answer to one kind of lookup: it takes the graph name and the ``args`` of the
+lookup and is a logic generator that yields ``RoQuery`` requests and returns the answer. ``resolve`` picks the
+function of a lookup; it is what the online backends give the drivers as their resolver.
+
+The queries are what the validators have always asked FalkorDB. See the ``backend`` module docstring for the
+FalkorDB peculiarities they compensate for.
+"""
+
+from collections.abc import Generator
+from typing import Any
+
+import pandas as pd
+import regex as re
+
+from cypher_guardrail._internal.core.errors import (
+    SYNTAX_ERROR,
+    CypherError,
+    is_missing_graph,
+)
+from cypher_guardrail._internal.core.io import (
+    Lookup,
+    Recall,
+    Remember,
+    Request,
+    RoQuery,
+)
+from cypher_guardrail._internal.core.queries import execute, query_to_df
+
+# the lookup kind "missing_names" is asked about one of these
+_NAME_PROCEDURES = {
+    "labels": "db.labels",
+    "relationship_types": "db.relationshipTypes",
+    "property_keys": "db.propertyKeys",
+}
+
+
+def schema_set(graph: str, procedure: str) -> Generator[Request, Any, frozenset]:
+    """Names returned by a schema procedure (db.labels, ...). A graph that does not exist yet has an empty schema."""
+    key = ("schema_set", graph, procedure)
+    known = yield Recall(key)
+    if known is not None:
+        return known
+    try:
+        result = yield RoQuery(graph, f"CALL {procedure}()")
+    except CypherError as e:
+        # FalkorDB creates a graph with its first write: a graph with no data has an empty schema
+        if not is_missing_graph(e):
+            raise
+        names = frozenset()
+    else:
+        names = frozenset(row[0] for row in result.result_set)
+    # Remembered (a failed request is not kept), so a graph with no data is asked about once, not once per lookup
+    yield Remember(key, names)
+    return names
+
+
+def indexes(graph: str) -> Generator[Request, Any, tuple]:
+    """The graph's indexes as (label or type, 'NODE' or 'RELATIONSHIP', {attribute: index types})."""
+    key = ("indexes", graph)
+    known = yield Recall(key)
+    if known is not None:
+        return known
+    try:
+        result = yield RoQuery(graph, "CALL db.indexes()")
+    except CypherError as e:
+        # No data yet, so no indexes either (see schema_set)
+        if not is_missing_graph(e):
+            raise
+        found = ()
+    else:
+        columns = [column[1] for column in result.header]
+        label, entity, types = (
+            columns.index(name) for name in ("label", "entitytype", "types")
+        )
+        found = tuple(
+            (row[label], row[entity], dict(row[types])) for row in result.result_set
+        )
+    yield Remember(key, found)
+    return found
+
+
+def missing_names(
+    graph: str, kind: str, names: tuple[str, ...]
+) -> Generator[Request, Any, tuple[str, ...]]:
+    """The ``names`` that the graph does not know, in the order given. ``kind``: 'labels', 'relationship_types' or 'property_keys'."""
+    known = yield from schema_set(graph, _NAME_PROCEDURES[kind])
+    return tuple(name for name in names if name not in known)
+
+
+def label_kind(graph: str, label: str) -> Generator[Request, Any, str]:
+    """Return 'node' if ``label`` is a node label, 'relationship' if it is a relationship type, else 'none'.
+
+    A graph that does not exist has no labels. A schema that cannot be read (the database failed) is an error,
+    not 'none': it does not say that the label is unknown.
+    """
+    if label in (yield from schema_set(graph, "db.labels")):
+        return "node"
+    if label in (yield from schema_set(graph, "db.relationshipTypes")):
+        return "relationship"
+    return "none"
+
+
+def index_exists(
+    graph: str, kind: str, on: str, label: str, attribute: str | None
+) -> Generator[Request, Any, bool]:
+    """Whether the graph has an index that a full-text or vector query needs (see ``_queries.index_exists``)."""
+    entity = "NODE" if on == "nodes" else "RELATIONSHIP"
+    graph_indexes = yield from indexes(graph)
+    return any(
+        index_label == label
+        and index_entity == entity
+        and any(
+            kind.upper() in index_types
+            for name, index_types in types.items()
+            if attribute is None or name == attribute
+        )
+        for index_label, index_entity, types in graph_indexes
+    )
+
+
+def path_exists(graph: str, path: str) -> Generator[Request, Any, bool]:
+    """Whether a pattern (node, relationship or path) matches anything in the graph."""
+    rows = yield from execute(graph, f"MATCH {path} RETURN 1 LIMIT 1")
+    return bool(rows)
+
+
+def property_exists(
+    graph: str, label: str, kind: str, prop: str
+) -> Generator[Request, Any, bool]:
+    """Whether any node (``kind`` 'node') or relationship ('relationship') with ``label`` has property ``prop``."""
+    pattern = f"(x:{label})" if kind == "node" else f"()-[x:{label}]-()"
+    # `(x.prop) IS NOT NULL` is true only for an element that has the property
+    rows = yield from execute(
+        graph, f"MATCH {pattern} WHERE (x.{prop}) IS NOT NULL RETURN 1 LIMIT 1"
+    )
+    return bool(rows)
+
+
+def property_types(
+    graph: str, label: str, kind: str, prop: str, literal_type: str
+) -> Generator[Request, Any, tuple[str, ...]]:
+    """The types of the values of property ``prop`` of the nodes (``kind`` 'node') or relationships ('relationship')
+    with ``label``, as ``typeof`` names them, sorted. ``literal_type`` is not needed to ask the database.
+
+    ``()`` if the database cannot say (e.g. the graph does not exist): no type is then known, and none is reported.
+    """
+    pattern = f"(x:`{label}`)" if kind == "node" else f"()-[x:`{label}`]->()"
+    try:
+        rows = yield from execute(
+            graph,
+            f"MATCH {pattern} WHERE (x.`{prop}`) IS NOT NULL RETURN DISTINCT typeof(x.`{prop}`) AS t",
+        )
+    except CypherError as e:
+        # A graph that does not exist, or a name the database cannot parse: no value is known. Another failure
+        # (a timeout, a full memory) does not say that there is none.
+        if e.code != SYNTAX_ERROR and not is_missing_graph(e):
+            raise
+        return ()
+    return tuple(sorted({row["t"] for row in rows}))
+
+
+def multilabels(graph: str) -> Generator[Request, Any, list]:
+    """The label combinations that occur together on a node."""
+    query = "MATCH (n) WHERE size(labels(n)) > 1 WITH DISTINCT labels(n) AS labelList RETURN COLLECT(labelList) AS output"
+    records = yield from execute(graph, query)
+    return records[0]["output"] if records else []
+
+
+def identify_variables_and_construct_query(pattern):
+    """Build the query that finds the labels a path's unlabeled variables can have.
+
+    ``(a)-[r]->(b)`` becomes::
+
+        MATCH (a)-[r]->(b)
+        WITH DISTINCT labels(a) AS a_labels, labels(b) AS b_labels, type(r) AS r_type
+        UNWIND a_labels AS a
+        UNWIND b_labels AS b
+        UNWIND [r_type] AS r
+        RETURN DISTINCT a, b, r
+
+    so every row is one combination of labels and types that exists in the graph.
+    Only variables written bare, as ``(a)`` or ``[r]``, are inferred.
+
+    Args:
+        pattern (str): A path, e.g. ``(a)-[r]->(:Label)``.
+
+    Returns:
+        tuple[str, list[str], list[str]]: The query ("" if the path has no variable to infer),
+        the node variables and the relationship variables, each in order of first appearance.
+    """
+    node_var_pattern = r"\((\w+)\)"
+    rel_var_pattern = r"\[(\w+)\]"
+
+    # Identify node and relationship variables
+    # A variable can appear more than once in a pattern, but it must be projected only once
+    node_vars = list(dict.fromkeys(re.findall(node_var_pattern, pattern)))
+    rel_vars = list(dict.fromkeys(re.findall(rel_var_pattern, pattern)))
+
+    # Only if the path has variables to infer
+    if node_vars or rel_vars:
+        # Match the pattern for extracting possible labels for nodes and relationships
+        match_clause = f"MATCH {pattern}"
+
+        # Prepare the WITH clause for nodes (extracting labels) and relationships (extracting types)
+        with_clause = "WITH DISTINCT "
+
+        # Collect node labels
+        for node in node_vars:
+            with_clause += f"labels({node}) AS {node}_labels, "
+
+        # Collect relationship types
+        for rel in rel_vars:
+            with_clause += f"type({rel}) AS {rel}_type, "
+
+        # Remove the trailing comma from the WITH clause
+        with_clause = with_clause.rstrip(", ")
+
+        # Create the UNWIND clause to unwind node labels and relationship types
+        unwind_clause = ""
+        for node in node_vars:
+            unwind_clause += f"UNWIND {node}_labels AS {node}\n"
+
+        for rel in rel_vars:
+            unwind_clause += f"UNWIND [{rel}_type] AS {rel}\n"
+
+        # Combine node_vars and rel_vars into a single list
+        variables = [*node_vars, *rel_vars]
+
+        # Construct the RETURN clause
+        return_clause = "RETURN DISTINCT " + ", ".join(map(str, variables)).strip(", ")
+
+        # Construct the full query
+        query = (
+            match_clause
+            + "\n"
+            + with_clause
+            + "\n"
+            + unwind_clause
+            + ""
+            + return_clause
+        )
+
+        return query, node_vars, rel_vars
+
+    else:
+        return "", node_vars, rel_vars
+
+
+def label_combinations(
+    graph: str, path: str
+) -> Generator[Request, Any, tuple[pd.DataFrame | None, list, list]]:
+    """Ask the database for the label and type combinations of one path.
+
+    Returns:
+        The DataFrame (columns: the vars of the path, rows: the valid label combinations) or None if the
+        database rejected the inference query, and the node and relationship variables of the path.
+    """
+    query_w_labels, node_vars, rel_vars = identify_variables_and_construct_query(path)
+    try:
+        return (yield from query_to_df(graph, query_w_labels)), node_vars, rel_vars
+    except CypherError:
+        # The inference query was rejected (e.g. FalkorDB.ClientError.Statement.SyntaxError)
+        return None, node_vars, rel_vars
+
+
+_RESOLVERS = {
+    "missing_names": missing_names,
+    "label_kind": label_kind,
+    "index_exists": index_exists,
+    "path_exists": path_exists,
+    "property_exists": property_exists,
+    "property_types": property_types,
+    "multilabels": multilabels,
+    "label_combinations": label_combinations,
+}
+
+
+def resolve(lookup: Lookup) -> Generator[Request, Any, Any]:
+    """The logic generator that answers ``lookup`` by asking the database."""
+    try:
+        resolver = _RESOLVERS[lookup.kind]
+    except KeyError:
+        raise ValueError(f"Unknown lookup: {lookup.kind!r}") from None
+    return resolver(lookup.graph, *lookup.args)
