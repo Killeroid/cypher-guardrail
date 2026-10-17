@@ -7,9 +7,15 @@ except PackageNotFoundError:
     __version__ = "unknown"
 
 from cypher_guardrail.snapshot import Snapshot, SnapshotSource
+from cypher_guardrail.validators.syntax_validator import (
+    AsyncSyntaxValidator,
+    SyntaxValidator,
+)
 
 __all__ = [
+    "AsyncSyntaxValidator",
     "Snapshot",
     "SnapshotSource",
+    "SyntaxValidator",
     "__version__",
 ]
