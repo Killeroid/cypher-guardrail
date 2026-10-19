@@ -1,0 +1,31 @@
+{
+ "movies": {
+  "seed": [
+   "CREATE (:Person:Actor {name: 'Keanu Reeves', born: 1964}), (:Person {name: 'Carrie-Anne Moss', born: 1967}), (:Person {name: 'Lana Wachowski', born: 1965})",
+   "CREATE (:Movie {title: 'The Matrix', released: 1999, rating: 8.7, embedding: vecf32([0.1, 0.2, 0.3])}), (:Movie {title: 'John Wick', released: 2014, rating: 7.4, embedding: vecf32([0.3, 0.2, 0.1])})",
+   "CREATE (:Genre {name: 'Sci-Fi'}), (:Genre {name: 'Action'})",
+   "CREATE (:User {id: 1, email: 'a@example.com'}), (:User {id: 2, email: 'b@example.com'})",
+   "MATCH (p:Person {name: 'Keanu Reeves'}), (m:Movie {title: 'The Matrix'}) CREATE (p)-[:ACTED_IN {role: 'Neo'}]->(m)",
+   "MATCH (p:Person {name: 'Keanu Reeves'}), (m:Movie {title: 'John Wick'}) CREATE (p)-[:ACTED_IN {role: 'John Wick'}]->(m)",
+   "MATCH (p:Person {name: 'Carrie-Anne Moss'}), (m:Movie {title: 'The Matrix'}) CREATE (p)-[:ACTED_IN {role: 'Trinity'}]->(m)",
+   "MATCH (p:Person {name: 'Lana Wachowski'}), (m:Movie {title: 'The Matrix'}) CREATE (p)-[:DIRECTED]->(m)",
+   "MATCH (m:Movie {title: 'The Matrix'}), (g:Genre {name: 'Sci-Fi'}) CREATE (m)-[:IN_GENRE]->(g)",
+   "MATCH (m:Movie {title: 'John Wick'}), (g:Genre {name: 'Action'}) CREATE (m)-[:IN_GENRE]->(g)",
+   "MATCH (u:User {id: 1}), (m:Movie {title: 'The Matrix'}) CREATE (u)-[:RATED {stars: 5}]->(m)",
+   "MATCH (u:User {id: 2}), (m:Movie {title: 'The Matrix'}) CREATE (u)-[:RATED {stars: 4}]->(m)",
+   "MATCH (a:Person {name: 'Keanu Reeves'}), (b:Person {name: 'Carrie-Anne Moss'}) CREATE (a)-[:KNOWS {since: 1999}]->(b)",
+   "MATCH (a:Person {name: 'Carrie-Anne Moss'}), (b:Person {name: 'Lana Wachowski'}) CREATE (a)-[:KNOWS {since: 1998}]->(b)"
+  ],
+  "indexes": [
+   "CREATE FULLTEXT INDEX FOR (m:Movie) ON (m.title)",
+   "CREATE VECTOR INDEX FOR (m:Movie) ON (m.embedding) OPTIONS {dimension: 3, similarityFunction: 'euclidean'}",
+   "CREATE FULLTEXT INDEX FOR ()-[a:ACTED_IN]-() ON (a.role)"
+  ]
+ },
+ "collision": {
+  "seed": [
+   "CREATE (:Person {name: 'Ann'})-[:Rated {stars: 5}]->(:Rated {note: 'great'})"
+  ],
+  "indexes": []
+ }
+}

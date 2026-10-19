@@ -54,6 +54,8 @@ extend-select = ["B", "I", "UP"]
 
 [tool.ty.environment]
 python = ".venv"
+# the corpus of tests/accuracy/ is imported by tests/test_accuracy.py and scripts/accuracy.py as `harness`
+extra-paths = ["tests/accuracy"]
 
 [tool.ty.analysis]
 # FalkorDBLite is only installed on Python >= 3.12, but a test script imports it
