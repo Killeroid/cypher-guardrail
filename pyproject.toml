@@ -31,7 +31,7 @@ module-name = "cypher_guardrail"
 
 [dependency-groups]
 dev = [
-    "falkordblite; python_version >= '3.12'",
+    "falkordblite<0.11 ; python_full_version >= '3.12'",
     "pytest>=9.1.1",
     "ruff>=0.17.0",
     "ty>=0.0.87",
