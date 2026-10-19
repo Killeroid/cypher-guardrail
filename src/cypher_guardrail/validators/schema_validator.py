@@ -700,6 +700,7 @@ class SchemaValidator(_SchemaValidator):
             of those calls that have an index.
 
             metadata (list[dict]): The problems found, without duplicates. Each dictionary includes:
+
             - 'code' (str): ``cypher_guardrail.Warning.UnknownLabel``, ``cypher_guardrail.Warning.UnknownRelationshipType``,
               ``cypher_guardrail.Warning.UnknownIndex``, or ``cypher_guardrail.Warning.UnknownPath``, ``cypher_guardrail.Warning.WrongDirectionPath``,
               ``cypher_guardrail.Warning.VariableLengthPath`` or ``cypher_guardrail.Warning.WrongDirectionVariableLengthPath`` for a path that does not exist.

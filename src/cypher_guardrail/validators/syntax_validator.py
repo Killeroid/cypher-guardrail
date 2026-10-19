@@ -197,14 +197,15 @@ class SyntaxValidator(_SyntaxValidator):
         """
         Checks if the query has correct Cypher syntax.
         It detects these errors and warnings:
+
         - FalkorDB.DatabaseError.Statement.ExecutionFailed: Raised when the database was unable to execute the statement.
         - FalkorDB.ClientError.Statement.SyntaxError: Raised when the provided statement has invalid syntax.
         - cypher_guardrail.Warning.ParameterNotProvided: Raised when a parameter is not provided.
         - cypher_guardrail.Error.WriteQuery: Raised when the query can modify the graph and ``read_only`` is True (the default).
         - cypher_guardrail.Warning.WriteQuery: The same when ``read_only`` is False. It is the only warning that leaves the
-        result True: the query is valid, the warning is there to be read.
+          result True: the query is valid, the warning is there to be read.
         - cypher_guardrail.Error.ArithmeticError: Raised when an arithmetic error occurs during query execution due to explicit division by zero ("/0", "/0.0" , "/(0)"),
-        but not when arithmetic errors may occur at execution time when a divisor becomes zero as part of dynamic execution.
+          but not when arithmetic errors may occur at execution time when a divisor becomes zero as part of dynamic execution.
         - cypher_guardrail.Error.ConflictingVariables: Raised when a variable is given different labels (unless they are labels that occur together on a node, see ``check_multilabeled_nodes``).
 
         Args:
@@ -215,11 +216,14 @@ class SyntaxValidator(_SyntaxValidator):
                 ``$name`` that is in neither ``parameters`` nor a ``CYPHER`` header of the query is reported as not provided.
 
         Returns:
-            bool: True if the syntax is correct and there is no error (a warning about a write is not one), False otherwise.
-            metadata (list[dict]): The errors and warnings found, empty if there are none.
-                Each dictionary includes:
-                - 'code' (str): The error or warning code.
-                - 'description' (str): A detailed message describing the issue.
+            tuple: ``(is_valid, metadata)``.
+
+            is_valid (bool): True if the syntax is correct and there is no error (a warning about a write is not one), False otherwise.
+
+            metadata (list[dict]): The errors and warnings found, empty if there are none. Each dictionary includes:
+
+            - 'code' (str): The error or warning code.
+            - 'description' (str): A detailed message describing the issue.
 
         Raises:
             TypeError: If ``parameters`` is a string.

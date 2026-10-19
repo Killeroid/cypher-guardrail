@@ -47,7 +47,7 @@ What to know:
 * **Where did the answer come from?** `validator.mode` is `"online"`, `"offline"` or `"hybrid"`, and `validator.stats` counts the lookups answered by the snapshot (`snapshot_answers`) and by the database (`database_answers`), how many misses were checked (`verified_misses`) and how many of them the database contradicted (`corrected_misses`, a sign that the snapshot is stale).
 * **Capture costs a pass over the graph** (every node and relationship is scanned once). On a large graph capture rarely, or use `sample=N`, which looks at no more than N nodes of each label and N relationships of each type (the label sets, the edges and the properties are each scanned per label or per type), so a rare label or type is never lost behind a common one. It can still miss a rare property, a rare combination of labels at the two ends of a relationship type, and a node with no label. A snapshot records that it is a sample (`snapshot.sample`), and the validators do not take its "not there" for an answer: offline they report nothing about a path or a property of a known label that the snapshot lacks (an unknown name is still reported: the names are not sampled), and in the hybrid mode the database is asked, even with `verify="never"`, which then reports nothing either. Which label is blamed when a label is inferred, or chosen among alternatives, depends on the properties in the sample and can differ from the database's.
 
-### Keeping a snapshot fresh
+## Keeping a snapshot fresh
 
 A snapshot goes stale. A `LiveSnapshot` holds a client and the name of a graph, and replaces its snapshot from time to time, so a service that validates many queries needs no database round trip per query and still follows the graph:
 

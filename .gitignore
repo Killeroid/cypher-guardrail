@@ -140,3 +140,6 @@ secrets.toml
 .pypirc
 .npmrc
 
+
+# Sphinx
+docs/_build/

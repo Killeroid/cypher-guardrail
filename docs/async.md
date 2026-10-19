@@ -38,7 +38,7 @@ asyncio.run(main())
   ```
 * **Timeouts and cancellation work.** `await asyncio.wait_for(validator.validate(query, database_name), timeout=5)` cancels the queries it started when it times out, which frees their `max_concurrency` slots for the next call.
 
-### Using FalkorDBLite's async client
+## Using FalkorDBLite's async client
 
 cypher-guardrail works with any `falkordb.asyncio` client, but FalkorDBLite 0.10.0's own `AsyncFalkorDB` (`redislite.async_falkordb_client`) has a bug on exit: you see `RuntimeWarning: coroutine 'AsyncManagementCommands.shutdown' was never awaited`. It is not only cosmetic. FalkorDBLite then waits about 5 seconds and kills its embedded server with `SIGKILL` without saving, so exiting is slower and **data written to a persistent database file can be lost**. The problem is in FalkorDBLite ([#61](https://github.com/FalkorDB/falkordblite/issues/61)), not in cypher-guardrail.
 

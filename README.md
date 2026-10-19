@@ -111,6 +111,7 @@ KG Valid Query = 1  if SyntaxValidator is_valid is True
 ```sh
 uv sync            # create the environment (Python >= 3.12 also installs FalkorDBLite for the tests)
 uv run pytest      # run the tests
+uv run --group docs sphinx-build -W docs docs/_build/html   # build the documentation
 ```
 
 [`.github/workflows/publish.yml`](.github/workflows/publish.yml) publishes a release to PyPI when a version tag is pushed: set `version` in `pyproject.toml`, add the release to `CHANGELOG.md`, then `git tag vX.Y.Z && git push origin vX.Y.Z`.

@@ -846,6 +846,7 @@ class PropertiesValidator(_PropertiesValidator):
             all the properties accessed. None if the query accesses no property.
 
             metadata (list[dict]): The problems found. Each dictionary includes:
+
             - 'code' (str): ``cypher_guardrail.Warning.InvalidPropertyAccessByLabel`` for a property that its label does not have,
               ``cypher_guardrail.Warning.UnknownPropertyKey`` for a property that exists nowhere in the graph, and, with
               ``check_types=True``, ``cypher_guardrail.Warning.PropertyTypeMismatch`` for a property that the query compares
