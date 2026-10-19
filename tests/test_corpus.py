@@ -18,6 +18,7 @@ from cypher_guardrail import (
     AsyncPropertiesValidator,
     AsyncSchemaValidator,
     AsyncSyntaxValidator,
+    GraphNotFoundError,
     PropertiesValidator,
     SchemaValidator,
     Snapshot,
@@ -401,22 +402,23 @@ def test_the_async_syntax_validator_in_the_hybrid_mode(
 def test_a_graph_that_does_not_exist_is_an_empty_snapshot_offline(
     falkordb_client, snapshots
 ):
-    # Online the database says nothing about a graph that is not there. A snapshot of it is empty ("no label exists"),
-    # so the offline mode, and the hybrid with verify="never", report the names as unknown; the hybrid mode that
-    # checks the misses asks the database and gives the online answer.
+    # Online the database says that the graph is not there (GraphNotFoundError). A snapshot of it is empty ("no label
+    # exists"), so the offline mode, and the hybrid with verify="never" (the database is not asked), report the names
+    # as unknown; the hybrid mode that checks the misses asks the database and gets the online answer.
     query = "MATCH (n:Goal) RETURN n"
     snapshot = snapshots["no_such_graph"]
     assert snapshot.labels == ()
 
-    online = SchemaValidator(falkordb_client).validate(query, "no_such_graph")
     offline = SchemaValidator(snapshot).validate(query, "no_such_graph")
     never = SchemaValidator(falkordb_client, snapshot=snapshot, verify="never")
     checked = SchemaValidator(falkordb_client, snapshot=snapshot)
 
-    assert online[1] == []
+    with pytest.raises(GraphNotFoundError):
+        SchemaValidator(falkordb_client).validate(query, "no_such_graph")
     assert [i["code"] for i in offline[1]] == ["cypher_guardrail.Warning.UnknownLabel"]
     assert never.validate(query, "no_such_graph") == offline
-    assert checked.validate(query, "no_such_graph") == online
+    with pytest.raises(GraphNotFoundError):
+        checked.validate(query, "no_such_graph")
 
 
 def test_the_label_chosen_among_equals_does_not_depend_on_the_order_of_the_rows(

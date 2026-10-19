@@ -62,6 +62,7 @@ def is_write(driver, query, database_name=None):
         - bool: True if the query can write, False if it only reads.
 
     Raises:
+        - GraphNotFoundError: If the graph does not exist (a ``CypherError`` too).
         - CypherError: If the database rejects the query (a syntax error, ...). A query that cannot be read is not one
           known to be safe, so it is not answered with False.
     """

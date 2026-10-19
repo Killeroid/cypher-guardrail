@@ -200,12 +200,17 @@ class TestIndexProceduresAreIndexes:
         query = "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) RETURN g"
         assert SchemaValidator(falkordb_client).validate(query, db_name) == (1.0, [])
 
-    def test_a_graph_without_indexes_or_data_has_no_index(self, falkordb_client):
+    def test_a_graph_without_indexes_has_no_index(self, falkordb_client):
+        graph = falkordb_client.select_graph("without_indexes")
+        graph.query("CREATE (:Doc {title: 'a'})")
         query = "CALL db.idx.fulltext.queryNodes('Doc', 'x') YIELD node RETURN node"
-        score, metadata = SchemaValidator(falkordb_client).validate(
-            query, "no_such_graph"
-        )
-        assert score == 0.0
+        try:
+            score, metadata = SchemaValidator(falkordb_client).validate(
+                query, "without_indexes"
+            )
+        finally:
+            graph.delete()
+        assert score == 0.5  # the label exists, the index does not
         assert UNKNOWN_INDEX in {m["code"] for m in metadata}
 
 

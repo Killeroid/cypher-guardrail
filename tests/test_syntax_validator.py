@@ -14,6 +14,7 @@ from support import code_set, codes, missing_parameters
 
 from cypher_guardrail import (
     AsyncSyntaxValidator,
+    GraphNotFoundError,
     SyntaxValidator,
 )
 from cypher_guardrail._internal.core import io as _io
@@ -161,11 +162,11 @@ class TestSyntaxValidator:
             falkordb_client
         )  # multilabels are fetched lazily, once a graph name is known
 
-    def test_unknown_graph_is_invalid(self, falkordb_client):
-        is_valid, metadata = SyntaxValidator(falkordb_client).validate(
-            "MATCH (n) RETURN n", "no_such_graph"
-        )
-        assert not is_valid and metadata
+    def test_unknown_graph_is_an_error(self, falkordb_client):
+        with pytest.raises(GraphNotFoundError, match="no_such_graph"):
+            SyntaxValidator(falkordb_client).validate(
+                "MATCH (n) RETURN n", "no_such_graph"
+            )
 
     def test_bound_graph_needs_no_database_name(self, graph):
         assert SyntaxValidator(graph).validate("MATCH (g:Goal) RETURN g") == (True, [])

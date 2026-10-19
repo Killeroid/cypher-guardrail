@@ -473,6 +473,7 @@ class _SchemaValidator(_modes.ModeInfo):
             )
             return node_paths, index_rel_paths, [], original_path_map
 
+    @_queries.graph_checked
     def _extract(
         self, query, database_name=None
     ) -> Generator[Request, Any, tuple[list, list, list]]:
@@ -482,6 +483,7 @@ class _SchemaValidator(_modes.ModeInfo):
         paths = [self.__replace_variables_with_empty_string(path) for path in paths]
         return nodes, rels, paths
 
+    @_queries.graph_checked
     def _validate(
         self, query, database_name=None
     ) -> Generator[Request, Any, tuple[float, list[Issue]]]:
@@ -711,6 +713,9 @@ class SchemaValidator(_SchemaValidator):
               ``cypher_guardrail.Warning.UnknownIndex``, or ``cypher_guardrail.Warning.UnknownPath``, ``cypher_guardrail.Warning.WrongDirectionPath``,
               ``cypher_guardrail.Warning.VariableLengthPath`` or ``cypher_guardrail.Warning.WrongDirectionVariableLengthPath`` for a path that does not exist.
             - 'description' (str): A detailed message describing the issue.
+
+        Raises:
+            GraphNotFoundError: If the validation asked the database about a graph that does not exist.
         """
         return self.backend.run(self._validate(query, database_name))
 

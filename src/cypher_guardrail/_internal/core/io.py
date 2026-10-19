@@ -39,7 +39,12 @@ from dataclasses import dataclass
 
 from redis.exceptions import ResponseError
 
-from cypher_guardrail._internal.core.errors import to_cypher_error
+from cypher_guardrail._internal.core.errors import (
+    CypherError,
+    is_missing_graph,
+    missing_graph_key,
+    to_cypher_error,
+)
 
 
 @dataclass(frozen=True)
@@ -248,6 +253,19 @@ def _resume(generator, answer, error):
         return _Done(done.value)
 
 
+def _note_missing_graph(request, error, answers):
+    """Note, for the run, that a request failed because its graph does not exist. The lookups take such a graph for one
+    with no schema (a capture needs that), and ``queries.graph_checked`` ends a validation with the error."""
+    graph = getattr(request, "graph", None)
+    if (
+        answers is not None
+        and graph is not None
+        and isinstance(error, CypherError)
+        and is_missing_graph(error)
+    ):
+        answers[("remembered", missing_graph_key(graph))] = True
+
+
 def _drive_sync(generator, transport, resolver, answers):
     answer = error = None
     with closing(generator):
@@ -260,6 +278,7 @@ def _drive_sync(generator, transport, resolver, answers):
                 answer = _answer_sync(request, transport, resolver, answers)
             except Exception as e:  # noqa: BLE001 - every error is thrown into the generator, as it would be from a plain call
                 error = e
+                _note_missing_graph(request, e, answers)
 
 
 def _resolve(lookup, resolver):
@@ -331,6 +350,7 @@ async def _drive_async(generator, transport, resolver, answers):
                 answer = await _answer_async(request, transport, resolver, answers)
             except Exception as e:  # noqa: BLE001 - every error is thrown into the generator, as it would be from a plain call
                 error = e
+                _note_missing_graph(request, e, answers)
 
 
 async def _answer_async(request, transport, resolver, answers):

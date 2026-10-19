@@ -48,6 +48,29 @@ class CypherError(Exception):
         self.message = message
 
 
+class GraphNotFoundError(CypherError, ValueError):
+    """The graph that was asked about does not exist: FalkorDB creates a graph with its first write, and answers "empty key"
+    to everything until then. It is a mistake of the caller (usually the name of the graph), not an answer about the query.
+
+    It is a :class:`CypherError` too, because ``is_write`` raised that for such a graph before.
+
+    Attributes:
+        graph (str): The name of the graph.
+    """
+
+    def __init__(self, graph):
+        super().__init__(
+            EXECUTION_FAILED,
+            f"The graph {graph!r} does not exist (FalkorDB creates a graph with its first write): check its name.",
+        )
+        self.graph = graph
+
+
+def missing_graph_key(graph):
+    """The key under which a run remembers that ``graph`` does not exist (see ``queries.graph_checked``)."""
+    return ("graph_missing", graph)
+
+
 def to_cypher_error(error):
     """Turn a redis ``ResponseError`` into a :class:`CypherError` with one of cypher-guardrail's codes.
 

@@ -6,7 +6,11 @@ import regex as re
 
 from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import queries as _queries
-from cypher_guardrail._internal.core.errors import SYNTAX_ERROR, WRITE_QUERY_WARNING
+from cypher_guardrail._internal.core.errors import (
+    SYNTAX_ERROR,
+    WRITE_QUERY_WARNING,
+    GraphNotFoundError,
+)
 from cypher_guardrail._internal.core.io import Lookup, Request
 from cypher_guardrail._internal.core.scopes import restore_variables, separate_variables
 from cypher_guardrail._internal.sources import hybrid as _modes
@@ -165,6 +169,8 @@ class _SyntaxValidator(_modes.ModeInfo):
 
             # A warning about a write does not make the query invalid, as an error about it does
             return all(i["code"] == WRITE_QUERY_WARNING for i in metadata), metadata
+        except GraphNotFoundError:
+            raise  # a mistake of the caller, not an answer about the query
         except CypherError as e:
             # The database rejected the query: FalkorDB.ClientError.Statement.SyntaxError,
             # FalkorDB.DatabaseError.Statement.ExecutionFailed or cypher_guardrail.Error.ArithmeticError
@@ -227,6 +233,7 @@ class SyntaxValidator(_SyntaxValidator):
 
         Raises:
             TypeError: If ``parameters`` is a string.
+            GraphNotFoundError: If the graph does not exist.
         """
         return self.backend.run(self._validate(query, database_name, parameters))
 

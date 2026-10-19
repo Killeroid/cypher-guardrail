@@ -8,6 +8,7 @@ cost one round-trip each per snapshot.
 See the ``backend`` module docstring for the FalkorDB peculiarities these functions compensate for.
 """
 
+import functools
 from collections.abc import Generator, Iterable
 from typing import Any
 
@@ -15,11 +16,18 @@ import pandas as pd
 import regex as re
 
 from cypher_guardrail._internal.core import builders as _issues
-from cypher_guardrail._internal.core.errors import NOT_READ_ONLY, CypherError
+from cypher_guardrail._internal.core.errors import (
+    NOT_READ_ONLY,
+    CypherError,
+    GraphNotFoundError,
+    is_missing_graph,
+    missing_graph_key,
+)
 from cypher_guardrail._internal.core.io import (
     Concurrently,
     Explain,
     Lookup,
+    Recall,
     Request,
     RoQuery,
 )
@@ -187,12 +195,15 @@ def explain(
 
     Raises:
         TypeError: If ``parameters`` is a string.
+        GraphNotFoundError: If the graph does not exist.
         CypherError: If the database rejects the query.
     """
     given = parameter_names(parameters)
     try:
         writes = yield from _explain(graph, query, read_only)
     except CypherError as e:
+        if is_missing_graph(e):
+            raise GraphNotFoundError(graph) from e
         # FalkorDB cannot plan the query without the value of a parameter: plan it with a placeholder for each
         # (a missing parameter is reported below, from the text, whatever the plan says)
         placeholders = (
@@ -221,6 +232,26 @@ def explain(
     if writes and read_only is not None:
         issues.append(_issues.write_query(read_only))
     return issues
+
+
+def graph_checked(method):
+    """Make a validation (a generator method ``(self, query, database_name=None, ...)``) end with GraphNotFoundError when
+    it met a graph that does not exist.
+
+    FalkorDB answers "empty key" to everything about such a graph, and the lookups take it for a graph with no schema
+    (a capture needs that). They note it (``missing_graph_key``), and the validation says so at its end, so a query that
+    asks nothing about the graph (``RETURN 1``) is not an error, and a request that is not made is not an extra one.
+    """
+
+    @functools.wraps(method)
+    def wrapper(self, query, database_name=None, *args, **kwargs):
+        result = yield from method(self, query, database_name, *args, **kwargs)
+        graph = self.backend.graph_name(database_name)
+        if (yield Recall(missing_graph_key(graph))):
+            raise GraphNotFoundError(graph)
+        return result
+
+    return wrapper
 
 
 def _explain(

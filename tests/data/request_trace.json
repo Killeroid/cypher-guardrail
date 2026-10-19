@@ -7141,12 +7141,6 @@
      "no_such_graph",
      "MATCH (a:A)-[:R|S]->(b)\nWITH DISTINCT labels(b) AS b_labels\nUNWIND b_labels AS b\nRETURN DISTINCT b",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -7154,12 +7148,6 @@
      "RoQuery",
      "no_such_graph",
      "MATCH (a:A)-[:R|S]->(b)\nWITH DISTINCT labels(b) AS b_labels\nUNWIND b_labels AS b\nRETURN DISTINCT b",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
      false
     ]
    ],
@@ -7633,12 +7621,6 @@
      "no_such_graph",
      "MATCH (g:Goal)-[]->(t)\nWITH DISTINCT labels(t) AS t_labels\nUNWIND t_labels AS t\nRETURN DISTINCT t",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -7646,12 +7628,6 @@
      "RoQuery",
      "no_such_graph",
      "MATCH (g:Goal)-[]->(t)\nWITH DISTINCT labels(t) AS t_labels\nUNWIND t_labels AS t\nRETURN DISTINCT t",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
      false
     ]
    ],
@@ -8073,12 +8049,6 @@
      "no_such_graph",
      "MATCH (t:Target)-[:HAS_INDICATOR]->(i)\nWITH DISTINCT labels(i) AS i_labels\nUNWIND i_labels AS i\nRETURN DISTINCT i",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -8086,12 +8056,6 @@
      "RoQuery",
      "no_such_graph",
      "MATCH (t:Target)-[:HAS_INDICATOR]->(i)\nWITH DISTINCT labels(i) AS i_labels\nUNWIND i_labels AS i\nRETURN DISTINCT i",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
      false
     ]
    ],
@@ -8362,12 +8326,6 @@
      "no_such_graph",
      "CALL db.relationshipTypes()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -8375,12 +8333,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.relationshipTypes()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
      false
     ]
    ],

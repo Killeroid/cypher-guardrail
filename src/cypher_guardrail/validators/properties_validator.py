@@ -438,6 +438,7 @@ class _PropertiesValidator(_modes.ModeInfo):
 
         return var_label_map, label_props_map, var_props_map
 
+    @_queries.graph_checked
     def _extract(
         self, query, database_name=None, strict=False
     ) -> Generator[Request, Any, tuple[dict, dict]]:
@@ -483,6 +484,7 @@ class _PropertiesValidator(_modes.ModeInfo):
 
         return var_props_map, label_props_map
 
+    @_queries.graph_checked
     def _validate(
         self, query, database_name=None, strict=False
     ) -> Generator[Request, Any, tuple[float | None, list[Issue]]]:
@@ -883,6 +885,9 @@ class PropertiesValidator(_PropertiesValidator):
               That warning does not change the score. It covers the variables that have a label in the query and the
               ``{map}`` of a pattern, and only comparisons with literals (not parameters or expressions).
             - 'description' (str): A detailed message describing the issue.
+
+        Raises:
+            GraphNotFoundError: If the validation asked the database about a graph that does not exist.
         """
         return self.backend.run(self._validate(query, database_name, strict))
 

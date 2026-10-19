@@ -619,92 +619,92 @@
   "MATCH ()-[r:HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
    "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
    "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "([], ['()-[:HAS_INDICATOR]-()'], ['()-[:HAS_INDICATOR]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']}})",
-   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight, bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight, bogus.'}])",
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 RETURN r": {
-   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
-   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.zzz = 1 RETURN r": {
-   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
-   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (a)-[:R]->(b), (c)-[:R]->(d) WHERE a.p = 1 AND b.q = 2 AND c.p = 3 AND d.q = 4 AND a.zz = 5 RETURN a": {
-   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
-   "schema.extract": "([], ['()-[:R]-()'], ['()-[:R]->()', '()-[:R]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (a)-[r]->(b) WHERE a.code = '1' AND b.nope = 2 RETURN r": {
-   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
-   "schema.extract": "([], [], ['()-[]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (a:A)-[:R|S]->(b) RETURN a.p, b.q": {
-   "properties.extract": "({'b': ['q']}, {'node': {'A': ['p']}, 'relationship': {}})",
-   "properties.extract.strict": "({'b': ['q']}, {'node': {'A': ['p']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  p.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  p.'}])",
-   "schema.extract": "(['(:A)'], ['()-[:R|S]-()'], ['(:A)-[:R|S]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (a:Nope)-[:NOPE]->(b) RETURN a": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
    "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
-   "schema.extract": "(['(:Nope)'], ['()-[:NOPE]-()'], ['(:Nope)-[:NOPE]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g)-[:HAS_TARGET]->(t) RETURN g.code, t.code": {
-   "properties.extract": "({'g': ['code'], 't': ['code']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
-   "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['()-[:HAS_TARGET]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g)-[:HAS_TARGET]->(t)-[r]->(i) WHERE g.code = '1' AND t.text = 'x' AND i.unit = 'y' AND i.nope = 1 RETURN g": {
-   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
-   "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['()-[:HAS_TARGET]->()', '()-[]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Ghost)-[:HAS_TARGET]->(t:Target) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -712,35 +712,35 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal), (t:Target) WHERE g.title = 'a' AND t.code = 'b' AND g.zzz = 1 AND t.text = 'c' RETURN g": {
    "properties.extract": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
    "properties.extract.strict": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code, text.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code, text.'}])",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], [])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)--(t:Target) RETURN g, t": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
    "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
-   "schema.extract": "(['(:Goal)', '(:Target)'], [], ['(:Goal)-[]-(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-->(t) RETURN g.title, t.text": {
-   "properties.extract": "({'t': ['text']}, {'node': {'Goal': ['title']}, 'relationship': {}})",
-   "properties.extract.strict": "({'t': ['text']}, {'node': {'Goal': ['title']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title.'}])",
-   "schema.extract": "(['(:Goal)'], [], ['(:Goal)-[]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_INDICATOR]->(i:Indicator) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -748,8 +748,8 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)'], ['()-[:HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_INDICATOR]->(:Indicator)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET*1..2]->(t:Target) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -757,8 +757,8 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*1..2]->(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET*2..3]->(t:Target) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -766,26 +766,26 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*2..3]->(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) RETURN g.code, t.code": {
    "properties.extract": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
    "properties.extract.strict": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code.'}])",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) WHERE g.code = '1' AND g.bogus = 2 AND t.text = 'x' AND t.nope = 3 RETURN g": {
    "properties.extract": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
    "properties.extract.strict": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target), (a:GeoArea)-[:HAS_NUTS1]->(n:Nuts1), (i:Indicator)-[:BOGUS]->(g) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -793,17 +793,17 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:GeoArea)', '(:Goal)', '(:Indicator)', '(:Nuts1)', '(:Target)'], ['()-[:BOGUS]-()', '()-[:HAS_NUTS1]-()', '()-[:HAS_TARGET]-()'], ['(:GeoArea)-[:HAS_NUTS1]->(:Nuts1)', '(:Goal)-[:HAS_TARGET]->(:Target)', '(:Indicator)-[:BOGUS]->(:Goal)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i) RETURN i.unit, g.bogus": {
-   "properties.extract": "({'i': ['unit']}, {'node': {'Goal': ['bogus']}, 'relationship': {}})",
-   "properties.extract.strict": "({'i': ['unit']}, {'node': {'Goal': ['bogus']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
-   "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i:Indicator) RETURN g, t, i": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -811,8 +811,8 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->(:Indicator)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Ghost)-[:HAS_TARGET]->(x:Target) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -820,8 +820,8 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()', '()-[:NOPE]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)', '(:Goal)-[:NOPE]->(:Ghost)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Target) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -829,17 +829,17 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:NOPE]-()'], ['(:Goal)-[:NOPE]->(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)-[r:HAS_TARGET|HAS_INDICATOR]->(t) WHERE r.weight = 1 AND g.code = '1' RETURN g": {
-   "properties.extract": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
-   "properties.extract.strict": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
-   "schema.extract": "(['(:Goal)'], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_TARGET|HAS_INDICATOR]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (g:Goal)<-[:HAS_TARGET]-(t:Target) RETURN g": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -847,26 +847,26 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)<-[:HAS_TARGET]-(:Target)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (n) WHERE n.a / 0 > 1 RETURN n": {
-   "properties.extract": "({'n': ['a']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'n': ['a']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (n) WHERE n.code = $code RETURN n": {
-   "properties.extract": "({'n': ['code']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'n': ['code']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (n:GeoArea:Area) RETURN n.name": {
    "properties.extract": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
@@ -875,7 +875,7 @@
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (n:Goal RETURN n": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -884,16 +884,16 @@
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (n:Goal) WHERE n.nonexistent = 1 RETURN n": {
    "properties.extract": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
    "properties.extract.strict": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
    "schema.extract": "(['(:Goal)'], [], [])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (n:Goal:Target) RETURN n": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -902,7 +902,7 @@
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (t:Target)-[:HAS_TARGET*1..2]->(g:Goal) RETURN t": {
    "properties.extract": "({}, {'node': {}, 'relationship': {}})",
@@ -910,17 +910,17 @@
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Target)-[:HAS_TARGET*1..2]->(:Goal)'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   },
   "MATCH (x)-[:R]->(y) RETURN x.p, y.q": {
-   "properties.extract": "({'x': ['p'], 'y': ['q']}, {'node': {}, 'relationship': {}})",
-   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {'node': {}, 'relationship': {}})",
-   "properties.validate": "(None, [])",
-   "properties.validate.strict": "(None, [])",
-   "schema.extract": "([], ['()-[:R]-()'], ['()-[:R]->()'])",
-   "schema.validate": "(0.0, [])",
-   "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
+   "properties.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.extract.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "properties.validate.strict": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.extract": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "schema.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name.",
+   "syntax.validate": "raised GraphNotFoundError: The graph 'no_such_graph' does not exist (FalkorDB creates a graph with its first write): check its name."
   }
  }
 }
