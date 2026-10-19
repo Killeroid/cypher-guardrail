@@ -97,6 +97,8 @@ syntax_validator.validate(
 
 `parameters` is the dict you give the client (`graph.query(query, params=params)`) or just a collection of the names. Only the names are read, never the values. It works the same on `AsyncSyntaxValidator`, and `backend.explain()` takes it too.
 
+**Parameters that FalkorDB needs the value of.** `EXPLAIN` plans the query without the values, and FalkorDB needs one in two places: a filter on a node of a label that has an index (`WHERE m.title = $title` when `Movie` has any index, even a full-text or a vector one), and `LIMIT $n` / `SKIP $n`. Without it FalkorDB answers "Missing parameters" and the validator reports `FalkorDB.DatabaseError.Statement.ExecutionFailed`, also when you listed the parameter in `parameters=` (that gives the names, not the values). Give the value in a `CYPHER` header instead: `CYPHER n=5 MATCH (m:Movie) RETURN m.title LIMIT $n` is valid. The labelled corpus in `tests/accuracy/` records these cases as known gaps.
+
 ## Schema Validator
 
 ```python
