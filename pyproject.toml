@@ -55,6 +55,10 @@ extend-select = ["B", "I", "UP"]
 [tool.ty.environment]
 python = ".venv"
 
+[tool.ty.analysis]
+# FalkorDBLite is only installed on Python >= 3.12, but a test script imports it
+allowed-unresolved-imports = ["redislite.**"]
+
 [project.urls]
 Homepage = "https://github.com/Killeroid/cypher-guardrail"
 Documentation = "https://cypher-guardrail.readthedocs.io/en/latest/"
