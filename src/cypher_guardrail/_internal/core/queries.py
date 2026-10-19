@@ -53,17 +53,52 @@ def _names(group: str) -> list[str]:
     ]
 
 
-def provided_parameters(query: str) -> set[str]:
-    """The names of the parameters that a ``CYPHER a=1 b='x' ...`` prefix gives the query."""
+def _parameter_header(query: str) -> tuple[set[str], int | None]:
+    """The names that a ``CYPHER a=1 b='x' ...`` prefix gives the query, and where the prefix ends (None if there is none)."""
     prefix = _CYPHER_PREFIX.match(query)
     if not prefix:
-        return set()
+        return set(), None
     names = set()
     position = prefix.end()
     while name := _PARAMETER_NAME.match(query, position):
         names.add(name.group(1))
         position = _end_of_value(query, name.end())
-    return names
+    return names, position
+
+
+def provided_parameters(query: str) -> set[str]:
+    """The names of the parameters that a ``CYPHER a=1 b='x' ...`` prefix gives the query."""
+    return _parameter_header(query)[0]
+
+
+# What FalkorDB says when it plans a query and needs the value of a parameter (it does on a label that has an index,
+# and in LIMIT and SKIP) and has none: the validator does not have the values, only the names
+_NEEDS_A_VALUE = ("Missing parameters", "operates only on non-negative integers")
+
+
+def _placeholder(name: str, text: str) -> str:
+    """``{}`` for a parameter whose property is read (``$p.title``), ``0`` for any other."""
+    return "{}" if re.search(r"\$" + re.escape(name) + r"\s*\.", text) else "0"
+
+
+def with_placeholder_parameters(query: str) -> str | None:
+    """``query`` with a ``CYPHER`` header that gives a placeholder to each parameter that no header gives, or None.
+
+    ``0`` is a valid ``LIMIT`` and ``SKIP`` and an inert value anywhere else a plan looks at a value, and ``{}`` is
+    one for a parameter whose property is read (``$p.title``). The placeholders only let FalkorDB plan the query:
+    the parameters that nobody provided are still reported, from the text.
+    """
+    given, end = _parameter_header(query)
+    text = strip_literals_and_comments(query)
+    names = [
+        name for name in dict.fromkeys(_PARAMETER.findall(text)) if name not in given
+    ]
+    if not names:
+        return None
+    pairs = " ".join(f"{name}={_placeholder(name, text)}" for name in names)
+    if end is None:
+        return f"CYPHER {pairs} {query}"
+    return f"{query[:end]} {pairs}{query[end:]}"
 
 
 def _end_of_value(text: str, start: int) -> int:
@@ -155,20 +190,19 @@ def explain(
         CypherError: If the database rejects the query.
     """
     given = parameter_names(parameters)
-    writes = False
-    if read_only is None:
-        yield Explain(graph, query)
-    else:
-        try:
-            yield Explain(graph, query, read_only=True)
-        except CypherError as e:
-            if e.code == NOT_READ_ONLY:
-                writes = True
-            else:
-                # Not an answer about writes (a syntax error, or something this form of the request gets
-                # wrong, such as the parameters of a ``CYPHER a=1 ...`` query): the plain EXPLAIN gives the
-                # database's own answer, and raises the error if there is one
-                yield Explain(graph, query)
+    try:
+        writes = yield from _explain(graph, query, read_only)
+    except CypherError as e:
+        # FalkorDB cannot plan the query without the value of a parameter: plan it with a placeholder for each
+        # (a missing parameter is reported below, from the text, whatever the plan says)
+        placeholders = (
+            with_placeholder_parameters(query)
+            if any(text in e.message for text in _NEEDS_A_VALUE)
+            else None
+        )
+        if placeholders is None:
+            raise
+        writes = yield from _explain(graph, placeholders, read_only)
     issues: list[
         ParameterNotProvidedIssue | WriteQueryErrorIssue | WriteQueryWarningIssue
     ] = []
@@ -187,6 +221,25 @@ def explain(
     if writes and read_only is not None:
         issues.append(_issues.write_query(read_only))
     return issues
+
+
+def _explain(
+    graph: str, query: str, read_only: bool | None
+) -> Generator[Request, Any, bool]:
+    """EXPLAIN ``query``, and say whether FalkorDB refused it as a write (only asked when ``read_only`` is not None)."""
+    if read_only is None:
+        yield Explain(graph, query)
+        return False
+    try:
+        yield Explain(graph, query, read_only=True)
+    except CypherError as e:
+        if e.code == NOT_READ_ONLY:
+            return True
+        # Not an answer about writes (a syntax error, or something this form of the request gets
+        # wrong, such as the parameters of a ``CYPHER a=1 ...`` query): the plain EXPLAIN gives the
+        # database's own answer, and raises the error if there is one
+        yield Explain(graph, query)
+    return False
 
 
 def query_to_df(graph: str, query: str) -> Generator[Request, Any, pd.DataFrame]:

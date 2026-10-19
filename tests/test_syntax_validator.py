@@ -509,6 +509,98 @@ def test_the_parameters_a_query_provides(query, provided):
 
 
 @pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        (
+            "MATCH (m:Movie) WHERE m.title = $title RETURN m",
+            "CYPHER title=0 MATCH (m:Movie) WHERE m.title = $title RETURN m",
+        ),
+        (
+            "MATCH (m:Movie) RETURN m SKIP $s LIMIT $n",
+            "CYPHER s=0 n=0 MATCH (m:Movie) RETURN m SKIP $s LIMIT $n",
+        ),
+        # a parameter used twice is given once; a parameter whose property is read is a map
+        (
+            "MATCH (m:Movie) WHERE m.a = $x OR m.b = $x OR m.c = $p.k RETURN m",
+            "CYPHER x=0 p={} MATCH (m:Movie) WHERE m.a = $x OR m.b = $x OR m.c = $p.k RETURN m",
+        ),
+        # the parameters of a header are kept, the others are added to it
+        (
+            "CYPHER a=1 MATCH (m:Movie) WHERE m.t = $t AND m.a = $a RETURN m",
+            "CYPHER a=1 t=0 MATCH (m:Movie) WHERE m.t = $t AND m.a = $a RETURN m",
+        ),
+        (
+            "CYPHER a='x y' n=[1, 2] MATCH (m:Movie) WHERE m.t = $t RETURN m",
+            "CYPHER a='x y' n=[1, 2] t=0 MATCH (m:Movie) WHERE m.t = $t RETURN m",
+        ),
+        # nothing to add
+        ("CYPHER t='x' MATCH (m:Movie) WHERE m.t = $t RETURN m", None),
+        ("MATCH (m:Movie) RETURN m", None),
+        ("MATCH (m:Movie) WHERE m.t = '$t' RETURN m // $limit", None),
+    ],
+)
+def test_a_placeholder_for_each_parameter_that_no_header_gives(query, expected):
+    assert _queries.with_placeholder_parameters(query) == expected
+
+
+@pytest.fixture
+def indexed_graph(falkordb_client):
+    graph = falkordb_client.select_graph("indexed_params")
+    graph.query("CREATE (:Movie {title: 'a', released: 1, rating: 2.0})")
+    graph.query("CREATE FULLTEXT INDEX FOR (m:Movie) ON (m.title)")
+    yield "indexed_params"
+    graph.delete()
+
+
+@pytest.mark.parametrize(
+    ("query", "names"),
+    [
+        ("MATCH (m:Movie) WHERE m.title = $title RETURN m", ["title"]),
+        ("MATCH (m:Movie) WHERE m.rating > $min RETURN m", ["min"]),
+        ("MATCH (m:Movie {title: $title}) RETURN m", ["title"]),
+        ("MATCH (m:Movie) RETURN m SKIP $skip LIMIT $limit", ["skip", "limit"]),
+        ("MATCH (m:Movie) WHERE m.title IN $titles RETURN m", ["titles"]),
+    ],
+)
+def test_a_parameter_on_a_label_with_an_index_needs_no_value(
+    falkordb_client, run_async, indexed_graph, query, names
+):
+    # FalkorDB cannot plan these without the value of the parameter: the validator gives it a placeholder
+    validator = SyntaxValidator(falkordb_client)
+
+    assert validator.validate(query, indexed_graph, parameters=names) == (True, [])
+    valid, metadata = validator.validate(query, indexed_graph)
+    assert valid is False
+    assert codes(metadata) == ["cypher_guardrail.Warning.ParameterNotProvided"]
+    assert missing_parameters(metadata) == [names]
+
+    async def ask(client):
+        validator = AsyncSyntaxValidator(client)
+        return (
+            await validator.validate(query, indexed_graph, parameters=names),
+            await validator.validate(query, indexed_graph),
+        )
+
+    given, not_given = run_async(ask)
+    assert given == (True, [])
+    assert not_given == (valid, metadata)
+
+
+def test_a_query_that_is_wrong_besides_its_parameters_is_still_wrong(
+    falkordb_client, indexed_graph
+):
+    # the placeholders let the plan be made; they do not make a real error go away
+    valid, metadata = SyntaxValidator(falkordb_client).validate(
+        "MATCH (m:Movie) WHERE m.title = $title RETURN q.name",
+        indexed_graph,
+        parameters=["title"],
+    )
+
+    assert valid is False
+    assert code_set(metadata) == {"FalkorDB.DatabaseError.Statement.ExecutionFailed"}
+
+
+@pytest.mark.parametrize(
     ("query", "reported"),
     [
         ("CYPHER a='1' MATCH (g:Goal) WHERE g.code = $a RETURN g", []),

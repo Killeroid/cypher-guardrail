@@ -30,7 +30,7 @@
  {"id": "valid.valid.29", "graph": "movies", "query": "CALL db.labels() YIELD label RETURN label", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
  {"id": "valid.valid.30", "graph": "movies", "query": "MATCH (m:Movie) RETURN m.title LIMIT 10", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
  {"id": "valid.valid.31", "graph": "movies", "query": "MATCH (p:Person) WHERE p.born > $year RETURN p.name", "validators": ["syntax", "schema", "properties"], "options": {"parameters": ["year"]}, "issues": [], "kg_valid": true},
- {"id": "valid.valid.32", "graph": "movies", "query": "MATCH (m:Movie) WHERE m.rating > $min RETURN m.title", "validators": ["syntax", "schema", "properties"], "options": {"parameters": ["min"]}, "issues": [], "kg_valid": true, "known_gap": "FalkorDB's EXPLAIN needs the value of a parameter on a label that has an index"},
+ {"id": "valid.valid.32", "graph": "movies", "query": "MATCH (m:Movie) WHERE m.rating > $min RETURN m.title", "validators": ["syntax", "schema", "properties"], "options": {"parameters": ["min"]}, "issues": [], "kg_valid": true},
  {"id": "valid.valid.33", "graph": "collision", "query": "MATCH (r:Rated) RETURN r.note", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
  {"id": "valid.valid.34", "graph": "collision", "query": "MATCH (a:Person)-[r:Rated]->(b:Rated) RETURN r.stars, b.note, a.name", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true}
 ]

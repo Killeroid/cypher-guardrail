@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1 (unreleased)
+
+### Fixed
+
+* **A `$parameter` on a label that has an index, or in `LIMIT` / `SKIP`, no longer makes `SyntaxValidator` report `ExecutionFailed`.** FalkorDB cannot plan such a query without the value of the parameter and answers "Missing parameters", so a valid query was flagged even when the parameter was given in `parameters=`, and a parameter that was not given was reported as `ExecutionFailed` and not as `ParameterNotProvided`. The validator now plans the query again with a placeholder for each parameter (only when FalkorDB asks for a value), so the answer is the one for the query itself.
+* **A variable-length path with no upper bound (`*3..`) is read and checked.** It was skipped, so `MATCH (a:Person)-[:KNOWS*3..]->(b:Person)` was never reported as `VariableLengthPath`.
+* **`WrongDirectionPath` is no longer reported for a multi-hop path that only exists undirected.** The check looked for the path without its arrows, which over several hops can mix directions, so the suggested path could have no rows. It now looks for the flipped path itself; if that does not exist either, the path is reported as `WrongDirectionVariableLengthPath` (it exists the other way round with any length) or as `UnknownPath`.
+
 ## 1.1.0 (2026-10-19)
 
 ### Changed
