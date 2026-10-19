@@ -129,7 +129,7 @@ def test_the_recording_is_not_empty():
 
 
 @pytest.mark.parametrize("graph_name", GOLDEN)
-def test_the_sync_validators_answer_what_3_0_1_answered(falkordb_client, graph_name):
+def test_the_sync_validators_answer_what_was_recorded(falkordb_client, graph_name):
     different = {}
     for query, expected in GOLDEN[graph_name].items():
         for name, (call, _) in CALLS.items():
@@ -140,7 +140,7 @@ def test_the_sync_validators_answer_what_3_0_1_answered(falkordb_client, graph_n
 
 
 @pytest.mark.parametrize("graph_name", GOLDEN)
-def test_the_async_validators_answer_what_3_0_1_answered(run_async, graph_name):
+def test_the_async_validators_answer_what_was_recorded(run_async, graph_name):
     async def ask(client):
         different = {}
         for query, expected in GOLDEN[graph_name].items():
