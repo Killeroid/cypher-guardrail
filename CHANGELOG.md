@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 (unreleased)
+
+### Changed
+
+* **A graph that does not exist is an error, `GraphNotFoundError`, and no longer a misleading answer.** FalkorDB creates a graph with its first write and answers "empty key" to everything until then. `SyntaxValidator` reported `ExecutionFailed` for every query, `SchemaValidator` scored 0 with no issue, and `PropertiesValidator` blamed each label for the properties; all three, online or hybrid, and `is_write`, now raise `GraphNotFoundError`, which names the graph. It is a `CypherError` (what `is_write` raised) and a `ValueError`, and is exported by the package. It comes from the requests the validation made anyway, so none is added: a query that asks nothing about the graph (`RETURN 1`), `extract()` of a query whose labels are in its text, an offline validator and `Snapshot.capture` (an empty snapshot) are as before.
+
 ## 1.1.1 (2026-10-20)
 
 ### Fixed

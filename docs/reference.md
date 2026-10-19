@@ -40,6 +40,12 @@ Each validator has an async twin for the `falkordb.asyncio` client, with the sam
 .. autofunction:: cypher_guardrail.utils.is_write_async
 ```
 
+## Errors
+
+```{eval-rst}
+.. autoexception:: cypher_guardrail.GraphNotFoundError
+```
+
 ## Issues
 
 The types and codes of the items in the `metadata` that `validate()` returns. See [Reading the metadata](metadata.md).
