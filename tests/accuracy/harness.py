@@ -22,20 +22,38 @@ A case is a JSON object:
 ``near_miss``  the codes this query is a valid look-alike of (it must not report them).
 ``known_gap``  (optional) why the library disagrees with the truth written in the case. The case is an expected
                failure: when the library gets it right, the test fails, so the label is taken out.
+``mode_gaps``  (optional) the same for one mode only: ``{"offline": "why"}``. The schema and properties validators also
+               run offline (from a snapshot of the graph) and hybrid (a snapshot and the database); the labels are the
+               same, minus what only ``SyntaxValidator`` reports, which needs the database. A snapshot never invents an
+               issue, but cannot see some (a path of two or more hops is only a "maybe"), which is what a mode gap says.
 """
 
 import json
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from cypher_guardrail import PropertiesValidator, SchemaValidator, SyntaxValidator
+from cypher_guardrail import (
+    PropertiesValidator,
+    SchemaValidator,
+    Snapshot,
+    SyntaxValidator,
+)
 from cypher_guardrail import issues as _issues_module
 
 DIRECTORY = Path(__file__).parent
 CASE_FILES = ("syntax", "schema", "properties", "valid")
 ANY_DATABASE_ERROR = "FalkorDB.*"
+MODES = ("online", "offline", "hybrid")
+# What only SyntaxValidator reports: it needs the database, so it is not part of the other modes
+SYNTAX_CODES = {
+    "Error.ArithmeticError",
+    "Error.ConflictingVariables",
+    "Error.WriteQuery",
+    "Warning.ParameterNotProvided",
+    "Warning.WriteQuery",
+}
 # Issue codes that are not reported to the user: the code of an error the library raises inside
 INTERNAL_CODES = {"cypher_guardrail.Error.NotReadOnly"}
 
@@ -54,6 +72,7 @@ class Case:
     kg_valid: bool | None = None
     near_miss: list[str] = field(default_factory=list)
     known_gap: str | None = None
+    mode_gaps: dict[str, str] = field(default_factory=dict)
 
 
 def load_graphs() -> dict[str, dict[str, list[str]]]:
@@ -78,6 +97,7 @@ def load_cases() -> list[Case]:
                     kg_valid=raw.get("kg_valid"),
                     near_miss=raw.get("near_miss", []),
                     known_gap=raw.get("known_gap"),
+                    mode_gaps=raw.get("mode_gaps", {}),
                 )
             )
     return cases
@@ -89,6 +109,35 @@ def seed(client, graphs=None) -> None:
         graph = client.select_graph(name)
         for statement in spec["seed"] + spec.get("indexes", []):
             graph.query(statement)
+
+
+def snapshots_of(client, graphs=None) -> dict[str, Snapshot]:
+    """A snapshot of each graph of the corpus (with the types of the values), for the offline and hybrid modes."""
+    return {
+        name: Snapshot.capture(client, name, types=True)
+        for name in (graphs or load_graphs())
+    }
+
+
+def _is_syntax_code(code: str) -> bool:
+    return code.startswith("FalkorDB.") or code in SYNTAX_CODES
+
+
+def applies_to(case: Case, mode: str) -> bool:
+    """Whether ``mode`` has anything to say about ``case``: the other modes run no ``SyntaxValidator``."""
+    return mode == "online" or bool(set(case.validators) - {"syntax"})
+
+
+def for_mode(case: Case, mode: str) -> Case:
+    """``case`` as the labels read in ``mode``: without what only ``SyntaxValidator`` reports."""
+    if mode == "online":
+        return case
+    return replace(
+        case,
+        issues=[i for i in case.issues if not _is_syntax_code(i["code"])],
+        valid=None,
+        kg_valid=None,
+    )
 
 
 def full_code(code: str) -> str:
@@ -112,12 +161,33 @@ class Outcome:
     scores: dict[str, float | None] = field(default_factory=dict)
 
 
-def run_case(client, case: Case) -> Outcome:
-    """Run the validators of ``case`` on its query, the way a consumer would."""
+def run_case(
+    client,
+    case: Case,
+    mode: str = "online",
+    snapshots: dict[str, Snapshot] | None = None,
+) -> Outcome:
+    """Run the validators of ``case`` on its query, the way a consumer would.
+
+    ``mode`` is ``online`` (the database answers), ``offline`` (a snapshot of the graph answers: there is no
+    ``SyntaxValidator``) or ``hybrid`` (the snapshot where it is sure, else the database).
+    """
     options = case.options
     outcome = Outcome(issues=[])
+    if mode == "online":
+        driver, extra, where = client, {}, (case.graph,)
+    else:
+        if snapshots is None:
+            raise ValueError(f"the {mode} mode needs the snapshots of the graphs")
+        snapshot = snapshots[case.graph]
+        if mode == "offline":
+            driver, extra, where = snapshot, {}, ()
+        else:
+            driver, extra, where = client, {"snapshot": snapshot}, (case.graph,)
     for name in case.validators:
         if name == "syntax":
+            if mode != "online":
+                continue
             validator = SyntaxValidator(
                 client,
                 check_multilabeled_nodes=options.get("check_multilabeled_nodes", True),
@@ -127,15 +197,15 @@ def run_case(client, case: Case) -> Outcome:
                 case.query, case.graph, parameters=options.get("parameters")
             )
         elif name == "schema":
-            outcome.scores[name], found = SchemaValidator(client).validate(
-                case.query, case.graph
+            outcome.scores[name], found = SchemaValidator(driver, **extra).validate(
+                case.query, *where
             )
         elif name == "properties":
             validator = PropertiesValidator(
-                client, check_types=options.get("check_types", False)
+                driver, check_types=options.get("check_types", False), **extra
             )
             outcome.scores[name], found = validator.validate(
-                case.query, case.graph, strict=options.get("strict", False)
+                case.query, *where, strict=options.get("strict", False)
             )
         else:
             raise ValueError(f"{case.id}: unknown validator {name!r}")

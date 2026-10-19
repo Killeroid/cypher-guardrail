@@ -35,6 +35,11 @@ def accuracy_graphs(falkordb_client):
         falkordb_client.select_graph(name).delete()
 
 
+@pytest.fixture(scope="module")
+def accuracy_snapshots(falkordb_client, accuracy_graphs):
+    return harness.snapshots_of(falkordb_client, accuracy_graphs)
+
+
 def _params():
     return [
         pytest.param(
@@ -53,6 +58,34 @@ def test_the_validators_agree_with_the_labels(falkordb_client, accuracy_graphs, 
     outcome = harness.run_case(falkordb_client, case)
 
     assert harness.disagreements(case, outcome) == [], case.query
+
+
+def _mode_params():
+    return [
+        pytest.param(
+            case,
+            mode,
+            id=f"{mode}-{case.id}",
+            marks=[pytest.mark.xfail(strict=True, reason=gap)]
+            if (gap := case.known_gap or case.mode_gaps.get(mode))
+            else [],
+        )
+        for mode in ("offline", "hybrid")
+        for case in CASES
+        if harness.applies_to(case, mode)
+    ]
+
+
+@pytest.mark.parametrize(("case", "mode"), _mode_params())
+def test_a_snapshot_agrees_with_the_labels_too(
+    falkordb_client, accuracy_snapshots, case, mode
+):
+    # Offline there is no database, so no SyntaxValidator; a snapshot never invents an issue, but cannot see them all
+    outcome = harness.run_case(falkordb_client, case, mode, accuracy_snapshots)
+
+    assert harness.disagreements(harness.for_mode(case, mode), outcome) == [], (
+        case.query
+    )
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -91,6 +124,9 @@ def test_every_case_is_well_formed():
         if case.valid is not None:
             assert "syntax" in case.validators, where
         assert case.known_gap is None or case.known_gap.strip(), where
+        for mode, reason in case.mode_gaps.items():
+            assert mode in {"offline", "hybrid"} and reason.strip(), where
+            assert harness.applies_to(case, mode), where
 
 
 def test_every_code_has_cases_that_report_it_and_valid_look_alikes():
@@ -184,6 +220,28 @@ def test_a_database_error_can_be_labelled_with_any_of_them():
         )
         != []
     )
+
+
+def test_the_other_modes_read_the_labels_without_what_only_syntax_reports():
+    case = _case(
+        validators=("syntax", "schema"),
+        issues=[
+            {"code": "Warning.UnknownLabel", "label": "Ghost"},
+            {"code": "Warning.ParameterNotProvided"},
+            {"code": "FalkorDB.*"},
+        ],
+        valid=False,
+        kg_valid=False,
+    )
+
+    offline = harness.for_mode(case, "offline")
+
+    assert [i["code"] for i in offline.issues] == ["Warning.UnknownLabel"]
+    assert offline.valid is None and offline.kg_valid is None
+    assert harness.for_mode(case, "online") is case
+    assert harness.applies_to(case, "offline")
+    assert not harness.applies_to(_case(validators=("syntax",)), "offline")
+    assert harness.applies_to(_case(validators=("syntax",)), "online")
 
 
 def test_the_tally_counts_what_was_found_missed_and_made_up():
