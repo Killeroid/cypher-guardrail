@@ -891,7 +891,6 @@ def test_the_async_driver_refuses_a_lookup_without_a_resolver(run_async_loop):
 def test_the_online_resolver_knows_every_kind_the_logic_asks_and_no_other():
     kinds = {
         "missing_names": ("labels", ("A",)),
-        "label_kind": ("A",),
         "index_exists": ("fulltext", "nodes", "A", None),
         "path_exists": ("(:A)",),
         "property_exists": ("A", "node", "p"),
@@ -1035,7 +1034,9 @@ def test_a_graph_that_does_not_exist_is_told_by_the_message_of_the_database(
 def test_a_label_in_a_graph_that_does_not_exist_is_no_label():
     transport = TypeTransport(MISSING_GRAPH)
 
-    assert _io.run_sync(_online.label_kind("none", "Goal"), transport) == "none"
+    assert _io.run_sync(
+        _online.missing_names("none", "labels", ("Goal",)), transport
+    ) == ("Goal",)
 
 
 @pytest.mark.parametrize("error", [TIMED_OUT, NOT_PARSED])
@@ -1044,7 +1045,7 @@ def test_a_label_is_not_called_unknown_because_the_database_failed(error):
     transport = TypeTransport(error)
 
     with pytest.raises(CypherError) as raised:
-        _io.run_sync(_online.label_kind("kg", "Goal"), transport)
+        _io.run_sync(_online.missing_names("kg", "labels", ("Goal",)), transport)
 
     assert raised.value is error
 

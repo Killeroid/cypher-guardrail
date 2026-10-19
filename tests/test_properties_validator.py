@@ -26,9 +26,7 @@ class TestPropertiesValidator:
             "MATCH (g:Goal) WHERE g.text = 1 RETURN g", db_name
         )
         assert score == 0.0
-        assert code_set(metadata) == {
-            "cypher_guardrail.Warning.InvalidPropertyAccessByLabel"
-        }
+        assert code_set(metadata) == {"cypher_guardrail.Warning.InvalidPropertyAccess"}
 
     def test_unknown_property_key(self, driver, db_name):
         score, metadata = PropertiesValidator(driver).validate(
@@ -70,12 +68,13 @@ class TestPropertiesValidator:
             db_name,
         )
         assert by_var == {"t": ["text"]}
-        assert set(by_label) == {
+        assert set(by_label["node"]) == {
             "Goal",
             "Target",
         }  # Target is inferred for the unlabeled `t`
-        assert sorted(by_label["Goal"]) == ["code", "title"]
-        assert by_label["Target"] == ["text"]
+        assert by_label["relationship"] == {}
+        assert sorted(by_label["node"]["Goal"]) == ["code", "title"]
+        assert by_label["node"]["Target"] == ["text"]
 
     def test_inference_finds_the_label_from_properties(self, driver, db_name):
         score, _ = PropertiesValidator(driver).validate(
@@ -95,11 +94,14 @@ class TestPropertiesValidatorIndexProcedures:
             "CALL db.idx.fulltext.queryNodes('Goal', 'x') YIELD node RETURN node.title"
         )
         invalid = "CALL db.idx.fulltext.queryNodes('Goal', 'x') YIELD node RETURN node.nonsense"
-        assert validator.extract(valid, db_name) == ({}, {"Goal": ["title"]})
+        assert validator.extract(valid, db_name) == (
+            {},
+            {"node": {"Goal": ["title"]}, "relationship": {}},
+        )
         assert validator.validate(valid, db_name) == (1.0, [])
         score, metadata = validator.validate(invalid, db_name)
         assert score == 0.0
-        assert "cypher_guardrail.Warning.InvalidPropertyAccessByLabel" in {
+        assert "cypher_guardrail.Warning.InvalidPropertyAccess" in {
             m["code"] for m in metadata
         }
 
@@ -107,7 +109,7 @@ class TestPropertiesValidatorIndexProcedures:
         query = "CALL db.idx.fulltext.queryNodes('Goal', 'x') YIELD score, node AS g RETURN g.title, g.code"
         assert PropertiesValidator(falkordb_client).extract(query, db_name) == (
             {},
-            {"Goal": ["title", "code"]},
+            {"node": {"Goal": ["title", "code"]}, "relationship": {}},
         )
 
     def test_properties_of_a_yielded_relationship_are_checked(
@@ -121,7 +123,10 @@ class TestPropertiesValidatorIndexProcedures:
         validator = PropertiesValidator(falkordb_client)
         valid = "CALL db.idx.vector.queryNodes('Doc', 'embedding', 1, vecf32([1.0, 2.0])) YIELD node RETURN node.title"
         invalid = "CALL db.idx.vector.queryNodes('Doc', 'nope', 1, vecf32([1.0, 2.0])) YIELD node RETURN node.title"
-        assert validator.extract(valid, documents)[1] == {"Doc": ["embedding", "title"]}
+        assert validator.extract(valid, documents)[1] == {
+            "node": {"Doc": ["embedding", "title"]},
+            "relationship": {},
+        }
         assert validator.validate(valid, documents) == (1.0, [])
         score, _ = validator.validate(invalid, documents)
         assert score == 0.5
@@ -150,7 +155,7 @@ class TestNamespacedFunctionsAreNotPropertyAccesses:
     def test_only_real_accesses_are_extracted(self, falkordb_client, db_name, query):
         variables, labels = PropertiesValidator(falkordb_client).extract(query, db_name)
         assert variables == {}
-        assert labels == {"Goal": ["code"]}
+        assert labels == {"node": {"Goal": ["code"]}, "relationship": {}}
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -206,7 +211,7 @@ class TestDeterminism:
         _, by_label = PropertiesValidator(falkordb_client).extract(
             "MATCH (g:Goal {title:'x', code:'1'}) RETURN g", db_name
         )
-        assert by_label == {"Goal": ["title", "code"]}
+        assert by_label == {"node": {"Goal": ["title", "code"]}, "relationship": {}}
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -229,9 +234,11 @@ def test_every_variable_of_an_inferred_path_is_checked_not_only_the_last():
     wrong = [
         i
         for i in metadata
-        if i["code"] == "cypher_guardrail.Warning.InvalidPropertyAccessByLabel"
+        if i["code"] == "cypher_guardrail.Warning.InvalidPropertyAccess"
     ]
-    assert [(i["label"], i["properties"]) for i in wrong] == [("Person", ["zzz"])]
+    assert [(i["kind"], i["name"], i["properties"]) for i in wrong] == [
+        ("node", "Person", ["zzz"])
+    ]
 
 
 def test_the_properties_of_every_label_of_an_inferred_path_are_extracted():
@@ -242,7 +249,10 @@ def test_the_properties_of_every_label_of_an_inferred_path_are_extracted():
     variables, labels = PropertiesValidator(PEOPLE).extract(query)
 
     assert variables == {"a": ["name"], "b": ["title"], "r": ["role"]}
-    assert labels == {"Person": ["name"], "Movie": ["title"], "ACTED_IN": ["role"]}
+    assert labels == {
+        "node": {"Person": ["name"], "Movie": ["title"]},
+        "relationship": {"ACTED_IN": ["role"]},
+    }
 
 
 def test_strict_ignores_the_properties_of_every_label_when_one_is_wrong():
@@ -252,7 +262,7 @@ def test_strict_ignores_the_properties_of_every_label_when_one_is_wrong():
     _, labels = PropertiesValidator(PEOPLE).extract(query, strict=True)
 
     assert (score, metadata) == (None, [])  # no label has all of them: none is used
-    assert labels == {}
+    assert labels == {"node": {}, "relationship": {}}
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -279,14 +289,16 @@ def test_narrowing_alternatives_keeps_what_the_narrowed_type_already_had():
     _, labels = PropertiesValidator(SOCIAL).extract(query)
     score, metadata = PropertiesValidator(SOCIAL).validate(query)
 
-    assert sorted(labels["KNOWS"]) == ["since", "zzz"]
+    assert sorted(labels["relationship"]["KNOWS"]) == ["since", "zzz"]
     assert score == 0.5  # since is right, zzz is not
     wrong = [
         i
         for i in metadata
-        if i["code"] == "cypher_guardrail.Warning.InvalidPropertyAccessByLabel"
+        if i["code"] == "cypher_guardrail.Warning.InvalidPropertyAccess"
     ]
-    assert [(i["label"], i["properties"]) for i in wrong] == [("KNOWS", ["zzz"])]
+    assert [(i["kind"], i["name"], i["properties"]) for i in wrong] == [
+        ("relationship", "KNOWS", ["zzz"])
+    ]
 
 
 @pytest.mark.parametrize(
@@ -309,7 +321,7 @@ def test_a_property_map_with_quotes_gives_all_its_properties(map_text, expected)
 
     _, labels = PropertiesValidator(SOCIAL).extract(query)
 
-    assert labels == {"Person": expected}
+    assert labels == {"node": {"Person": expected}, "relationship": {}}
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -333,7 +345,7 @@ def test_what_is_in_a_string_or_a_comment_is_not_a_property_access(query):
 
     assert (score, metadata) == (1.0, [])
     _, labels = PropertiesValidator(PEOPLE).extract(query)
-    assert labels == {"Person": ["name"]}
+    assert labels == {"node": {"Person": ["name"]}, "relationship": {}}
 
 
 def test_a_property_inside_a_string_next_to_a_real_one_is_not_counted():
@@ -343,7 +355,10 @@ def test_a_property_inside_a_string_next_to_a_real_one_is_not_counted():
 
     assert (score, metadata) == (1.0, [])
     _, labels = PropertiesValidator(PEOPLE).extract(query)
-    assert labels == {"Person": ["name"], "ACTED_IN": ["role"], "Movie": ["title"]}
+    assert labels == {
+        "node": {"Person": ["name"], "Movie": ["title"]},
+        "relationship": {"ACTED_IN": ["role"]},
+    }
 
 
 def test_an_index_procedure_still_gets_its_label_and_attribute_from_the_strings():
@@ -375,7 +390,10 @@ def test_the_same_variable_in_two_branches_is_a_different_variable():
 
     assert PropertiesValidator(PEOPLE).validate(query) == (1.0, [])
     _, labels = PropertiesValidator(PEOPLE).extract(query)
-    assert labels == {"Person": ["name"], "Movie": ["title"]}
+    assert labels == {
+        "node": {"Person": ["name"], "Movie": ["title"]},
+        "relationship": {},
+    }
 
 
 def test_a_property_that_is_wrong_in_one_branch_is_reported_for_that_branchs_label():
@@ -384,7 +402,9 @@ def test_a_property_that_is_wrong_in_one_branch_is_reported_for_that_branchs_lab
     score, metadata = PropertiesValidator(PEOPLE).validate(query)
 
     assert score == 0.5  # Person.name is right, Movie.name is not
-    assert [(i["label"], i["properties"]) for i in metadata] == [("Movie", ["name"])]
+    assert [(i["kind"], i["name"], i["properties"]) for i in metadata] == [
+        ("node", "Movie", ["name"])
+    ]
 
 
 def test_every_branch_of_a_union_all_is_checked_for_its_properties():
@@ -394,7 +414,7 @@ def test_every_branch_of_a_union_all_is_checked_for_its_properties():
     )
 
     score, metadata = PropertiesValidator(PEOPLE).validate(query)
-    wrong = {i["label"]: i["properties"] for i in metadata if "properties" in i}
+    wrong = {i["name"]: i["properties"] for i in metadata if "properties" in i}
 
     assert score == 0.5
     assert wrong == {"Person": ["zzz"], "Movie": ["qqq"]}
@@ -414,7 +434,10 @@ def test_a_query_without_a_union_is_extracted_as_before():
 
     variables, labels = PropertiesValidator(PEOPLE).extract(query)
 
-    assert labels == {"Person": ["name"], "Movie": ["title"]}
+    assert labels == {
+        "node": {"Person": ["name"], "Movie": ["title"]},
+        "relationship": {},
+    }
     assert variables == {}
 
 
@@ -427,7 +450,10 @@ def test_a_variable_that_a_with_dropped_is_a_new_one_when_it_comes_back():
 
     assert PropertiesValidator(PEOPLE).validate(query) == (1.0, [])
     _, labels = PropertiesValidator(PEOPLE).extract(query)
-    assert labels == {"Movie": ["title"], "Person": ["name"]}
+    assert labels == {
+        "node": {"Movie": ["title"], "Person": ["name"]},
+        "relationship": {},
+    }
 
 
 def test_a_name_that_comes_back_without_a_label_does_not_get_the_old_one():
@@ -436,7 +462,10 @@ def test_a_name_that_comes_back_without_a_label_does_not_get_the_old_one():
     variables, labels = PropertiesValidator(PEOPLE).extract(query)
 
     assert variables == {"n": ["name"]}  # under the name the query writes
-    assert labels == {"Movie": ["title"], "Person": ["name"]}
+    assert labels == {
+        "node": {"Movie": ["title"], "Person": ["name"]},
+        "relationship": {},
+    }
 
 
 def test_a_variable_that_a_with_carries_keeps_its_label():
@@ -451,7 +480,9 @@ def test_a_property_of_the_wrong_scope_is_reported_for_that_scopes_label():
     score, metadata = PropertiesValidator(PEOPLE).validate(query)
 
     assert score == 0.0
-    assert [(i["label"], i["properties"]) for i in metadata] == [("Movie", ["name"])]
+    assert [(i["kind"], i["name"], i["properties"]) for i in metadata] == [
+        ("node", "Movie", ["name"])
+    ]
 
 
 def test_a_subquery_does_not_see_a_name_it_does_not_import():
@@ -470,7 +501,10 @@ def test_the_branches_of_a_union_inside_a_subquery_have_their_own_variables():
 
     assert PropertiesValidator(PEOPLE).validate(query) == (1.0, [])
     _, labels = PropertiesValidator(PEOPLE).extract(query)
-    assert labels == {"Person": ["name"], "Movie": ["title"]}
+    assert labels == {
+        "node": {"Person": ["name"], "Movie": ["title"]},
+        "relationship": {},
+    }
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -503,14 +537,23 @@ def both(falkordb_client, **options):
     [
         (
             "MATCH (w:Q) WHERE w.`odd key` = 1 RETURN w.`odd key`, w.ok",
-            {"Q": ["odd key", "ok"]},
+            {"node": {"Q": ["odd key", "ok"]}, "relationship": {}},
         ),
-        ("MATCH (w:Q {`odd key`: 1, ok: 'x'}) RETURN w", {"Q": ["odd key", "ok"]}),
-        ("MATCH ()-[r:T]->() RETURN r.`rel key`", {"T": ["rel key"]}),
-        ("MATCH ()-[r:T {`rel key`: 3}]->() RETURN r", {"T": ["rel key"]}),
+        (
+            "MATCH (w:Q {`odd key`: 1, ok: 'x'}) RETURN w",
+            {"node": {"Q": ["odd key", "ok"]}, "relationship": {}},
+        ),
+        (
+            "MATCH ()-[r:T]->() RETURN r.`rel key`",
+            {"node": {}, "relationship": {"T": ["rel key"]}},
+        ),
+        (
+            "MATCH ()-[r:T {`rel key`: 3}]->() RETURN r",
+            {"node": {}, "relationship": {"T": ["rel key"]}},
+        ),
         (
             "MATCH (w:Q) RETURN w.`a}b'c`",
-            {"Q": ["a}b'c"]},
+            {"node": {"Q": ["a}b'c"]}, "relationship": {}},
         ),  # what is between the quotes is no Cypher
     ],
 )
@@ -551,9 +594,11 @@ def test_a_quoted_property_key_that_the_label_lacks_is_reported_by_its_name(
     wrong = [
         i
         for i in issues
-        if i["code"] == "cypher_guardrail.Warning.InvalidPropertyAccessByLabel"
+        if i["code"] == "cypher_guardrail.Warning.InvalidPropertyAccess"
     ]
-    assert [(i["label"], i["properties"]) for i in wrong] == [("Q", ["no such key"])]
+    assert [(i["kind"], i["name"], i["properties"]) for i in wrong] == [
+        ("node", "Q", ["no such key"])
+    ]
     unknown = [i for i in issues if i["code"] == UNKNOWN_PROPERTY]
     assert [i["property"] for i in unknown] == ["no such key"]
 
@@ -568,7 +613,7 @@ def test_a_label_is_inferred_from_a_quoted_property_key(falkordb_client, quoted_
             else validator.extract(query)
         )
         assert variables == {"n": ["odd key"]}, mode
-        assert labels == {"Q": ["odd key"]}, mode
+        assert labels == {"node": {"Q": ["odd key"]}, "relationship": {}}, mode
 
 
 def test_a_comparison_with_a_quoted_property_key_is_type_checked(
@@ -585,7 +630,11 @@ def test_a_comparison_with_a_quoted_property_key_is_type_checked(
         assert score == 1.0, mode
         (issue,) = issues
         assert issue["code"] == "cypher_guardrail.Warning.PropertyTypeMismatch", mode
-        assert (issue["label"], issue["property"]) == ("Q", "odd key"), mode
+        assert (issue["kind"], issue["name"], issue["property"]) == (
+            "node",
+            "Q",
+            "odd key",
+        ), mode
 
 
 def test_a_name_that_is_not_quoted_is_still_a_syntax_error_for_the_property_check(
@@ -599,3 +648,122 @@ def test_a_name_that_is_not_quoted_is_still_a_syntax_error_for_the_property_chec
             else validator.validate("MATCH (w:Q) RETURN w.2020")
         )
         assert score in (0.0, None), mode
+
+
+# ----------------------------------------------------------------------------------------------------
+# A node label and a relationship type are told apart: the issue says which of the two it is about
+
+
+def test_a_property_issue_about_an_unknown_relationship_type_says_it_is_a_relationship():
+    # LOVES is no relationship type of the graph. The schema validator says so, and the property issue repeats it:
+    # `kind` lets a consumer see that, and match it with the right one of the two unknown-name issues
+    query = "MATCH ()-[r:LOVES]->() RETURN r.zzz"
+
+    _, schema_issues = SchemaValidator(PEOPLE).validate(query)
+    _, property_issues = PropertiesValidator(PEOPLE).validate(query)
+
+    assert [(i["code"], i["relationship_type"]) for i in schema_issues] == [
+        ("cypher_guardrail.Warning.UnknownRelationshipType", "LOVES")
+    ]
+    (issue,) = property_issues
+    assert (issue["kind"], issue["name"], issue["properties"]) == (
+        "relationship",
+        "LOVES",
+        ["zzz"],
+    )
+    assert issue["description"] == (
+        "The relationship type LOVES does not have the following properties:  zzz."
+    )
+
+
+def test_a_real_property_error_is_not_taken_for_the_unknown_relationship_type_of_the_same_name():
+    # `Movie` is a node label of the graph and an unknown relationship type; `m.name` is wrong on the node label
+    query = "MATCH (m:Movie)-[:Movie]->(p:Person) RETURN m.name"
+
+    _, schema_issues = SchemaValidator(PEOPLE).validate(query)
+    _, property_issues = PropertiesValidator(PEOPLE).validate(query)
+
+    assert [(i["code"].rsplit(".", 1)[1]) for i in schema_issues] == [
+        "UnknownRelationshipType"
+    ]
+    (issue,) = property_issues
+    assert (issue["kind"], issue["name"], issue["properties"]) == (
+        "node",
+        "Movie",
+        ["name"],
+    )
+    assert issue["description"] == (
+        "The label Movie does not have the following properties:  name."
+    )
+
+
+# A node label and a relationship type can have the same name: their properties are not mixed up
+RATED = Snapshot.from_schema(
+    nodes={"Person": ["name"], "Rated": ["note"]},
+    relationships=[("Person", "Rated", "Rated")],
+    relationship_properties={"Rated": ["stars"]},
+    graph="g",
+)
+SAME_NAME = "MATCH (a:Person)-[r:Rated]->(b:Rated) RETURN {relationship}, {node}"
+
+
+def test_a_node_label_and_a_relationship_type_with_the_same_name_are_kept_apart():
+    query = SAME_NAME.format(relationship="r.stars", node="b.note")
+
+    assert PropertiesValidator(RATED).extract(query) == (
+        {},
+        {"node": {"Rated": ["note"]}, "relationship": {"Rated": ["stars"]}},
+    )
+    assert PropertiesValidator(RATED).validate(query) == (1.0, [])
+
+
+def test_the_properties_of_a_node_label_and_a_relationship_type_of_one_name_are_not_mixed_up():
+    # each one has the property that the other one has
+    query = SAME_NAME.format(relationship="r.note", node="b.stars")
+
+    score, issues = PropertiesValidator(RATED).validate(query)
+
+    assert score == 0.0
+    assert sorted((i["kind"], i["name"], tuple(i["properties"])) for i in issues) == [
+        ("node", "Rated", ("stars",)),
+        ("relationship", "Rated", ("note",)),
+    ]
+
+
+def test_an_inferred_label_and_an_inferred_type_of_one_name_are_kept_apart():
+    query = "MATCH (a)-[r]->(b) WHERE r.stars = 1 AND b.note = 'x' RETURN a"
+
+    assert PropertiesValidator(RATED).extract(query)[1] == {
+        "node": {"Rated": ["note"]},
+        "relationship": {"Rated": ["stars"]},
+    }
+    assert PropertiesValidator(RATED).validate(query) == (1.0, [])
+
+
+@pytest.fixture
+def rated_graph(falkordb_client):
+    graph = falkordb_client.select_graph("rated")
+    graph.query(
+        "CREATE (:Person {name: 'A'})-[:Rated {stars: 5}]->(:Rated {note: 'x'})"
+    )
+    yield graph
+    graph.delete()
+
+
+@pytest.mark.parametrize(
+    "properties",
+    [("r.stars", "b.note"), ("r.note", "b.stars")],
+    ids=["right", "swapped"],
+)
+def test_the_database_and_a_snapshot_tell_a_label_and_a_type_of_one_name_apart(
+    falkordb_client, rated_graph, properties
+):
+    relationship, node = properties
+    query = SAME_NAME.format(relationship=relationship, node=node)
+    snapshot = Snapshot.capture(falkordb_client, "rated")
+
+    online = PropertiesValidator(falkordb_client).validate(query, "rated")
+    offline = PropertiesValidator(snapshot).validate(query)
+
+    assert online == offline
+    assert online[0] == (1.0 if properties == ("r.stars", "b.note") else 0.0)

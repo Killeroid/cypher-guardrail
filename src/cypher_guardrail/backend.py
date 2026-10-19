@@ -227,10 +227,6 @@ class FalkorDBBackend(_Backend):
         """
         return self.run(_queries.path_exists(self.graph_name(database_name), path))
 
-    def label_kind(self, label, database_name=None):
-        """Return 'node' if ``label`` is a node label, 'relationship' if it is a relationship type, else 'none'."""
-        return self.run(_queries.label_kind(self.graph_name(database_name), label))
-
     def property_exists(self, label, kind, prop, database_name=None):
         """Check whether any node/relationship with ``label`` has property ``prop``.
 
@@ -306,12 +302,6 @@ class AsyncFalkorDBBackend(_Backend):
         """The async version of :meth:`FalkorDBBackend.path_exists`."""
         return await self.run(
             _queries.path_exists(self.graph_name(database_name), path)
-        )
-
-    async def label_kind(self, label, database_name=None):
-        """The async version of :meth:`FalkorDBBackend.label_kind`."""
-        return await self.run(
-            _queries.label_kind(self.graph_name(database_name), label)
         )
 
     async def property_exists(self, label, kind, prop, database_name=None):

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0 (unreleased)
+
+### Changed
+
+* **`InvalidPropertyAccess` and `PropertyTypeMismatch` say whether they are about a node label or a relationship type.** They have `kind` (`"node"` or `"relationship"`, as the query writes the name) and `name`, which replaces `label` (it held either). A consumer can tell an issue that only repeats an unknown label or relationship type from a real one, even when a node label and a relationship type have the same name (see "Reading the metadata").
+* **`cypher_guardrail.Warning.InvalidPropertyAccessByLabel` is now `cypher_guardrail.Warning.InvalidPropertyAccess`**: it is not only about labels. The description of an issue about a relationship type says "The relationship type X does not have the following properties".
+* **`PropertiesValidator.extract()` returns the labels split by kind**: `{"node": {label: properties}, "relationship": {type: properties}}`, where it returned one dict keyed by name.
+
+### Fixed
+
+* **A node label and a relationship type with the same name no longer share their properties.** With a `Rated` label (property `note`) and a `Rated` relationship type (property `stars`), `MATCH (a)-[r:Rated]->(b:Rated) RETURN r.stars, b.note` was reported as having an invalid property and scored 0.5, and `r.note, b.stars` was reported for one property only. Each is now checked against its own kind.
+* The properties validator no longer asks the database whether a name is a node label or a relationship type, as the query says which it is. One request fewer for each label.
+
 ## 1.0.0 (2026-10-19)
 
 First release of cypher-guardrail, licensed under Apache 2.0. Requires Python 3.11 or later and a FalkorDB graph (a server, or the embedded FalkorDBLite).

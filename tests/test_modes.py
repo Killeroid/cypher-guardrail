@@ -186,7 +186,7 @@ def test_offline_a_sampled_snapshot_still_reports_a_property_no_label_of_the_gra
 
     assert score == 0.0
     assert {i["code"] for i in issues} >= {
-        "cypher_guardrail.Warning.InvalidPropertyAccessByLabel"
+        "cypher_guardrail.Warning.InvalidPropertyAccess"
     }
 
 
@@ -842,13 +842,13 @@ def test_a_run_outside_a_validation_pins_for_its_own_length():
     def logic():
         from cypher_guardrail._internal.core import queries
 
-        labels = yield from queries.label_kind("kg", "Goal")
-        again = yield from queries.label_kind("kg", "Goal")
+        labels = yield from queries.name_exists("kg", "node", "Goal")
+        again = yield from queries.name_exists("kg", "node", "Goal")
         return labels, again
 
-    assert backend.run(logic()) == ("node", "node")
+    assert backend.run(logic()) == (True, True)
     assert source.calls == 1
-    assert backend.run(logic()) == ("none", "none")  # the second run asked again
+    assert backend.run(logic()) == (False, False)  # the second run asked again
     assert source.calls == 2
 
 
@@ -859,8 +859,8 @@ def test_nested_blocks_keep_the_snapshot_of_the_outer_one():
     with backend.snapshot():
         with backend.snapshot():
             pass
-        assert backend.run(iter_label("Goal")) == "node"
-        assert backend.run(iter_label("Goal")) == "node"
+        assert backend.run(iter_label("Goal")) is True
+        assert backend.run(iter_label("Goal")) is True
 
     assert source.calls == 1
 
@@ -868,15 +868,15 @@ def test_nested_blocks_keep_the_snapshot_of_the_outer_one():
 def iter_label(name):
     from cypher_guardrail._internal.core import queries
 
-    return queries.label_kind("kg", name)
+    return queries.name_exists("kg", "node", name)
 
 
 def two_lookups():
     """A run that asks two different questions: pinned, they are answered from one snapshot."""
     from cypher_guardrail._internal.core import queries
 
-    goal = yield from queries.label_kind("kg", "Goal")
-    target = yield from queries.label_kind("kg", "Target")
+    goal = yield from queries.name_exists("kg", "node", "Goal")
+    target = yield from queries.name_exists("kg", "node", "Target")
     return goal, target
 
 
@@ -992,7 +992,7 @@ def test_the_async_backend_pins_for_its_own_run():
         return await backend.run(two_lookups()), await backend.run(two_lookups())
 
     # one snapshot for each run: both questions of a run get the same answer
-    assert asyncio.run(ask()) == (("node", "node"), ("none", "none"))
+    assert asyncio.run(ask()) == ((True, True), (False, False))
     assert source.calls == 2
 
 

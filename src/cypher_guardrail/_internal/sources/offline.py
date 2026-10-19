@@ -236,7 +236,6 @@ class SnapshotResolver:
         }
         self._answers = {
             "missing_names": self._missing_names,
-            "label_kind": self._label_kind,
             "index_exists": self._index_exists,
             "path_exists": self._path_exists,
             "property_exists": self._property_exists,
@@ -276,13 +275,6 @@ class SnapshotResolver:
         known = self._names(kind)
         missing = tuple(name for name in names if name not in known)
         return Resolution(missing, miss=bool(missing))
-
-    def _label_kind(self, label: str) -> Resolution:
-        if label in self._names("labels"):
-            return Resolution("node")
-        if label in self._names("relationship_types"):
-            return Resolution("relationship")
-        return Resolution("none", miss=True)
 
     def _index_exists(
         self, kind: str, on: str, label: str, attribute: str | None

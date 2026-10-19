@@ -83,7 +83,7 @@ CASES: dict[str, tuple[str, str, str, str, dict[str, Any]]] = {
         "kg",
         "MATCH (g:Goal) WHERE g.code = '1' AND g.bogus = 1 AND g.zzz = 2 RETURN g",
         INVALID_PROPERTY_ACCESS,
-        {"label": "Goal", "properties": ["bogus", "zzz"]},
+        {"kind": "node", "name": "Goal", "properties": ["bogus", "zzz"]},
     ),
     "parameters not provided": (
         "syntax",

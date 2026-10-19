@@ -89,19 +89,6 @@ def missing_names(
     return tuple(name for name in names if name not in known)
 
 
-def label_kind(graph: str, label: str) -> Generator[Request, Any, str]:
-    """Return 'node' if ``label`` is a node label, 'relationship' if it is a relationship type, else 'none'.
-
-    A graph that does not exist has no labels. A schema that cannot be read (the database failed) is an error,
-    not 'none': it does not say that the label is unknown.
-    """
-    if label in (yield from schema_set(graph, "db.labels")):
-        return "node"
-    if label in (yield from schema_set(graph, "db.relationshipTypes")):
-        return "relationship"
-    return "none"
-
-
 def index_exists(
     graph: str, kind: str, on: str, label: str, attribute: str | None
 ) -> Generator[Request, Any, bool]:
@@ -267,7 +254,6 @@ def label_combinations(
 
 _RESOLVERS = {
     "missing_names": missing_names,
-    "label_kind": label_kind,
     "index_exists": index_exists,
     "path_exists": path_exists,
     "property_exists": property_exists,

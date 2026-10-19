@@ -488,7 +488,8 @@ def test_a_property_compared_with_a_literal_of_another_type_is_reported(
     assert issue == {
         "code": MISMATCH,
         "description": issue["description"],
-        "label": "Goal",
+        "kind": "node",
+        "name": "Goal",
         "property": "code",
         "expected_types": ["String"],
         "value": "1",
@@ -600,7 +601,7 @@ def test_what_is_reported(falkordb_client, query, expected):
     )
 
     assert [
-        (i["label"], i["property"], i["value"], i["value_type"])
+        (i["name"], i["property"], i["value"], i["value_type"])
         for i in mismatches(metadata)
     ] == expected
 
@@ -903,7 +904,9 @@ def test_alternatives_of_relationship_types_are_checked_once_they_narrow_to_one(
         "MATCH ()-[r:HAS_TARGET|HAS_NUTS1]->() WHERE r.weight = 'x' RETURN r", "kg"
     )
 
-    assert [i["label"] for i in mismatches(narrowed[1])] == ["HAS_INDICATOR"]
+    assert [(i["kind"], i["name"]) for i in mismatches(narrowed[1])] == [
+        ("relationship", "HAS_INDICATOR")
+    ]
     assert mismatches(fits[1]) == []
     assert mismatches(tie[1]) == []
 
@@ -931,7 +934,7 @@ def test_a_comparison_is_checked_against_the_label_of_its_own_branch(falkordb_cl
         query, "kg"
     )
 
-    assert [(i["label"], i["value"]) for i in mismatches(metadata)] == [("Goal", "1")]
+    assert [(i["name"], i["value"]) for i in mismatches(metadata)] == [("Goal", "1")]
 
 
 def test_every_branch_of_a_union_has_its_comparisons_checked(falkordb_client):
@@ -945,4 +948,4 @@ def test_every_branch_of_a_union_has_its_comparisons_checked(falkordb_client):
         query, "kg"
     )
 
-    assert [i["label"] for i in mismatches(metadata)] == ["Goal", "Target"]
+    assert [i["name"] for i in mismatches(metadata)] == ["Goal", "Target"]

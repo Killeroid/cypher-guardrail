@@ -63,14 +63,18 @@ class UnknownPropertyKeyIssue(TypedDict):
 
 
 class InvalidPropertyAccessIssue(TypedDict):
-    """Properties the query reads from a label that does not have them.
+    """Properties the query reads from a node label or a relationship type that does not have them.
 
-    For alternatives (``Label1|Label2``) ``label`` is the first one.
+    ``kind`` says which of the two ``name`` is, as the query writes it: ``(n:Movie)`` is a ``"node"`` and
+    ``[r:ACTED_IN]`` a ``"relationship"``. A node label and a relationship type can have the same name, so the name
+    alone is not enough to tell whether the issue repeats an ``UnknownLabel`` (a ``"node"``) or an
+    ``UnknownRelationshipType`` (a ``"relationship"``). For alternatives (``TYPE1|TYPE2``) ``name`` is the first one.
     """
 
-    code: Literal["cypher_guardrail.Warning.InvalidPropertyAccessByLabel"]
+    code: Literal["cypher_guardrail.Warning.InvalidPropertyAccess"]
     description: str
-    label: str
+    kind: Literal["node", "relationship"]
+    name: str
     properties: list[str]
 
 
@@ -78,14 +82,16 @@ class PropertyTypeMismatchIssue(TypedDict):
     """The query compares a property with a literal of a type that none of its values has (``check_types=True``).
 
     FalkorDB does not report it: a comparison of a property with a value of another type (``year = '2020'`` for an
-    integer ``year``) finds nothing. ``expected_types`` are the types of the values the property has (``typeof``),
+    integer ``year``) finds nothing. ``kind`` and ``name`` are the node label or relationship type the property is read from (see
+    :class:`InvalidPropertyAccessIssue`). ``expected_types`` are the types of the values the property has (``typeof``),
     several when the data is mixed; ``value`` is the literal as written (a string without its quotes) and
     ``value_type`` its type: ``String``, ``Integer``, ``Float`` or ``Boolean``.
     """
 
     code: Literal["cypher_guardrail.Warning.PropertyTypeMismatch"]
     description: str
-    label: str
+    kind: Literal["node", "relationship"]
+    name: str
     property: str
     expected_types: list[str]
     value: str

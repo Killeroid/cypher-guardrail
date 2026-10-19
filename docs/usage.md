@@ -147,6 +147,10 @@ print(f"Properties Validation Score: {props_score}")
 print(f"Properties Validation Metadata: {properties_metadata}")
 ```
 
+`labels_properties` keeps node labels and relationship types apart, as the query writes them:
+`{"node": {"Goal": ["code"], "Target": [...]}, "relationship": {"HAS_TARGET": [...]}}`. A node label and a relationship type
+can have the same name (a `Rated` label and a `Rated` type), and each is checked against its own properties.
+
 ### Type mismatches (opt-in)
 
 FalkorDB does not complain when a property is compared with a value of another type: `WHERE g.code = 1` finds nothing when `code` holds strings, and `{year: '2020'}` finds nothing when `year` is an integer. A query written by a model fails this way without any error. With `check_types=True` the validator warns about it:

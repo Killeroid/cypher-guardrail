@@ -241,12 +241,15 @@ def path_exists(graph: str, path: str) -> Generator[Request, Any, tuple[bool, li
     return exists, notifications
 
 
-def label_kind(graph: str, label: str) -> Generator[Request, Any, str]:
-    """Return 'node' if ``label`` is a node label, 'relationship' if it is a relationship type, else 'none'.
+def name_exists(graph: str, kind: str, name: str) -> Generator[Request, Any, bool]:
+    """Whether the graph has a node label (``kind`` 'node') or a relationship type (``kind`` 'relationship') called ``name``.
 
-    A schema that cannot be read counts as 'none'.
+    A node label and a relationship type can have the same name, so the kind is asked for, not guessed.
     """
-    return (yield Lookup("label_kind", graph, (label,)))
+    missing = yield from _missing_names(
+        graph, "labels" if kind == "node" else "relationship_types", [name]
+    )
+    return not missing
 
 
 def property_exists(

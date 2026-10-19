@@ -4,6 +4,7 @@ import falkordb
 import pytest
 from support import code_set
 
+from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail.backend import (
     PARAMETER_NOT_PROVIDED,
     SYNTAX_ERROR,
@@ -275,24 +276,39 @@ class TestPathExists:
             backend.path_exists("(:Goal", db_name)
 
 
-class TestLabelKind:
+class TestNameExists:
     @pytest.mark.parametrize(
-        "label, kind",
+        "kind, name, expected",
         [
-            ("Goal", "node"),
-            ("Area", "node"),
-            ("HAS_TARGET", "relationship"),
-            ("Nope", "none"),
+            ("node", "Goal", True),
+            ("node", "Area", True),
+            ("relationship", "HAS_TARGET", True),
+            ("node", "HAS_TARGET", False),  # a relationship type is not a node label
+            ("relationship", "Goal", False),  # and a node label is not a type
+            ("node", "Nope", False),
+            ("relationship", "Nope", False),
         ],
     )
-    def test_kind(self, backend, db_name, label, kind):
-        assert backend.label_kind(label, db_name) == kind
+    def test_exists(self, backend, db_name, kind, name, expected):
+        assert (
+            backend.run(_queries.name_exists(backend.graph_name(db_name), kind, name))
+            is expected
+        )
 
-    def test_missing_graph_is_none(self, backend):
-        assert backend.label_kind("Goal", "no_such_graph") == "none"
+    def test_missing_graph_has_no_names(self, backend):
+        assert (
+            backend.run(_queries.name_exists("no_such_graph", "node", "Goal")) is False
+        )
 
-    def test_label_is_matched_literally_not_interpolated(self, backend, db_name):
-        assert backend.label_kind("Goal' OR 1=1 //", db_name) == "none"
+    def test_name_is_matched_literally_not_interpolated(self, backend, db_name):
+        assert (
+            backend.run(
+                _queries.name_exists(
+                    backend.graph_name(db_name), "node", "Goal' OR 1=1 //"
+                )
+            )
+            is False
+        )
 
 
 class TestPropertyExists:

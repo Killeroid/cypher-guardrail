@@ -1,62 +1,62 @@
 {
  "ambiguous": {
   "MATCH ()-[r:HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.extract.strict": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
    "schema.extract": "([], ['()-[:HAS_INDICATOR]-()'], ['()-[:HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_INDICATOR)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight, bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight, bogus.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight, bogus.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight, bogus.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_INDICATOR)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_INDICATOR)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.zzz = 1 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['zzz']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['zzz']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  zzz.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_INDICATOR)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (a)-[:R]->(b), (c)-[:R]->(d) WHERE a.p = 1 AND b.q = 2 AND c.p = 3 AND d.q = 4 AND a.zz = 5 RETURN a": {
-   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'A': ['p', 'zz'], 'B': ['q']})",
-   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'A': ['p'], 'B': ['q']})",
-   "properties.validate": "(0.6666666666666666, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  zz.'}])",
+   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {'A': ['p', 'zz'], 'B': ['q']}, 'relationship': {}})",
+   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {'A': ['p'], 'B': ['q']}, 'relationship': {}})",
+   "properties.validate": "(0.6666666666666666, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  zz.'}])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "([], ['()-[:R]-()'], ['(:A)-[:R]->(:B)'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (a)-[r]->(b) WHERE a.code = '1' AND b.nope = 2 RETURN r": {
-   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {'A': ['code'], 'B': ['nope']})",
-   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: code)\"}, {'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label B does not have the following properties:  nope.'}])",
+   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {'node': {'A': ['code'], 'B': ['nope']}, 'relationship': {}})",
+   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {'node': {}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: code)\"}, {'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label B does not have the following properties:  nope.'}])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], ['(:A)-[:R]->(:B)'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (a:A)-[:R|S]->(b) RETURN a.p, b.q": {
-   "properties.extract": "({'b': ['q']}, {'A': ['p'], 'B': ['q']})",
-   "properties.extract.strict": "({'b': ['q']}, {'A': ['p'], 'B': ['q']})",
+   "properties.extract": "({'b': ['q']}, {'node': {'A': ['p'], 'B': ['q']}, 'relationship': {}})",
+   "properties.extract.strict": "({'b': ['q']}, {'node': {'A': ['p'], 'B': ['q']}, 'relationship': {}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "(['(:A)'], ['()-[:R|S]-()'], ['(:A)-[:R|S]->(:B)'])",
@@ -64,8 +64,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (a:Nope)-[:NOPE]->(b) RETURN a": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Nope)'], ['()-[:NOPE]-()'], ['(:Nope)-[:NOPE]->()'])",
@@ -73,8 +73,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g)-[:HAS_TARGET]->(t) RETURN g.code, t.code": {
-   "properties.extract": "({'g': ['code'], 't': ['code']}, {})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {})",
+   "properties.extract": "({'g': ['code'], 't': ['code']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['()-[:HAS_TARGET]->()'])",
@@ -82,8 +82,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g)-[:HAS_TARGET]->(t)-[r]->(i) WHERE g.code = '1' AND t.text = 'x' AND i.unit = 'y' AND i.nope = 1 RETURN g": {
-   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {})",
+   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['()-[:HAS_TARGET]->()', '()-[]->()'])",
@@ -91,8 +91,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Ghost)-[:HAS_TARGET]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)'])",
@@ -100,17 +100,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal), (t:Target) WHERE g.title = 'a' AND t.code = 'b' AND g.zzz = 1 AND t.text = 'c' RETURN g": {
-   "properties.extract": "({}, {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']})",
-   "properties.extract.strict": "({}, {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code, text.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code, text.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code, text.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code, text.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], [])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}, {'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Target)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)--(t:Target) RETURN g, t": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], ['(:Goal)-[]-(:Target)'])",
@@ -118,17 +118,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-->(t) RETURN g.title, t.text": {
-   "properties.extract": "({'t': ['text']}, {'Goal': ['title']})",
-   "properties.extract.strict": "({'t': ['text']}, {'Goal': ['title']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title.'}])",
+   "properties.extract": "({'t': ['text']}, {'node': {'Goal': ['title']}, 'relationship': {}})",
+   "properties.extract.strict": "({'t': ['text']}, {'node': {'Goal': ['title']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title.'}])",
    "schema.extract": "(['(:Goal)'], [], ['(:Goal)-[]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_INDICATOR]->(i:Indicator) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)'], ['()-[:HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_INDICATOR]->(:Indicator)'])",
@@ -136,8 +136,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET*1..2]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*1..2]->(:Target)'])",
@@ -145,8 +145,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET*2..3]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*2..3]->(:Target)'])",
@@ -154,26 +154,26 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) RETURN g.code, t.code": {
-   "properties.extract": "({}, {'Goal': ['code'], 'Target': ['code']})",
-   "properties.extract.strict": "({}, {'Goal': ['code'], 'Target': ['code']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}, {'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Target)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) WHERE g.code = '1' AND g.bogus = 2 AND t.text = 'x' AND t.nope = 3 RETURN g": {
-   "properties.extract": "({}, {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']})",
-   "properties.extract.strict": "({}, {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}, {'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Target)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target), (a:GeoArea)-[:HAS_NUTS1]->(n:Nuts1), (i:Indicator)-[:BOGUS]->(g) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:GeoArea)', '(:Goal)', '(:Indicator)', '(:Nuts1)', '(:Target)'], ['()-[:BOGUS]-()', '()-[:HAS_NUTS1]-()', '()-[:HAS_TARGET]-()'], ['(:GeoArea)-[:HAS_NUTS1]->(:Nuts1)', '(:Goal)-[:HAS_TARGET]->(:Target)', '(:Indicator)-[:BOGUS]->(:Goal)'])",
@@ -181,17 +181,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i) RETURN i.unit, g.bogus": {
-   "properties.extract": "({'i': ['unit']}, {'Goal': ['bogus']})",
-   "properties.extract.strict": "({'i': ['unit']}, {'Goal': ['bogus']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
+   "properties.extract": "({'i': ['unit']}, {'node': {'Goal': ['bogus']}, 'relationship': {}})",
+   "properties.extract.strict": "({'i': ['unit']}, {'node': {'Goal': ['bogus']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}, {'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Target)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_INDICATOR)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i:Indicator) RETURN g, t, i": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->(:Indicator)'])",
@@ -199,8 +199,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Ghost)-[:HAS_TARGET]->(x:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()', '()-[:NOPE]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)', '(:Goal)-[:NOPE]->(:Ghost)'])",
@@ -208,8 +208,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:NOPE]-()'], ['(:Goal)-[:NOPE]->(:Target)'])",
@@ -217,17 +217,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[r:HAS_TARGET|HAS_INDICATOR]->(t) WHERE r.weight = 1 AND g.code = '1' RETURN g": {
-   "properties.extract": "({}, {'Goal': ['code'], 'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.extract.strict": "({}, {'Goal': ['code'], 'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
    "schema.extract": "(['(:Goal)'], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_INDICATOR)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: HAS_TARGET)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)<-[:HAS_TARGET]-(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)<-[:HAS_TARGET]-(:Target)'])",
@@ -235,26 +235,26 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (n) WHERE n.a / 0 > 1 RETURN n": {
-   "properties.extract": "({'n': ['a']}, {'A': ['a']})",
-   "properties.extract.strict": "({'n': ['a']}, {})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: a)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  a.'}])",
+   "properties.extract": "({'n': ['a']}, {'node': {'A': ['a']}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['a']}, {'node': {}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: a)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  a.'}])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
    "syntax.validate": "(False, [{'code': 'cypher_guardrail.Error.ArithmeticError', 'description': 'Division by zero.'}])"
   },
   "MATCH (n) WHERE n.code = $code RETURN n": {
-   "properties.extract": "({'n': ['code']}, {'A': ['code']})",
-   "properties.extract.strict": "({'n': ['code']}, {})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: code)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  code.'}])",
+   "properties.extract": "({'n': ['code']}, {'node': {'A': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['code']}, {'node': {}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: code)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  code.'}])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
    "syntax.validate": "(False, [{'code': 'cypher_guardrail.Warning.ParameterNotProvided', 'description': 'Did not supply query with enough parameters. Missing parameters: code'}])"
   },
   "MATCH (n:GeoArea:Area) RETURN n.name": {
-   "properties.extract": "({'n': ['name']}, {})",
-   "properties.extract.strict": "({'n': ['name']}, {})",
+   "properties.extract": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -262,8 +262,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (n:Goal RETURN n": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -271,17 +271,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.ClientError.Statement.SyntaxError', 'description': \"errMsg: Invalid input 'R': expected a label, '{', a parameter or ')' line: 1, column: 15, offset: 14 errCtx: MATCH (n:Goal RETURN n errCtxOffset: 14\"}])"
   },
   "MATCH (n:Goal) WHERE n.nonexistent = 1 RETURN n": {
-   "properties.extract": "({}, {'Goal': ['nonexistent']})",
-   "properties.extract.strict": "({}, {'Goal': ['nonexistent']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
    "schema.extract": "(['(:Goal)'], [], [])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: Goal)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (n:Goal:Target) RETURN n": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -289,8 +289,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (t:Target)-[:HAS_TARGET*1..2]->(g:Goal) RETURN t": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Target)-[:HAS_TARGET*1..2]->(:Goal)'])",
@@ -298,8 +298,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (x)-[:R]->(y) RETURN x.p, y.q": {
-   "properties.extract": "({'x': ['p'], 'y': ['q']}, {'A': ['p'], 'B': ['q']})",
-   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {'A': ['p'], 'B': ['q']})",
+   "properties.extract": "({'x': ['p'], 'y': ['q']}, {'node': {'A': ['p'], 'B': ['q']}, 'relationship': {}})",
+   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {'node': {'A': ['p'], 'B': ['q']}, 'relationship': {}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "([], ['()-[:R]-()'], ['(:A)-[:R]->(:B)'])",
@@ -309,26 +309,26 @@
  },
  "kg": {
   "MATCH ()-[r:HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.extract.strict": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  bogus.'}])",
-   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  bogus.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  bogus.'}])",
+   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  bogus.'}])",
    "schema.extract": "([], ['()-[:HAS_INDICATOR]-()'], ['()-[:HAS_INDICATOR]->()'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.extract.strict": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  bogus.'}])",
-   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  bogus.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  bogus.'}])",
+   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  bogus.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 RETURN r": {
-   "properties.extract": "({}, {'HAS_INDICATOR': ['weight']})",
-   "properties.extract.strict": "({}, {'HAS_INDICATOR': ['weight']})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight']}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
@@ -336,17 +336,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.zzz = 1 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['zzz']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['zzz']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  zzz.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (a)-[:R]->(b), (c)-[:R]->(d) WHERE a.p = 1 AND b.q = 2 AND c.p = 3 AND d.q = 4 AND a.zz = 5 RETURN a": {
-   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {})",
-   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {})",
+   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:R]-()'], ['()-[:R]->()', '()-[:R]->()'])",
@@ -354,26 +354,26 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (a)-[r]->(b) WHERE a.code = '1' AND b.nope = 2 RETURN r": {
-   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {'Area': ['code'], 'Nuts1': ['nope']})",
-   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {})",
-   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Nuts1 does not have the following properties:  nope.'}])",
+   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {'node': {'Area': ['code'], 'Nuts1': ['nope']}, 'relationship': {}})",
+   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {'node': {}, 'relationship': {}})",
+   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Nuts1 does not have the following properties:  nope.'}])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], ['(:Area)-[:HAS_NUTS1]->(:Nuts1)'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (a:A)-[:R|S]->(b) RETURN a.p, b.q": {
-   "properties.extract": "({'b': ['q']}, {'A': ['p']})",
-   "properties.extract.strict": "({'b': ['q']}, {'A': ['p']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  p.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  p.'}])",
+   "properties.extract": "({'b': ['q']}, {'node': {'A': ['p']}, 'relationship': {}})",
+   "properties.extract.strict": "({'b': ['q']}, {'node': {'A': ['p']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  p.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  p.'}])",
    "schema.extract": "(['(:A)'], ['()-[:R|S]-()'], ['(:A)-[:R|S]->()'])",
    "schema.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownLabel', 'description': \"One of the labels in your query is not available in the database, make sure you didn't misspell it or that the label is available when you run this statement in your application (the missing label name is: A)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: R)\"}, {'code': 'cypher_guardrail.Warning.UnknownRelationshipType', 'description': \"One of the relationship types in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing relationship type is: S)\"}])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (a:Nope)-[:NOPE]->(b) RETURN a": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Nope)'], ['()-[:NOPE]-()'], ['(:Nope)-[:NOPE]->()'])",
@@ -381,8 +381,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g)-[:HAS_TARGET]->(t) RETURN g.code, t.code": {
-   "properties.extract": "({'g': ['code'], 't': ['code']}, {'Goal': ['code'], 'Target': ['code']})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {'Goal': ['code'], 'Target': ['code']})",
+   "properties.extract": "({'g': ['code'], 't': ['code']}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
@@ -390,17 +390,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g)-[:HAS_TARGET]->(t)-[r]->(i) WHERE g.code = '1' AND t.text = 'x' AND i.unit = 'y' AND i.nope = 1 RETURN g": {
-   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'Target': ['text'], 'Indicator': ['unit', 'nope'], 'Goal': ['code']})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {})",
-   "properties.validate": "(0.75, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Indicator does not have the following properties:  nope.'}])",
+   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {'Target': ['text'], 'Indicator': ['unit', 'nope'], 'Goal': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
+   "properties.validate": "(0.75, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Indicator does not have the following properties:  nope.'}])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->(:Indicator)'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Ghost)-[:HAS_TARGET]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)'])",
@@ -408,17 +408,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal), (t:Target) WHERE g.title = 'a' AND t.code = 'b' AND g.zzz = 1 AND t.text = 'c' RETURN g": {
-   "properties.extract": "({}, {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']})",
-   "properties.extract.strict": "({}, {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']})",
-   "properties.validate": "(0.75, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  zzz.'}])",
-   "properties.validate.strict": "(0.75, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  zzz.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
+   "properties.validate": "(0.75, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  zzz.'}])",
+   "properties.validate.strict": "(0.75, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: zzz)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  zzz.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], [])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)--(t:Target) RETURN g, t": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], ['(:Goal)-[:HAS_TARGET]-(:Target)'])",
@@ -426,8 +426,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-->(t) RETURN g.title, t.text": {
-   "properties.extract": "({'t': ['text']}, {'Goal': ['title'], 'Target': ['text']})",
-   "properties.extract.strict": "({'t': ['text']}, {'Goal': ['title'], 'Target': ['text']})",
+   "properties.extract": "({'t': ['text']}, {'node': {'Goal': ['title'], 'Target': ['text']}, 'relationship': {}})",
+   "properties.extract.strict": "({'t': ['text']}, {'node': {'Goal': ['title'], 'Target': ['text']}, 'relationship': {}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "(['(:Goal)'], [], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
@@ -435,8 +435,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_INDICATOR]->(i:Indicator) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)'], ['()-[:HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_INDICATOR]->(:Indicator)'])",
@@ -444,8 +444,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET*1..2]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*1..2]->(:Target)'])",
@@ -453,8 +453,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET*2..3]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*2..3]->(:Target)'])",
@@ -462,8 +462,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) RETURN g.code, t.code": {
-   "properties.extract": "({}, {'Goal': ['code'], 'Target': ['code']})",
-   "properties.extract.strict": "({}, {'Goal': ['code'], 'Target': ['code']})",
+   "properties.extract": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
@@ -471,17 +471,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) WHERE g.code = '1' AND g.bogus = 2 AND t.text = 'x' AND t.nope = 3 RETURN g": {
-   "properties.extract": "({}, {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']})",
-   "properties.extract.strict": "({}, {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']})",
-   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  nope.'}])",
-   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  nope.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
+   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  nope.'}])",
+   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nope)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  nope.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target), (a:GeoArea)-[:HAS_NUTS1]->(n:Nuts1), (i:Indicator)-[:BOGUS]->(g) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:GeoArea)', '(:Goal)', '(:Indicator)', '(:Nuts1)', '(:Target)'], ['()-[:BOGUS]-()', '()-[:HAS_NUTS1]-()', '()-[:HAS_TARGET]-()'], ['(:GeoArea)-[:HAS_NUTS1]->(:Nuts1)', '(:Goal)-[:HAS_TARGET]->(:Target)', '(:Indicator)-[:BOGUS]->(:Goal)'])",
@@ -489,17 +489,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i) RETURN i.unit, g.bogus": {
-   "properties.extract": "({'i': ['unit']}, {'Goal': ['bogus'], 'Indicator': ['unit']})",
-   "properties.extract.strict": "({'i': ['unit']}, {'Goal': ['bogus'], 'Indicator': ['unit']})",
-   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
-   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
+   "properties.extract": "({'i': ['unit']}, {'node': {'Goal': ['bogus'], 'Indicator': ['unit']}, 'relationship': {}})",
+   "properties.extract.strict": "({'i': ['unit']}, {'node': {'Goal': ['bogus'], 'Indicator': ['unit']}, 'relationship': {}})",
+   "properties.validate": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
+   "properties.validate.strict": "(0.5, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: bogus)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->(:Indicator)'])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i:Indicator) RETURN g, t, i": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->(:Indicator)'])",
@@ -507,8 +507,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Ghost)-[:HAS_TARGET]->(x:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()', '()-[:NOPE]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)', '(:Goal)-[:NOPE]->(:Ghost)'])",
@@ -516,8 +516,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:NOPE]-()'], ['(:Goal)-[:NOPE]->(:Target)'])",
@@ -525,8 +525,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)-[r:HAS_TARGET|HAS_INDICATOR]->(t) WHERE r.weight = 1 AND g.code = '1' RETURN g": {
-   "properties.extract": "({}, {'Goal': ['code'], 'HAS_INDICATOR': ['weight']})",
-   "properties.extract.strict": "({}, {'Goal': ['code'], 'HAS_INDICATOR': ['weight']})",
+   "properties.extract": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_INDICATOR': ['weight']}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_INDICATOR': ['weight']}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "(['(:Goal)'], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_TARGET|HAS_INDICATOR]->(:Target)'])",
@@ -534,8 +534,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (g:Goal)<-[:HAS_TARGET]-(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)<-[:HAS_TARGET]-(:Target)'])",
@@ -543,17 +543,17 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (n) WHERE n.a / 0 > 1 RETURN n": {
-   "properties.extract": "({'n': ['a']}, {'Area': ['a']})",
-   "properties.extract.strict": "({'n': ['a']}, {})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: a)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Area does not have the following properties:  a.'}])",
+   "properties.extract": "({'n': ['a']}, {'node': {'Area': ['a']}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['a']}, {'node': {}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: a)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Area does not have the following properties:  a.'}])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
    "schema.validate": "(1, [])",
    "syntax.validate": "(False, [{'code': 'cypher_guardrail.Error.ArithmeticError', 'description': 'Division by zero.'}])"
   },
   "MATCH (n) WHERE n.code = $code RETURN n": {
-   "properties.extract": "({'n': ['code']}, {'Area': ['code']})",
-   "properties.extract.strict": "({'n': ['code']}, {'Area': ['code']})",
+   "properties.extract": "({'n': ['code']}, {'node': {'Area': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['code']}, {'node': {'Area': ['code']}, 'relationship': {}})",
    "properties.validate": "(1.0, [])",
    "properties.validate.strict": "(1.0, [])",
    "schema.extract": "([], [], [])",
@@ -561,8 +561,8 @@
    "syntax.validate": "(False, [{'code': 'cypher_guardrail.Warning.ParameterNotProvided', 'description': 'Did not supply query with enough parameters. Missing parameters: code'}])"
   },
   "MATCH (n:GeoArea:Area) RETURN n.name": {
-   "properties.extract": "({'n': ['name']}, {})",
-   "properties.extract.strict": "({'n': ['name']}, {})",
+   "properties.extract": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -570,8 +570,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (n:Goal RETURN n": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -579,17 +579,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.ClientError.Statement.SyntaxError', 'description': \"errMsg: Invalid input 'R': expected a label, '{', a parameter or ')' line: 1, column: 15, offset: 14 errCtx: MATCH (n:Goal RETURN n errCtxOffset: 14\"}])"
   },
   "MATCH (n:Goal) WHERE n.nonexistent = 1 RETURN n": {
-   "properties.extract": "({}, {'Goal': ['nonexistent']})",
-   "properties.extract.strict": "({}, {'Goal': ['nonexistent']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nonexistent)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nonexistent)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nonexistent)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.UnknownPropertyKey', 'description': \"One of the property names in your query is not available in the database, make sure you didn't misspell it or that it is available when you run this statement in your application (the missing property name is: nonexistent)\"}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
    "schema.extract": "(['(:Goal)'], [], [])",
    "schema.validate": "(1.0, [])",
    "syntax.validate": "(True, [])"
   },
   "MATCH (n:Goal:Target) RETURN n": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -597,8 +597,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (t:Target)-[:HAS_TARGET*1..2]->(g:Goal) RETURN t": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Target)-[:HAS_TARGET*1..2]->(:Goal)'])",
@@ -606,8 +606,8 @@
    "syntax.validate": "(True, [])"
   },
   "MATCH (x)-[:R]->(y) RETURN x.p, y.q": {
-   "properties.extract": "({'x': ['p'], 'y': ['q']}, {})",
-   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {})",
+   "properties.extract": "({'x': ['p'], 'y': ['q']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:R]-()'], ['()-[:R]->()'])",
@@ -617,44 +617,44 @@
  },
  "no_such_graph": {
   "MATCH ()-[r:HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.extract.strict": "({}, {'HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_INDICATOR does not have the following properties:  weight, bogus.'}])",
    "schema.extract": "([], ['()-[:HAS_INDICATOR]-()'], ['()-[:HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 AND r.bogus = 2 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight, bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight, bogus.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight', 'bogus']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight, bogus.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight, bogus.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.weight = 1 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH ()-[r:HAS_TARGET|HAS_INDICATOR]->() WHERE r.zzz = 1 RETURN r": {
-   "properties.extract": "({}, {'HAS_TARGET|HAS_INDICATOR': ['zzz']})",
-   "properties.extract.strict": "({}, {'HAS_TARGET|HAS_INDICATOR': ['zzz']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  zzz.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.extract": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['zzz']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  zzz.'}])",
    "schema.extract": "([], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['()-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (a)-[:R]->(b), (c)-[:R]->(d) WHERE a.p = 1 AND b.q = 2 AND c.p = 3 AND d.q = 4 AND a.zz = 5 RETURN a": {
-   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {})",
-   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {})",
+   "properties.extract": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'a': ['p', 'zz'], 'b': ['q'], 'c': ['p'], 'd': ['q']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:R]-()'], ['()-[:R]->()', '()-[:R]->()'])",
@@ -662,8 +662,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (a)-[r]->(b) WHERE a.code = '1' AND b.nope = 2 RETURN r": {
-   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {})",
-   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {})",
+   "properties.extract": "({'a': ['code'], 'b': ['nope']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'a': ['code'], 'b': ['nope']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], ['()-[]->()'])",
@@ -671,17 +671,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (a:A)-[:R|S]->(b) RETURN a.p, b.q": {
-   "properties.extract": "({'b': ['q']}, {'A': ['p']})",
-   "properties.extract.strict": "({'b': ['q']}, {'A': ['p']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  p.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label A does not have the following properties:  p.'}])",
+   "properties.extract": "({'b': ['q']}, {'node': {'A': ['p']}, 'relationship': {}})",
+   "properties.extract.strict": "({'b': ['q']}, {'node': {'A': ['p']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  p.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label A does not have the following properties:  p.'}])",
    "schema.extract": "(['(:A)'], ['()-[:R|S]-()'], ['(:A)-[:R|S]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (a:Nope)-[:NOPE]->(b) RETURN a": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Nope)'], ['()-[:NOPE]-()'], ['(:Nope)-[:NOPE]->()'])",
@@ -689,8 +689,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g)-[:HAS_TARGET]->(t) RETURN g.code, t.code": {
-   "properties.extract": "({'g': ['code'], 't': ['code']}, {})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {})",
+   "properties.extract": "({'g': ['code'], 't': ['code']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'g': ['code'], 't': ['code']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['()-[:HAS_TARGET]->()'])",
@@ -698,8 +698,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g)-[:HAS_TARGET]->(t)-[r]->(i) WHERE g.code = '1' AND t.text = 'x' AND i.unit = 'y' AND i.nope = 1 RETURN g": {
-   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {})",
-   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {})",
+   "properties.extract": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'g': ['code'], 't': ['text'], 'i': ['unit', 'nope']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:HAS_TARGET]-()'], ['()-[:HAS_TARGET]->()', '()-[]->()'])",
@@ -707,8 +707,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Ghost)-[:HAS_TARGET]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)'])",
@@ -716,17 +716,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal), (t:Target) WHERE g.title = 'a' AND t.code = 'b' AND g.zzz = 1 AND t.text = 'c' RETURN g": {
-   "properties.extract": "({}, {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']})",
-   "properties.extract.strict": "({}, {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code, text.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code, text.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['title', 'zzz'], 'Target': ['code', 'text']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code, text.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title, zzz.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code, text.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], [])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)--(t:Target) RETURN g, t": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], [], ['(:Goal)-[]-(:Target)'])",
@@ -734,17 +734,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-->(t) RETURN g.title, t.text": {
-   "properties.extract": "({'t': ['text']}, {'Goal': ['title']})",
-   "properties.extract.strict": "({'t': ['text']}, {'Goal': ['title']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  title.'}])",
+   "properties.extract": "({'t': ['text']}, {'node': {'Goal': ['title']}, 'relationship': {}})",
+   "properties.extract.strict": "({'t': ['text']}, {'node': {'Goal': ['title']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  title.'}])",
    "schema.extract": "(['(:Goal)'], [], ['(:Goal)-[]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_INDICATOR]->(i:Indicator) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)'], ['()-[:HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_INDICATOR]->(:Indicator)'])",
@@ -752,8 +752,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET*1..2]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*1..2]->(:Target)'])",
@@ -761,8 +761,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET*2..3]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET*2..3]->(:Target)'])",
@@ -770,26 +770,26 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) RETURN g.code, t.code": {
-   "properties.extract": "({}, {'Goal': ['code'], 'Target': ['code']})",
-   "properties.extract.strict": "({}, {'Goal': ['code'], 'Target': ['code']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  code.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code'], 'Target': ['code']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  code.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) WHERE g.code = '1' AND g.bogus = 2 AND t.text = 'x' AND t.nope = 3 RETURN g": {
-   "properties.extract": "({}, {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']})",
-   "properties.extract.strict": "({}, {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code', 'bogus'], 'Target': ['text', 'nope']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code, bogus.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Target does not have the following properties:  text, nope.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target), (a:GeoArea)-[:HAS_NUTS1]->(n:Nuts1), (i:Indicator)-[:BOGUS]->(g) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:GeoArea)', '(:Goal)', '(:Indicator)', '(:Nuts1)', '(:Target)'], ['()-[:BOGUS]-()', '()-[:HAS_NUTS1]-()', '()-[:HAS_TARGET]-()'], ['(:GeoArea)-[:HAS_NUTS1]->(:Nuts1)', '(:Goal)-[:HAS_TARGET]->(:Target)', '(:Indicator)-[:BOGUS]->(:Goal)'])",
@@ -797,17 +797,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i) RETURN i.unit, g.bogus": {
-   "properties.extract": "({'i': ['unit']}, {'Goal': ['bogus']})",
-   "properties.extract.strict": "({'i': ['unit']}, {'Goal': ['bogus']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
+   "properties.extract": "({'i': ['unit']}, {'node': {'Goal': ['bogus']}, 'relationship': {}})",
+   "properties.extract.strict": "({'i': ['unit']}, {'node': {'Goal': ['bogus']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  bogus.'}])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target)-[:HAS_INDICATOR]->(i:Indicator) RETURN g, t, i": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Indicator)', '(:Target)'], ['()-[:HAS_INDICATOR]-()', '()-[:HAS_TARGET]-()'], ['(:Goal)-[:HAS_TARGET]->(:Target)', '(:Target)-[:HAS_INDICATOR]->(:Indicator)'])",
@@ -815,8 +815,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Ghost)-[:HAS_TARGET]->(x:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Ghost)', '(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()', '()-[:NOPE]-()'], ['(:Ghost)-[:HAS_TARGET]->(:Target)', '(:Goal)-[:NOPE]->(:Ghost)'])",
@@ -824,8 +824,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[:NOPE]->(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:NOPE]-()'], ['(:Goal)-[:NOPE]->(:Target)'])",
@@ -833,17 +833,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)-[r:HAS_TARGET|HAS_INDICATOR]->(t) WHERE r.weight = 1 AND g.code = '1' RETURN g": {
-   "properties.extract": "({}, {'Goal': ['code'], 'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.extract.strict": "({}, {'Goal': ['code'], 'HAS_TARGET|HAS_INDICATOR': ['weight']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['code']}, 'relationship': {'HAS_TARGET|HAS_INDICATOR': ['weight']}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  code.'}, {'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The relationship type HAS_TARGET does not have the following properties:  weight.'}])",
    "schema.extract": "(['(:Goal)'], ['()-[:HAS_TARGET|HAS_INDICATOR]-()'], ['(:Goal)-[:HAS_TARGET|HAS_INDICATOR]->()'])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (g:Goal)<-[:HAS_TARGET]-(t:Target) RETURN g": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Goal)<-[:HAS_TARGET]-(:Target)'])",
@@ -851,8 +851,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (n) WHERE n.a / 0 > 1 RETURN n": {
-   "properties.extract": "({'n': ['a']}, {})",
-   "properties.extract.strict": "({'n': ['a']}, {})",
+   "properties.extract": "({'n': ['a']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['a']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -860,8 +860,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (n) WHERE n.code = $code RETURN n": {
-   "properties.extract": "({'n': ['code']}, {})",
-   "properties.extract.strict": "({'n': ['code']}, {})",
+   "properties.extract": "({'n': ['code']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['code']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -869,8 +869,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (n:GeoArea:Area) RETURN n.name": {
-   "properties.extract": "({'n': ['name']}, {})",
-   "properties.extract.strict": "({'n': ['name']}, {})",
+   "properties.extract": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'n': ['name']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -878,8 +878,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (n:Goal RETURN n": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -887,17 +887,17 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (n:Goal) WHERE n.nonexistent = 1 RETURN n": {
-   "properties.extract": "({}, {'Goal': ['nonexistent']})",
-   "properties.extract.strict": "({}, {'Goal': ['nonexistent']})",
-   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
-   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccessByLabel', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.extract": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {'Goal': ['nonexistent']}, 'relationship': {}})",
+   "properties.validate": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
+   "properties.validate.strict": "(0.0, [{'code': 'cypher_guardrail.Warning.InvalidPropertyAccess', 'description': 'The label Goal does not have the following properties:  nonexistent.'}])",
    "schema.extract": "(['(:Goal)'], [], [])",
    "schema.validate": "(0.0, [])",
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (n:Goal:Target) RETURN n": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], [], [])",
@@ -905,8 +905,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (t:Target)-[:HAS_TARGET*1..2]->(g:Goal) RETURN t": {
-   "properties.extract": "({}, {})",
-   "properties.extract.strict": "({}, {})",
+   "properties.extract": "({}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "(['(:Goal)', '(:Target)'], ['()-[:HAS_TARGET]-()'], ['(:Target)-[:HAS_TARGET*1..2]->(:Goal)'])",
@@ -914,8 +914,8 @@
    "syntax.validate": "(False, [{'code': 'FalkorDB.DatabaseError.Statement.ExecutionFailed', 'description': 'Invalid graph operation on empty key'}])"
   },
   "MATCH (x)-[:R]->(y) RETURN x.p, y.q": {
-   "properties.extract": "({'x': ['p'], 'y': ['q']}, {})",
-   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {})",
+   "properties.extract": "({'x': ['p'], 'y': ['q']}, {'node': {}, 'relationship': {}})",
+   "properties.extract.strict": "({'x': ['p'], 'y': ['q']}, {'node': {}, 'relationship': {}})",
    "properties.validate": "(None, [])",
    "properties.validate.strict": "(None, [])",
    "schema.extract": "([], ['()-[:R]-()'], ['()-[:R]->()'])",

@@ -24,7 +24,7 @@ WRITE_QUERY_ERROR: Final = "cypher_guardrail.Error.WriteQuery"
 NOT_READ_ONLY: Final = "cypher_guardrail.Error.NotReadOnly"
 # More codes cypher-guardrail reports.
 CONFLICTING_VARIABLES: Final = "cypher_guardrail.Error.ConflictingVariables"
-INVALID_PROPERTY_ACCESS: Final = "cypher_guardrail.Warning.InvalidPropertyAccessByLabel"
+INVALID_PROPERTY_ACCESS: Final = "cypher_guardrail.Warning.InvalidPropertyAccess"
 PROPERTY_TYPE_MISMATCH: Final = "cypher_guardrail.Warning.PropertyTypeMismatch"
 UNKNOWN_PATH: Final = "cypher_guardrail.Warning.UnknownPath"
 VARIABLE_LENGTH_PATH: Final = "cypher_guardrail.Warning.VariableLengthPath"

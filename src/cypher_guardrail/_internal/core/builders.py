@@ -4,7 +4,7 @@ Each builder makes the ``description`` from the fields it returns, so the text a
 The sentences are the ones the validators have always reported: consumers may match on them.
 """
 
-from typing import cast
+from typing import Literal, cast
 
 from cypher_guardrail._internal.core.errors import (
     CONFLICTING_VARIABLES,
@@ -88,18 +88,21 @@ def unknown_property(property: str) -> UnknownPropertyKeyIssue:
 
 
 def invalid_property_access(
-    label: str, properties: list[str]
+    kind: Literal["node", "relationship"], name: str, properties: list[str]
 ) -> InvalidPropertyAccessIssue:
+    what = "label" if kind == "node" else "relationship type"
     return {
         "code": INVALID_PROPERTY_ACCESS,
-        "description": f"The label {label} does not have the following properties:  {', '.join(properties)}.",
-        "label": label,
+        "description": f"The {what} {name} does not have the following properties:  {', '.join(properties)}.",
+        "kind": kind,
+        "name": name,
         "properties": list(properties),
     }
 
 
 def property_type_mismatch(
-    label: str,
+    kind: Literal["node", "relationship"],
+    name: str,
     property: str,
     expected_types: list[str],
     value: str,
@@ -109,11 +112,12 @@ def property_type_mismatch(
     return {
         "code": PROPERTY_TYPE_MISMATCH,
         "description": (
-            f"The property {property} of {label} holds {' or '.join(expected_types)} values, but the query "
+            f"The property {property} of {name} holds {' or '.join(expected_types)} values, but the query "
             f"compares it with the {value_type} {shown}: FalkorDB does not report it, it finds nothing when the "
             "types differ."
         ),
-        "label": label,
+        "kind": kind,
+        "name": name,
         "property": property,
         "expected_types": list(expected_types),
         "value": value,

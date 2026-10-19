@@ -242,17 +242,6 @@ def test_the_names_the_graph_does_not_know():
     assert ask("missing_names", "labels", ()).value == ()
 
 
-@pytest.mark.parametrize(
-    ("label", "kind"),
-    [("A", "node"), ("R", "relationship"), ("Nope", "none"), ("U", "relationship")],
-)
-def test_a_label_is_a_node_label_or_a_relationship_type_or_neither(label, kind):
-    answer = ask("label_kind", label)
-
-    assert answer.value == kind
-    assert answer.miss is (kind == "none")
-
-
 # ---------------------------------------------------------------------------- properties
 
 
@@ -849,14 +838,6 @@ def test_the_names_the_graph_does_not_know_match_the_databases(lab, backend, res
         offline = resolver.answer(Lookup("missing_names", GRAPH, (kind, tuple(names))))
         assert tuple(online) == offline.value, kind
         assert offline.miss is bool(offline.value)
-
-
-def test_a_label_is_a_node_label_or_a_relationship_type_or_neither_like_the_database(
-    lab, backend, resolver
-):
-    for label in ["A", "Extra", "R", "T", "Nope", "p", ""]:
-        online = backend.run(_queries.label_kind(GRAPH, label))
-        assert resolver.answer(Lookup("label_kind", GRAPH, (label,))).value == online
 
 
 def test_the_properties_of_a_label(lab, backend, resolver):

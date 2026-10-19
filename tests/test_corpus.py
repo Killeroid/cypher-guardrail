@@ -439,7 +439,7 @@ def test_the_label_chosen_among_equals_does_not_depend_on_the_order_of_the_rows(
     reversed_order = PropertiesValidator(falkordb_client).extract(query, "kg")
 
     assert reversed_order == in_scan_order
-    assert in_scan_order[1] == {"Area": ["code"]}
+    assert in_scan_order[1] == {"node": {"Area": ["code"]}, "relationship": {}}
 
 
 # ----------------------------------------------------------------------------------------------------

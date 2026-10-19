@@ -7,23 +7,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -66,23 +54,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -94,23 +70,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -153,23 +117,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -181,23 +133,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -240,23 +180,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -268,23 +196,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -1340,12 +1256,6 @@
      "ambiguous",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -1353,12 +1263,6 @@
      "RoQuery",
      "ambiguous",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -1475,12 +1379,6 @@
      "ambiguous",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -1494,12 +1392,6 @@
      "RoQuery",
      "ambiguous",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -1714,12 +1606,6 @@
      "ambiguous",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -1727,12 +1613,6 @@
      "RoQuery",
      "ambiguous",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -1793,12 +1673,6 @@
      "ambiguous",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -1806,12 +1680,6 @@
      "RoQuery",
      "ambiguous",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -1987,12 +1855,6 @@
      "ambiguous",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -2006,12 +1868,6 @@
      "RoQuery",
      "ambiguous",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -2288,23 +2144,11 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "ambiguous",
@@ -2316,13 +2160,13 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
+     "CALL db.relationshipTypes()",
      false
     ],
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.relationshipTypes()",
+     "CALL db.labels()",
      false
     ]
    ],
@@ -2330,13 +2174,13 @@
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.labels()",
+     "CALL db.relationshipTypes()",
      false
     ],
     [
      "RoQuery",
      "ambiguous",
-     "CALL db.relationshipTypes()",
+     "CALL db.labels()",
      false
     ]
    ],
@@ -2877,12 +2721,6 @@
      "ambiguous",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -2890,12 +2728,6 @@
      "RoQuery",
      "ambiguous",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "ambiguous",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -3179,12 +3011,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3208,12 +3034,6 @@
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -3274,12 +3094,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3315,12 +3129,6 @@
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -3362,12 +3170,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3403,12 +3205,6 @@
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -3481,12 +3277,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3510,12 +3300,6 @@
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -3545,12 +3329,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3574,12 +3352,6 @@
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -3640,12 +3412,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3669,12 +3435,6 @@
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -3704,12 +3464,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -3733,12 +3487,6 @@
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -4233,12 +3981,6 @@
      "kg",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -4252,12 +3994,6 @@
      "RoQuery",
      "kg",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -6096,12 +5832,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -6125,12 +5855,6 @@
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "kg",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "kg",
@@ -6160,12 +5884,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -6185,6 +5903,12 @@
      "RoQuery",
      "kg",
      "MATCH ()-[x:HAS_INDICATOR]-() WHERE (x.weight) IS NOT NULL RETURN 1 LIMIT 1",
+     false
+    ],
+    [
+     "RoQuery",
+     "kg",
+     "CALL db.labels()",
      false
     ],
     [
@@ -6198,12 +5922,6 @@
     [
      "RoQuery",
      "kg",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "kg",
      "CALL db.relationshipTypes()",
      false
     ],
@@ -6223,6 +5941,12 @@
      "RoQuery",
      "kg",
      "MATCH ()-[x:HAS_INDICATOR]-() WHERE (x.weight) IS NOT NULL RETURN 1 LIMIT 1",
+     false
+    ],
+    [
+     "RoQuery",
+     "kg",
+     "CALL db.labels()",
      false
     ],
     [
@@ -6975,23 +6699,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7034,23 +6746,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7062,23 +6762,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7121,23 +6809,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7149,23 +6825,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7208,23 +6872,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7236,23 +6888,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.validate.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -7507,12 +7147,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -7526,12 +7160,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -7888,12 +7516,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -7901,12 +7523,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -8023,12 +7639,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -8042,12 +7652,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -8244,12 +7848,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -8257,12 +7855,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -8317,12 +7909,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -8330,12 +7916,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -8499,12 +8079,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -8518,12 +8092,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],
@@ -8776,23 +8344,11 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
      "CALL db.relationshipTypes()",
      false
     ]
    ],
    "properties.extract.strict": [
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.labels()",
-     false
-    ],
     [
      "RoQuery",
      "no_such_graph",
@@ -8804,13 +8360,13 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
+     "CALL db.relationshipTypes()",
      false
     ],
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.relationshipTypes()",
+     "CALL db.labels()",
      false
     ]
    ],
@@ -8818,13 +8374,13 @@
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.labels()",
+     "CALL db.relationshipTypes()",
      false
     ],
     [
      "RoQuery",
      "no_such_graph",
-     "CALL db.relationshipTypes()",
+     "CALL db.labels()",
      false
     ]
    ],
@@ -9077,12 +8633,6 @@
      "no_such_graph",
      "CALL db.labels()",
      false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
-     false
     ]
    ],
    "properties.validate.strict": [
@@ -9090,12 +8640,6 @@
      "RoQuery",
      "no_such_graph",
      "CALL db.labels()",
-     false
-    ],
-    [
-     "RoQuery",
-     "no_such_graph",
-     "CALL db.relationshipTypes()",
      false
     ]
    ],

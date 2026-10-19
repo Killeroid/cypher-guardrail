@@ -412,12 +412,6 @@ def test_the_async_backend_does_what_the_sync_backend_does(falkordb_client, run_
             "path_exists unknown": outcome(
                 lambda: sync_backend.path_exists("(:Ghost)-[:NOPE]->(:Target)", "kg")
             ),
-            "label_kind": outcome(
-                lambda: [
-                    sync_backend.label_kind(name, "kg")
-                    for name in ("Goal", "HAS_TARGET", "Ghost")
-                ]
-            ),
             "property_exists": outcome(
                 lambda: [
                     sync_backend.property_exists("Goal", "node", prop, "kg")
@@ -457,12 +451,6 @@ def test_the_async_backend_does_what_the_sync_backend_does(falkordb_client, run_
             ),
             "path_exists unknown": await async_outcome(
                 lambda: backend.path_exists("(:Ghost)-[:NOPE]->(:Target)", "kg")
-            ),
-            "label_kind": await async_outcome(
-                lambda: _all(
-                    backend.label_kind(name, "kg")
-                    for name in ("Goal", "HAS_TARGET", "Ghost")
-                )
             ),
             "property_exists": await async_outcome(
                 lambda: _all(

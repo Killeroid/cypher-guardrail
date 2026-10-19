@@ -24,14 +24,23 @@ from cypher_guardrail.utils import paths_after_inference, replace_with_labels
 
 
 def _plain_names(found):
-    """What ``_extract`` found, with the properties as their names (the ones that were written between back-quotes
-    are written so in ``_extract``, where the database is asked about them)."""
-    return tuple(
+    """What ``_extract`` found, as ``extract`` returns it: the properties as their names (the ones that were written
+    between back-quotes are written so in ``_extract``, where the database is asked about them), and the labels split
+    by kind, ``{"node": {label: properties}, "relationship": {type: properties}}``."""
+    var_props_map, label_props_map = found
+    return (
         {
-            key: [patterns.unquote_name(prop) for prop in props]
-            for key, props in part.items()
-        }
-        for part in found
+            var: [patterns.unquote_name(prop) for prop in props]
+            for var, props in var_props_map.items()
+        },
+        {
+            kind: {
+                label: [patterns.unquote_name(prop) for prop in props]
+                for (label_kind, label), props in label_props_map.items()
+                if label_kind == kind
+            }
+            for kind in ("node", "relationship")
+        },
     )
 
 
@@ -66,28 +75,13 @@ class _PropertiesValidator(_modes.ModeInfo):
         """The backend the validator runs on. The async validators override this."""
         return get_backend(driver, snapshot=snapshot, verify=verify)
 
-    def __check_label_type(
-        self, label, database_name=None
-    ) -> Generator[Request, Any, str]:
-        """
-        Check if a given label is a node label or a relationship type.
-
-        Args:
-            - label(string): The label to check.
-            - database_name (str | None): The graph to validate the query against. None (default) uses the graph the validator was given.
-
-        Returns:
-            string: "node" or "relationship", "none" otherwise.
-        """
-        graph = self.backend.graph_name(database_name)
-        return (yield from _queries.label_kind(graph, label))
-
     def __query_prop_exist(
-        self, label, property, database_name=None
+        self, kind, label, property, database_name=None
     ) -> Generator[Request, Any, tuple[bool, list]]:
         """Check if this property exists for the defined label.
 
         Args:
+            - kind (str): "node" if ``label`` is a node label, "relationship" if it is a relationship type.
             - label(str): The label (or relationship type) to check.
             - property (str): The property to check.
             - database_name (str | None): The graph to validate the query against. None (default) uses the graph the validator was given.
@@ -102,13 +96,12 @@ class _PropertiesValidator(_modes.ModeInfo):
         property_exists = False
         metadata = []
         graph = self.backend.graph_name(database_name)
-        type = yield from self.__check_label_type(label, database_name)
         if (
-            type != "none"
+            yield from _queries.name_exists(graph, kind, label)
         ):  # otherwise the label does not exist in the graph, and neither does the property
             try:
                 property_exists, notifications = yield from _queries.property_exists(
-                    graph, label, type, property
+                    graph, label, kind, property
                 )
                 # The warning about a property key that exists on no node or relationship at all
                 metadata.extend(n.copy() for n in notifications)
@@ -120,7 +113,7 @@ class _PropertiesValidator(_modes.ModeInfo):
     def __check_properties(
         self, checks, database_name
     ) -> Generator[Request, Any, list[tuple[bool, list]]]:
-        """Check several properties together: ``checks`` is a list of ``(label, property)``.
+        """Check several properties together: ``checks`` is a list of ``(kind, label, property)``.
 
         Returns:
             What ``__query_prop_exist`` returns for each of them, in the same order.
@@ -129,8 +122,8 @@ class _PropertiesValidator(_modes.ModeInfo):
             (
                 yield Concurrently(
                     tuple(
-                        self.__query_prop_exist(label, property, database_name)
-                        for label, property in checks
+                        self.__query_prop_exist(kind, label, property, database_name)
+                        for kind, label, property in checks
                     )
                 )
             )
@@ -147,7 +140,7 @@ class _PropertiesValidator(_modes.ModeInfo):
     ) -> Generator[Request, Any, dict]:
         """
         Infers the labels of variables that have none but access properties, and adds the labels with the
-        properties they are accessed with to label_props_map (label -> properties).
+        properties they are accessed with to label_props_map ((kind, label) -> properties).
 
         A variable can fit several label combinations that exist in the graph. The properties are attributed to
         the combination in which all of them are valid. If there is none, ``strict`` decides.
@@ -156,8 +149,8 @@ class _PropertiesValidator(_modes.ModeInfo):
         - strict (bool): What to do when no label combination has all the properties:
             - If True, the properties are ignored: they are not attributed to any label, so they cannot lower the score.
             - If False, they are attributed to the combination that has the most of them, so the invalid ones lower the score.
-        - var_label_map (dict): Variable -> its label, for the variables that have one.
-        - label_props_map (dict): Label -> the properties accessed on it so far.
+        - var_label_map (dict): Variable -> its (kind, label), for the variables that have one.
+        - label_props_map (dict): (kind, label) -> the properties accessed on it so far.
         - var_props_map (dict): Variable without a label -> the properties accessed on it.
         - query (str): The query, whose paths are used to infer the labels.
         - database_name (str | None): The graph to validate the query against. None (default) uses the graph the validator was given.
@@ -167,6 +160,14 @@ class _PropertiesValidator(_modes.ModeInfo):
         """
         # Infer the unknown variables
         inference_paths = self.__prepare_query_for_infer(var_label_map, query)
+        # A bare variable in square brackets, [r], is a relationship; in parentheses, (a), a node
+        relationship_variables = set(
+            re.findall(r"\[\s*(\w+)\s*\]", " ".join(inference_paths))
+        )
+
+        def kind_of(variable):
+            return "relationship" if variable in relationship_variables else "node"
+
         graph = self.backend.graph_name(database_name)
         df_valid_label_pairs = yield from paths_after_inference(
             graph, inference_paths
@@ -197,7 +198,11 @@ class _PropertiesValidator(_modes.ModeInfo):
                     (
                         yield from self.__check_properties(
                             [
-                                (df_filtered[variable].iloc[0], accessed_prop)
+                                (
+                                    kind_of(variable),
+                                    df_filtered[variable].iloc[0],
+                                    accessed_prop,
+                                )
                                 for variable in df_filtered.columns
                                 for accessed_prop in var_props_map[variable]
                             ],
@@ -206,7 +211,10 @@ class _PropertiesValidator(_modes.ModeInfo):
                     )
                 )
                 for variable in df_filtered.columns:
-                    label = df_filtered[variable].iloc[0]  # the label of the variable
+                    label = (
+                        kind_of(variable),
+                        df_filtered[variable].iloc[0],
+                    )  # the label of the variable, with its kind
                     label_props = self.__extend_dict_with_list_elements(
                         label_props, label, var_props_map[variable]
                     )
@@ -234,7 +242,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                         (
                             yield from self.__check_properties(
                                 [
-                                    (row[variable], accessed_prop)
+                                    (kind_of(variable), row[variable], accessed_prop)
                                     for variable in df_filtered.columns
                                     for accessed_prop in var_props_map[variable]
                                 ],
@@ -243,7 +251,10 @@ class _PropertiesValidator(_modes.ModeInfo):
                         )
                     )
                     for variable in df_filtered.columns:
-                        label = row[variable]  # the label this row gives the variable
+                        label = (
+                            kind_of(variable),
+                            row[variable],
+                        )  # the label this row gives the variable, with its kind
                         label_props = self.__extend_dict_with_list_elements(
                             label_props, label, var_props_map[variable]
                         )
@@ -271,7 +282,10 @@ class _PropertiesValidator(_modes.ModeInfo):
                     label_props = {}
 
                     for variable in df_filtered.columns:
-                        label = df_filtered.loc[max_index, variable]
+                        label = (
+                            kind_of(variable),
+                            df_filtered.loc[max_index, variable],
+                        )
                         label_props = self.__extend_dict_with_list_elements(
                             label_props, label, var_props_map[variable]
                         )
@@ -297,8 +311,8 @@ class _PropertiesValidator(_modes.ModeInfo):
         the alternative (or alternatives) with the most valid properties, in var_label_map, label_props_map and the query.
 
         Args:
-        - var_label_map (dict): Variable -> its label.
-        - label_props_map (dict): Label -> the properties accessed on it.
+        - var_label_map (dict): Variable -> its (kind, label).
+        - label_props_map (dict): (kind, label) -> the properties accessed on it.
         - query (str): The query, in which the alternatives are replaced.
         - database_name (str | None): The graph to validate the query against. None (default) uses the graph the validator was given.
 
@@ -307,10 +321,11 @@ class _PropertiesValidator(_modes.ModeInfo):
         - label_props_map: The updated version of label_props_map
         - query(str): The updated version of the query
         """
-        for examined_label in label_props_map.copy():
+        for examined_key in label_props_map.copy():
+            kind, examined_label = examined_key
             if "|" in examined_label:  # alternatives: Label1|Label2|...
                 disjoint_labels = examined_label.split("|")
-                properties_accessed = label_props_map[examined_label]
+                properties_accessed = label_props_map[examined_key]
 
                 label_pair_correct_props = {}  # alternative -> how many of the properties it has
                 valid_label = True  # whether every alternative has all the properties
@@ -318,7 +333,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                     (
                         yield from self.__check_properties(
                             [
-                                (label, accessed_prop)
+                                (kind, label, accessed_prop)
                                 for label in disjoint_labels
                                 for accessed_prop in properties_accessed
                             ],
@@ -351,16 +366,16 @@ class _PropertiesValidator(_modes.ModeInfo):
                         updated_label = "|".join(selected_labels)
 
                     # 1: Update var_label_map
-                    for var, label in var_label_map.items():
-                        if label == examined_label:
-                            var_label_map[var] = updated_label
+                    for var, labelled in var_label_map.items():
+                        if labelled == examined_key:
+                            var_label_map[var] = (kind, updated_label)
 
                     # 2: Update label_props_map (what the narrowed label already has is kept)
-                    if examined_label in label_props_map:
+                    if examined_key in label_props_map:
                         label_props_map = self.__extend_dict_with_list_elements(
                             label_props_map,
-                            updated_label,
-                            label_props_map.pop(examined_label),
+                            (kind, updated_label),
+                            label_props_map.pop(examined_key),
                         )
 
                     # 3: Update the query
@@ -380,8 +395,8 @@ class _PropertiesValidator(_modes.ModeInfo):
 
         Returns:
             tuple: Three dicts:
-            - var_label_map: variable -> its label, for the variables that have one;
-            - label_props_map: label -> the properties accessed on it;
+            - var_label_map: variable -> its (kind, label), for the variables that have one;
+            - label_props_map: (kind, label) -> the properties accessed on it;
             - var_props_map: variable without a label -> the properties accessed on it (its label is inferred later).
         """
         # What is in a string or a comment is not Cypher: the patterns below must not see it. (An index procedure has
@@ -400,11 +415,12 @@ class _PropertiesValidator(_modes.ModeInfo):
         # In CALL db.idx.fulltext.queryNodes('Label', ...) YIELD node, `node` is a `Label`;
         # a vector query also accesses its attribute
         for call in patterns.index_procedure_calls(original):
+            index_label = ("node" if call.on == "nodes" else "relationship", call.label)
             if call.variable:
-                var_label_map[call.variable] = call.label
+                var_label_map[call.variable] = index_label
             if call.attribute:
                 label_props_map = PropertiesValidator.__extend_dict_with_list_elements(
-                    label_props_map, call.label, [call.attribute]
+                    label_props_map, index_label, [call.attribute]
                 )
         # The properties accessed as variable.property (in WHERE, RETURN, ...)
         label_props_map, var_props_map = (
@@ -475,27 +491,27 @@ class _PropertiesValidator(_modes.ModeInfo):
         _, label_props_map = yield from self._extract(query, database_name, strict)
         if label_props_map:
             correct_props = 0  # the properties that exist on their label
-            incorrect_label_props_map = {}  # label -> its properties that do not exist
+            incorrect_label_props_map = {}  # (kind, label) -> its properties that do not exist
 
             # The properties are checked independently of each other, so the checks are asked together.
             # Their results are used below in the order of the query, so nothing else changes.
-            checked = []  # (label, property) of every property to check
-            for label, properties in label_props_map.items():
+            checked = []  # (kind, label, property) of every property to check
+            for (kind, label), properties in label_props_map.items():
                 # For alternatives (Label1|Label2|...) check only the first: after narrowing, they all
                 # have the same number of valid properties
                 if "|" in label:
                     label = label.split("|")[0]
-                checked.extend((label, property) for property in properties)
+                checked.extend((kind, label, property) for property in properties)
             results = yield from self.__check_properties(checked, database_name)
 
-            for (label, property), (property_exists, notifications) in zip(
+            for (kind, label, property), (property_exists, notifications) in zip(
                 checked, results, strict=True
             ):
                 if property_exists:
                     correct_props += 1
                 else:
                     incorrect_label_props_map = self.__extend_dict_with_list_elements(
-                        incorrect_label_props_map, label, [property]
+                        incorrect_label_props_map, (kind, label), [property]
                     )
 
                 if notifications:  # the unknown property key warning
@@ -507,10 +523,10 @@ class _PropertiesValidator(_modes.ModeInfo):
 
             precision = correct_props / total_props
             if precision < 1:
-                for label, props in incorrect_label_props_map.items():
+                for (kind, label), props in incorrect_label_props_map.items():
                     metadata.append(
                         _issues.invalid_property_access(
-                            label, [patterns.unquote_name(prop) for prop in props]
+                            kind, label, [patterns.unquote_name(prop) for prop in props]
                         )
                     )
             # Only a warning: it does not change the score
@@ -549,12 +565,14 @@ class _PropertiesValidator(_modes.ModeInfo):
                 if (
                     label is None or entity is None
                 ):  # a `variable.property`: the variable's label is in the query
-                    label = var_label_map.get(comparison.variable)
-                    if label is None or "|" in label:  # no label, or alternatives
-                        continue
-                    entity = yield from self.__check_label_type(label, database_name)
+                    labelled = var_label_map.get(comparison.variable)
                     if (
-                        entity == "none"
+                        labelled is None or "|" in labelled[1]
+                    ):  # no label, or alternatives
+                        continue
+                    entity, label = labelled
+                    if not (
+                        yield from _queries.name_exists(graph, entity, label)
                     ):  # not a label of the graph: the schema validator reports it
                         continue
                 questions.append((label, entity, comparison))
@@ -584,6 +602,7 @@ class _PropertiesValidator(_modes.ModeInfo):
             if observed and not fits(comparison.value_type, observed):
                 mismatches.setdefault(
                     (
+                        entity,
                         label,
                         comparison.property,
                         comparison.value,
@@ -592,8 +611,10 @@ class _PropertiesValidator(_modes.ModeInfo):
                     list(observed),
                 )
         return [
-            _issues.property_type_mismatch(label, prop, types, value, value_type)
-            for (label, prop, value, value_type), types in mismatches.items()
+            _issues.property_type_mismatch(
+                entity, label, prop, types, value, value_type
+            )
+            for (entity, label, prop, value, value_type), types in mismatches.items()
         ]
 
     @staticmethod
@@ -626,13 +647,13 @@ class _PropertiesValidator(_modes.ModeInfo):
         Args:
             query (str): The Cypher query to validate.
         Returns:
-            Dict (var_label_map) that maps any variables with their labels
-            Dict (label_props_map) that maps the label (of a node or a relationship) with a list of the properties
-            mentioned for it in the patterns
+            Dict (var_label_map) that maps any variables with their (kind, label)
+            Dict (label_props_map) that maps the (kind, label) of a node or a relationship with a list of the
+            properties mentioned for it in the patterns
         """
 
-        label_props_map = {}  # label -> the properties mentioned in its patterns
-        # variable -> label: a later mention of the variable without its label is then known
+        label_props_map = {}  # (kind, label) -> the properties mentioned in its patterns
+        # variable -> (kind, label): a later mention of the variable without its label is then known
         var_label_map = {}
 
         # Find patterns of nodes or relationships that define their label
@@ -643,7 +664,9 @@ class _PropertiesValidator(_modes.ModeInfo):
         # Match nodes and relationships separately
         node_matches = re.findall(node_pattern, query)
         rel_matches = re.findall(rel_pattern, query)
-        matches = [match for match in node_matches] + [match for match in rel_matches]
+        matches = [("node", match) for match in node_matches] + [
+            ("relationship", match) for match in rel_matches
+        ]
 
         # The properties mentioned inside the node or relationship: {name: value, ...}
         label_pattern = r":(.*)"  # the label, after the colon
@@ -652,14 +675,14 @@ class _PropertiesValidator(_modes.ModeInfo):
             r"\b(\w+)\s*:"  # a property name: the word before a colon in the {map}
         )
 
-        for match in matches:
+        for kind, match in matches:
             # Extract the label
             label = re.search(label_pattern, match[0]).group(1).strip()
 
             # Extract the var if any
             var = re.search(var_pattern, match[0]).group(1).strip()
             if var:
-                var_label_map[var] = label
+                var_label_map[var] = (kind, label)
 
             # Extract the properties
             properties = []
@@ -674,7 +697,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                 if properties:
                     label_props_map = (
                         PropertiesValidator.__extend_dict_with_list_elements(
-                            label_props_map, label, properties
+                            label_props_map, (kind, label), properties
                         )
                     )
         return var_label_map, label_props_map
@@ -687,11 +710,11 @@ class _PropertiesValidator(_modes.ModeInfo):
         on a variable without a label goes to var_props_map, and its label is inferred later.
 
         Args:
-            Dict (var_label_map) that maps any variables with their labels
-            Dict (label_props_map), that maps labels with properties they access
+            Dict (var_label_map) that maps any variables with their (kind, label)
+            Dict (label_props_map), that maps (kind, label) with properties they access
             query (str): The Cypher query to validate.
         Returns:
-            Dict (label_props_map), that maps labels with properties they access, updated.
+            Dict (label_props_map), that maps (kind, label) with properties they access, updated.
             Dict (var_props_map), that maps variables without a label with the properties accessed on them.
         """
         var_props_map = {}  # variable without a label -> the properties accessed on it
@@ -771,13 +794,15 @@ class _PropertiesValidator(_modes.ModeInfo):
         6. Keep those that have a variable to infer
 
         Args:
-            Dict (var_label_map): that maps any variables with their labels
+            Dict (var_label_map): that maps any variables with their (kind, label)
             query(str): The query to be validated
         Returns:
             List of 1 hop paths that have unknown variables to infer
         """
         # Give the variables that have a known label their label
-        query = replace_with_labels(query, var_label_map)
+        query = replace_with_labels(
+            query, {var: label for var, (_, label) in var_label_map.items()}
+        )
 
         # Replace -- with empty relationship
         query = query.replace("--", "-[]-")
@@ -822,8 +847,11 @@ class PropertiesValidator(_PropertiesValidator):
 
         Returns:
             tuple: Two dicts:
+
             - var_props_map: variable without a label in the query -> the properties accessed on it;
-            - label_props_map: label (written in the query, or inferred) -> the properties accessed on it.
+            - label_props_map: ``{"node": {label: properties}, "relationship": {type: properties}}``, the node labels
+              and the relationship types (written in the query, or inferred) with the properties accessed on each.
+              A node label and a relationship type with the same name are kept apart.
         """
         return _plain_names(
             self.backend.run(self._extract(query, database_name, strict))
@@ -847,7 +875,8 @@ class PropertiesValidator(_PropertiesValidator):
 
             metadata (list[dict]): The problems found. Each dictionary includes:
 
-            - 'code' (str): ``cypher_guardrail.Warning.InvalidPropertyAccessByLabel`` for a property that its label does not have,
+            - 'code' (str): ``cypher_guardrail.Warning.InvalidPropertyAccess`` for a property that its node label or
+              relationship type does not have (``kind`` says which of the two ``name`` is),
               ``cypher_guardrail.Warning.UnknownPropertyKey`` for a property that exists nowhere in the graph, and, with
               ``check_types=True``, ``cypher_guardrail.Warning.PropertyTypeMismatch`` for a property that the query compares
               with a literal of a type that none of its values has (FalkorDB finds nothing then, and says nothing).

@@ -260,28 +260,34 @@ class TestPropertiesValidatorQueryHelpers:
         assert extract_1hop("MATCH (a:G) RETURN a") == ["(a:G)"]
 
     def test_prepare_query_for_infer_keeps_only_paths_with_unknown_variables(self):
-        paths = prepare_for_infer({"a": "G"}, "MATCH (a)-[r]->(b)-->(c:T) RETURN a")
+        paths = prepare_for_infer(
+            {"a": ("node", "G")}, "MATCH (a)-[r]->(b)-->(c:T) RETURN a"
+        )
         assert paths == ["(a:G)-[r]->(b)", "(b)-[]->(c:T)"]
 
     def test_inline_mapping(self):
         var_label, label_props = inline_mapping(
             "MATCH (g:Goal {code:'1', n:2})-[r:HAS {w:1}]->(t:T|U) RETURN g"
         )
-        assert var_label == {"g": "Goal", "t": "T|U", "r": "HAS"}
+        assert var_label == {
+            "g": ("node", "Goal"),
+            "t": ("node", "T|U"),
+            "r": ("relationship", "HAS"),
+        }
         assert {label: sorted(props) for label, props in label_props.items()} == {
-            "Goal": ["code", "n"],
-            "HAS": ["w"],
+            ("node", "Goal"): ["code", "n"],
+            ("relationship", "HAS"): ["w"],
         }
 
     def test_inline_mapping_ignores_colons_inside_values(self):
         _, label_props = inline_mapping("MATCH (g:Goal {at:'12:30', code:1}) RETURN g")
-        assert sorted(label_props["Goal"]) == ["at", "code"]
+        assert sorted(label_props[("node", "Goal")]) == ["at", "code"]
 
     def test_outside_mapping_splits_known_and_unknown_variables(self):
         label_props, var_props = outside_mapping(
-            {"g": "Goal"}, {}, "RETURN g.code, x.name, 'y.z'"
+            {"g": ("node", "Goal")}, {}, "RETURN g.code, x.name, 'y.z'"
         )
-        assert label_props == {"Goal": ["code"]}
+        assert label_props == {("node", "Goal"): ["code"]}
         assert var_props == {"x": ["name"]}
 
 
