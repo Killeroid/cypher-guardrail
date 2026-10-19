@@ -121,12 +121,21 @@ class TestVariableLength:
             ("[:R*]", "[:R]"),
             ("[:R*3]", "[:R]"),
             ("[:R*2..5]", "[:R]"),
+            ("[:R*3..]", "[:R]"),  # no upper bound
+            ("[:R*..5]", "[:R]"),  # no lower bound
+            ("[:R*..]", "[:R]"),
             ("[:R * 2 .. 5]", "[:R ]"),  # whitespace before the '*' is left alone
             ("[:R]", "[:R]"),
         ],
     )
     def test_removed(self, text, expected):
         assert patterns.VARIABLE_LENGTH.sub("", text) == expected
+
+    @pytest.mark.parametrize(
+        "text", ["[:R*]", "[r:R*3]", "[:R*2..5]", "[:R*3..]", "[:R*..5]", "[:R|S*3..]"]
+    )
+    def test_every_form_of_length_is_read_in_a_relationship(self, text):
+        assert patterns.REL.fullmatch(text)
 
 
 # ----------------------------------------------------------------------------------------------------

@@ -179,12 +179,9 @@ class _SchemaValidator(_modes.ModeInfo):
             metadata (list[dict]): Receives one warning per original path.
         """
         shown = self.__replace_variables_with_empty_string(pattern)
-        # The same path without its arrows, or '' if the path has no direction
-        undirected = (
-            pattern.replace("->", "-").replace("<-", "-")
-            if "->" in pattern or "<-" in pattern
-            else ""
-        )
+        directed = (
+            "->" in pattern or "<-" in pattern
+        )  # a path with no arrow has no other way round
 
         for original in original_paths:
             unknown = _issues.unknown_path(shown, original)
@@ -195,19 +192,28 @@ class _SchemaValidator(_modes.ModeInfo):
                 and (yield from self.__get_path_exists(any_hops, database_name))[0]
             ):
                 metadata.append(_issues.variable_length_path(shown, original, any_hops))
-            elif not undirected:
+            elif not directed:
                 metadata.append(unknown)
-            elif (yield from self.__get_path_exists(undirected, database_name))[0]:
-                # It only exists the other way round
+            else:
                 flipped = _reverse_direction(original)
-                if flipped is None:
-                    metadata.append(unknown)
-                else:
+                # The path with its arrow flipped (labels and types only, as the check above was made). The path
+                # without arrows is not enough: over several hops it can mix directions and exist without the
+                # path existing either way
+                flipped_pattern = _reverse_direction(pattern)
+                if (
+                    flipped is not None
+                    and flipped_pattern is not None
+                    and (
+                        yield from self.__get_path_exists(
+                            flipped_pattern, database_name
+                        )
+                    )[0]
+                ):
+                    # It only exists the other way round
                     metadata.append(
                         _issues.wrong_direction_path(shown, original, flipped)
                     )
-            else:
-                flipped = _reverse_direction(original)
+                    continue
                 flipped_any_hops = _zero_or_more_hops(flipped) if flipped else None
                 if (
                     flipped_any_hops is not None

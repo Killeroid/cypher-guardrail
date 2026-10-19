@@ -4992,7 +4992,7 @@
     [
      "RoQuery",
      "kg",
-     "MATCH (:Goal)-[:HAS_INDICATOR]-(:Indicator) RETURN 1 LIMIT 1",
+     "MATCH (:Goal)<-[:HAS_INDICATOR]-(:Indicator) RETURN 1 LIMIT 1",
      false
     ]
    ],
@@ -6057,7 +6057,7 @@
     [
      "RoQuery",
      "kg",
-     "MATCH (:Goal)-[:HAS_TARGET]-(:Target) RETURN 1 LIMIT 1",
+     "MATCH (:Goal)-[:HAS_TARGET]->(:Target) RETURN 1 LIMIT 1",
      false
     ]
    ],
@@ -6601,7 +6601,7 @@
     [
      "RoQuery",
      "kg",
-     "MATCH (:Target)-[:HAS_TARGET*1..2]-(:Goal) RETURN 1 LIMIT 1",
+     "MATCH (:Target)<-[:HAS_TARGET*1..2]-(:Goal) RETURN 1 LIMIT 1",
      false
     ]
    ],

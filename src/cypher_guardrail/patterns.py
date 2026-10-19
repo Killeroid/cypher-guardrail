@@ -56,10 +56,10 @@ REL_SOURCE = r"""
                 :                                   # Colon separator
                 \s*\w+                              # label
                 (?:\s*\|\s*\w+)*                    # Optional additional '|' separated labels (*-> zero or more)
-                (?:                                 # Optional repetition pattern (*, *X, *X..Y)
+                (?:                                 # Optional repetition pattern (*, *X, *X..Y, *X..)
                     \s*\*                           # Asterisk
                     \s*\d*                          # Optional X
-                    (?:\s*\.\.\s*\d+)?              # Optional ..Y
+                    (?:\s*\.\.\s*\d*)?              # Optional ..Y, or .. for no upper bound
                 )?
                 \s*                                 # Optional whitespace
             # Catches just a variable n
@@ -106,10 +106,10 @@ LABELED_REL_SOURCE = r"""
                 :                                   # Colon separator
                 \s*\w+                              # label
                 (?:\s*\|\s*\w+)*                    # Optional additional '|' separated labels (*-> zero or more)
-                (?:                                 # Optional repetition pattern (*, *X, *X..Y)
+                (?:                                 # Optional repetition pattern (*, *X, *X..Y, *X..)
                     \s*\*                           # Asterisk
                     \s*\d*                          # Optional X
-                    (?:\s*\.\.\s*\d+)?              # Optional ..Y
+                    (?:\s*\.\.\s*\d*)?              # Optional ..Y, or .. for no upper bound
                 )?
                 \s*                                 # Optional whitespace
             )
@@ -211,7 +211,7 @@ def hide_quoted_keys(text):
 
 
 # Variable length in a relationship: `*`, `*3`, `*2..5`
-VARIABLE_LENGTH = re.compile(r"\*\s*+\d*+(?:\s*+\.\.\s*+\d++)?")
+VARIABLE_LENGTH = re.compile(r"\*\s*+\d*+(?:\s*+\.\.\s*+\d*+)?")
 
 # Properties in curly braces. Nested braces are not supported (nor are '}' inside values).
 _PROPERTIES = re.compile(r"\{[^}]*\}")
