@@ -206,6 +206,7 @@ class FalkorDBBackend(_Backend):
             list[dict]: The problems found (dicts with 'code' and 'description'): currently only missing parameters.
 
         Raises:
+            TypeError: If ``parameters`` is a string.
             CypherError: If the database rejects the query.
         """
         return self.run(

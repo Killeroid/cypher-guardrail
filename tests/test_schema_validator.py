@@ -3,7 +3,7 @@
 import pytest
 from support import code_set
 
-from cypher_guardrail import SchemaValidator, Snapshot
+from cypher_guardrail import PropertiesValidator, SchemaValidator, Snapshot
 from cypher_guardrail.backend import (
     UNKNOWN_INDEX,
     UNKNOWN_LABEL,
@@ -645,3 +645,32 @@ def test_a_name_with_nothing_behind_it_is_explained(
         assert score < 1
         assert [i["code"] for i in issues] == ["cypher_guardrail.Warning.UnknownPath"]
     assert online == offline
+
+
+# ----------------------------------------------------------------------------------------------------
+# A `CYPHER a=1 ...` header gives the query its parameters: the validators read the query as if it were not there
+
+HEADED_QUERIES = [
+    "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) RETURN t",
+    "MATCH (g:Ghost)-[:HAS_TARGET]->(t:Target) RETURN t",  # an unknown label
+    "MATCH (t:Target)-[:HAS_TARGET]->(g:Goal) RETURN t",  # the wrong direction
+    "MATCH (g:Goal)-[:HAS_TARGET]->(t) WHERE t.text = $a RETURN t",  # a label to infer
+    "MATCH (g:Goal) WHERE g.zzz = $a RETURN g",  # a property that no label has
+]
+
+
+@pytest.mark.parametrize("header", ["CYPHER a=1 ", "cypher a=1 b='x' "])
+@pytest.mark.parametrize("query", HEADED_QUERIES)
+def test_a_cypher_header_changes_nothing_for_the_schema_and_properties_validators(
+    falkordb_client, db_name, header, query
+):
+    for validator in (
+        SchemaValidator(falkordb_client),
+        PropertiesValidator(falkordb_client),
+    ):
+        assert validator.extract(header + query, db_name) == validator.extract(
+            query, db_name
+        )
+        assert validator.validate(header + query, db_name) == validator.validate(
+            query, db_name
+        )
