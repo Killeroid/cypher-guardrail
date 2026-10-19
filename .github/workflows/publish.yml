@@ -1,4 +1,4 @@
-# Builds and publishes cypher-guardrail to PyPI when a version tag (v0.1.0, v0.2.0rc1, ...) is pushed.
+# Builds and publishes cypher-guardrail to PyPI when a version tag (v1.0.0, v1.1.0rc1, ...) is pushed.
 #
 # Publishing uses PyPI "trusted publishing": no token is stored. Set it up once on PyPI
 # (Account > Publishing, or the project's Publishing page) with:

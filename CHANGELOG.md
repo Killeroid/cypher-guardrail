@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 1.0.0 (2026-10-19)
 
 First release of cypher-guardrail, licensed under Apache 2.0. Requires Python 3.11 or later and a FalkorDB graph (a server, or the embedded FalkorDBLite).
 
@@ -34,5 +34,5 @@ First release of cypher-guardrail, licensed under Apache 2.0. Requires Python 3.
 
 ### Documentation and examples
 
-* The scores and the KG Valid Query check are written out in the README. Longer guides are in `docs/` (`usage.md`, `metadata.md`, `snapshots.md`, `async.md`).
+* The scores and the KG Valid Query check are written out in the README. Longer guides are on [Read the Docs](https://cypher-guardrail.readthedocs.io/en/latest/): usage, reading the metadata, snapshots and async.
 * Runnable examples in `examples/` that need no server (they use FalkorDBLite): a quickstart, offline validation with a snapshot, and async validation.
