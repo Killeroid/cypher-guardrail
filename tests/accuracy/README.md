@@ -9,8 +9,14 @@ precision and recall, and not only compared with what they answered before (that
   (`near_miss`) of the issue it is about. `valid.json`: queries that must report nothing (the KG Valid Query of the README).
 * `harness.py`: how a case is written, run and scored.
 
-Run the tests with `uv run pytest tests/test_accuracy.py`, and print the precision and recall of each issue code with
-`uv run python scripts/accuracy.py`.
+Run the tests with `uv run pytest tests/test_accuracy.py`, and print the precision and recall of each issue code, and of
+each mode, with `uv run python scripts/accuracy.py`.
+
+**Modes.** The schema and properties validators also run offline (from a snapshot of the graph, no database) and hybrid
+(a snapshot and the database); `SyntaxValidator` needs the database, so it only runs online. The labels are the same, minus
+what only `SyntaxValidator` reports. A snapshot never invents an issue, but cannot see them all: a path of two or more hops
+is only a "maybe", so offline the warning about a variable-length path is missed (a `mode_gaps` entry in those cases). Hybrid
+agrees with every label.
 
 **Labels.** They are written from the Cypher and the graph, never from what the library answered. The exception is an
 issue from FalkorDB itself (`SyntaxError`, `ExecutionFailed`): the database is the judge, so those labels are what the
@@ -19,6 +25,11 @@ embedded engine of the tests answers, and belong to its version.
 **Known gaps.** When the library gets a case wrong, the case keeps the true label and is marked `known_gap` with the reason.
 It runs as an expected failure, so it stays in the measure, and the test fails when the library gets it right (the mark is
 then taken out).
+
+**Real queries.** `scripts/false_positives.py` runs the gold queries of Neo4j's text2cypher dataset (downloaded on demand,
+not stored here) through the offline validators and lists what is flagged, grouped. Reading the schema of a row is
+`text2cypher.py`. A flagged query is a candidate, not a verdict: gold queries are sometimes wrong, and on the whole test split
+(4438 rows, 2783 with a schema that is read) every group of findings that was checked was a mistake of the gold query.
 
 **Adding a case.** Put it in the file of its validator, with a unique `id`. Every issue code needs at least three cases that
 report it and three valid look-alikes; `tests/test_accuracy.py` checks that, so a new code cannot be added without cases.
