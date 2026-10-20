@@ -1,10 +1,14 @@
 # Changelog
 
-## 1.2.0 (unreleased)
+## 1.2.0 (2026-10-20)
 
 ### Changed
 
 * **A graph that does not exist is an error, `GraphNotFoundError`, and no longer a misleading answer.** FalkorDB creates a graph with its first write and answers "empty key" to everything until then. `SyntaxValidator` reported `ExecutionFailed` for every query, `SchemaValidator` scored 0 with no issue, and `PropertiesValidator` blamed each label for the properties; all three, online or hybrid, and `is_write`, now raise `GraphNotFoundError`, which names the graph. It is a `CypherError` (what `is_write` raised) and a `ValueError`, and is exported by the package. It comes from the requests the validation made anyway, so none is added: a query that asks nothing about the graph (`RETURN 1`), `extract()` of a query whose labels are in its text, an offline validator and `Snapshot.capture` (an empty snapshot) are as before.
+
+### Internal
+
+* **The code was reorganised, with the same answers.** The validators were split into small functions (none is over 10 in cyclomatic complexity or 60 lines), the package has layers that a test enforces (`import-linter`), and the issue codes are defined in `cypher_guardrail.issues`. Every answer of the validators is the same, to the last digit of a score: the recorded answers of 714 queries, the order of the requests sent to the database, and the labelled accuracy corpus did not change. Nothing public was renamed (`cypher_guardrail.backend` still exports the codes); the private modules and methods were (`__name` methods are `_name`, and `_internal.sources.capture` no longer wraps a driver: see `_internal.capture_driver`).
 
 ## 1.1.1 (2026-10-20)
 
