@@ -50,7 +50,41 @@ testpaths = ["tests"]
 src = ["src"]
 
 [tool.ruff.lint]
-extend-select = ["B", "I", "UP"]
+extend-select = ["ANN", "ARG", "B", "C4", "C90", "I", "PERF", "PIE", "PLR", "PT", "RET", "RUF", "SIM", "TC", "UP"]
+ignore = ["PT018"]  # an assertion with `and` is one claim; splitting it only repeats the message
+
+# Ratchets of the refactoring plan: they stand at the worst function today and only go down (target in each comment).
+[tool.ruff.lint.mccabe]
+max-complexity = 20  # target 10
+
+[tool.ruff.lint.pylint]
+max-branches = 23  # target 12
+max-statements = 53  # target 50
+max-args = 11  # target 5
+max-positional-args = 8  # target 5
+max-returns = 7  # target 6
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "ARG", "PLR0913", "PLR0917", "PLR2004"]
+# The modules that are not typed yet. The list only gets shorter: take a module out when it is fully annotated.
+"src/cypher_guardrail/backend.py" = ["ANN"]
+"src/cypher_guardrail/live.py" = ["ANN"]
+"src/cypher_guardrail/patterns.py" = ["ANN"]
+"src/cypher_guardrail/snapshot.py" = ["ANN"]
+"src/cypher_guardrail/utils.py" = ["ANN"]
+"src/cypher_guardrail/validators/properties_validator.py" = ["ANN"]
+"src/cypher_guardrail/validators/schema_validator.py" = ["ANN"]
+"src/cypher_guardrail/validators/syntax_validator.py" = ["ANN"]
+"src/cypher_guardrail/_internal/core/errors.py" = ["ANN"]
+"src/cypher_guardrail/_internal/core/io.py" = ["ANN"]
+"src/cypher_guardrail/_internal/core/literals.py" = ["ANN"]
+"src/cypher_guardrail/_internal/core/queries.py" = ["ANN"]
+"src/cypher_guardrail/_internal/core/scopes.py" = ["ANN"]
+"src/cypher_guardrail/_internal/core/valuetypes.py" = ["ANN"]
+"src/cypher_guardrail/_internal/sources/capture.py" = ["ANN"]
+"src/cypher_guardrail/_internal/sources/hybrid.py" = ["ANN"]
+"src/cypher_guardrail/_internal/sources/offline.py" = ["ANN"]
+"src/cypher_guardrail/_internal/sources/online.py" = ["ANN"]
 
 [tool.ty.environment]
 python = ".venv"
