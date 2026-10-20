@@ -7,12 +7,12 @@ from cypher_guardrail import patterns
 from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import literals
 from cypher_guardrail._internal.core import queries as _queries
+from cypher_guardrail._internal.core.errors import CypherError
 from cypher_guardrail._internal.core.io import Concurrently, Request
 from cypher_guardrail._internal.core.scopes import restore_variables, separate_variables
 from cypher_guardrail._internal.core.valuetypes import fits
 from cypher_guardrail._internal.sources import hybrid as _modes
 from cypher_guardrail.backend import (
-    CypherError,
     async_snapshotted,
     get_async_backend,
     get_backend,

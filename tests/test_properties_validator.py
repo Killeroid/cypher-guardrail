@@ -4,9 +4,7 @@ import pytest
 from support import code_set
 
 from cypher_guardrail import PropertiesValidator, SchemaValidator, Snapshot
-from cypher_guardrail.backend import (
-    UNKNOWN_PROPERTY,
-)
+from cypher_guardrail.issues import UNKNOWN_PROPERTY
 
 # ----------------------------------------------------------------------------------------------------
 # The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.

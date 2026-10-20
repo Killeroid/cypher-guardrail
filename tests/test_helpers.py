@@ -11,6 +11,9 @@ import regex as re
 from cypher_guardrail import SchemaValidator, patterns
 from cypher_guardrail._internal.core.io import run_sync
 from cypher_guardrail._internal.sources import online as _online
+from cypher_guardrail._internal.sources.online import (
+    identify_variables_and_construct_query,
+)
 from cypher_guardrail.patterns import (
     IndexQuery,
     index_procedure_calls,
@@ -20,7 +23,6 @@ from cypher_guardrail.patterns import (
 )
 from cypher_guardrail.utils import (
     get_paths_after_inference,
-    identify_variables_and_construct_query,
     replace_with_labels,
 )
 from cypher_guardrail.validators import properties_validator, schema_validator

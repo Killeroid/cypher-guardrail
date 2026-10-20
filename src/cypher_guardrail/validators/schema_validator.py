@@ -9,20 +9,18 @@ import regex as re
 from cypher_guardrail import patterns
 from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import queries as _queries
+from cypher_guardrail._internal.core.errors import CypherError
 from cypher_guardrail._internal.core.io import Concurrently, Request
 from cypher_guardrail._internal.core.scopes import restore_variables, separate_variables
 from cypher_guardrail._internal.sources import hybrid as _modes
 from cypher_guardrail.backend import (
-    UNKNOWN_LABEL,
-    UNKNOWN_REL_TYPE,
-    CypherError,
     async_snapshotted,
     get_async_backend,
     get_backend,
     snapshotted,
 )
 from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
-from cypher_guardrail.issues import Issue
+from cypher_guardrail.issues import UNKNOWN_LABEL, UNKNOWN_REL_TYPE, Issue
 from cypher_guardrail.snapshot import SnapshotSource
 from cypher_guardrail.utils import paths_after_inference as infer_paths
 from cypher_guardrail.utils import replace_with_labels

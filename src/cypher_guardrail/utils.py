@@ -7,12 +7,13 @@ import regex as re
 
 from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail._internal.core.io import Concurrently, Lookup, Request
-from cypher_guardrail._internal.sources.online import (
-    identify_variables_and_construct_query,  # noqa: F401
-)
+from cypher_guardrail._internal.deprecated import moved
 from cypher_guardrail.backend import get_async_backend, get_backend
 from cypher_guardrail.drivers import AsyncDriver, Driver
 from cypher_guardrail.issues import WRITE_QUERY_ERROR
+
+# It was importable from here: it builds the query of the inference, and is not public
+__getattr__ = moved(__name__, {"identify_variables_and_construct_query": None})
 
 
 def get_paths_after_inference(

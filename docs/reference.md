@@ -43,6 +43,7 @@ Each validator has an async twin for the `falkordb.asyncio` client, with the sam
 ## Errors
 
 ```{eval-rst}
+.. autoexception:: cypher_guardrail.CypherError
 .. autoexception:: cypher_guardrail.GraphNotFoundError
 ```
 

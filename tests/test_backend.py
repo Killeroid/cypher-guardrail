@@ -1,19 +1,22 @@
 """The backend: running queries, EXPLAIN, schema lookups, index lookups and the mapping of errors, on FalkorDB."""
 
+import importlib
+
 import falkordb
 import pytest
 from support import code_set
 
+import cypher_guardrail
+from cypher_guardrail import CypherError, issues
 from cypher_guardrail._internal.core import queries as _queries
-from cypher_guardrail.backend import (
+from cypher_guardrail._internal.sources import online as _online
+from cypher_guardrail.backend import FalkorDBBackend, get_backend
+from cypher_guardrail.issues import (
     PARAMETER_NOT_PROVIDED,
     SYNTAX_ERROR,
     UNKNOWN_LABEL,
     UNKNOWN_PROPERTY,
     UNKNOWN_REL_TYPE,
-    CypherError,
-    FalkorDBBackend,
-    get_backend,
 )
 from cypher_guardrail.utils import is_write, is_write_async
 
@@ -424,3 +427,32 @@ def test_is_write_async(run_async, scratch):
 
     with pytest.raises(CypherError):
         run_async(reject)
+
+
+# ----------------------------------------------------------------------------------------------------
+# What used to be importable from ``cypher_guardrail.backend`` and ``cypher_guardrail.utils``
+
+
+@pytest.mark.parametrize(
+    ("module", "name", "home"),
+    [
+        ("cypher_guardrail.backend", "CypherError", cypher_guardrail),
+        ("cypher_guardrail.backend", "SYNTAX_ERROR", issues),
+        ("cypher_guardrail.backend", "UNKNOWN_REL_TYPE", issues),
+        (
+            "cypher_guardrail.utils",
+            "identify_variables_and_construct_query",
+            _online,
+        ),
+    ],
+)
+def test_a_name_that_moved_still_imports_with_a_deprecation_warning(module, name, home):
+    with pytest.warns(DeprecationWarning, match=rf"{name} is deprecated.*2\.0"):
+        found = getattr(importlib.import_module(module), name)
+
+    assert found is getattr(home, name)
+
+
+def test_a_name_that_never_existed_is_still_an_attribute_error():
+    with pytest.raises(AttributeError, match="no attribute 'nope'"):
+        _ = importlib.import_module("cypher_guardrail.backend").nope

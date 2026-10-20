@@ -24,21 +24,28 @@ from falkordb.asyncio.graph import AsyncGraph
 
 from cypher_guardrail._internal.core import io as _io
 from cypher_guardrail._internal.core import queries as _queries
-
-# The codes and CypherError are part of this module's API, though they are defined in cypher_guardrail._internal.core.errors
-from cypher_guardrail._internal.core.errors import CypherError  # noqa: F401
+from cypher_guardrail._internal.deprecated import moved
 from cypher_guardrail._internal.sources import hybrid as _modes
-from cypher_guardrail.issues import (  # noqa: F401
-    ARITHMETIC_ERROR,
-    EXECUTION_FAILED,
-    PARAMETER_NOT_PROVIDED,
-    SYNTAX_ERROR,
-    UNKNOWN_INDEX,
-    UNKNOWN_LABEL,
-    UNKNOWN_PROPERTY,
-    UNKNOWN_REL_TYPE,
-)
 from cypher_guardrail.snapshot import SnapshotSource
+
+# The codes and CypherError were importable from here: they are in cypher_guardrail.issues and cypher_guardrail
+__getattr__ = moved(
+    __name__,
+    {"CypherError": "cypher_guardrail"}
+    | dict.fromkeys(
+        (
+            "ARITHMETIC_ERROR",
+            "EXECUTION_FAILED",
+            "PARAMETER_NOT_PROVIDED",
+            "SYNTAX_ERROR",
+            "UNKNOWN_INDEX",
+            "UNKNOWN_LABEL",
+            "UNKNOWN_PROPERTY",
+            "UNKNOWN_REL_TYPE",
+        ),
+        "cypher_guardrail.issues",
+    ),
+)
 
 
 def snapshotted(method):

@@ -8,13 +8,13 @@ from cypher_guardrail import (
     AsyncPropertiesValidator,
     AsyncSchemaValidator,
     AsyncSyntaxValidator,
+    CypherError,
     GraphNotFoundError,
     PropertiesValidator,
     SchemaValidator,
     Snapshot,
     SyntaxValidator,
 )
-from cypher_guardrail.backend import CypherError
 from cypher_guardrail.utils import is_write, is_write_async
 
 GHOST = "graph_that_does_not_exist"

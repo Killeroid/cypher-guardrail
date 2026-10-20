@@ -14,11 +14,12 @@ from cypher_guardrail import (
     AsyncPropertiesValidator,
     AsyncSchemaValidator,
     AsyncSyntaxValidator,
+    CypherError,
     PropertiesValidator,
     SchemaValidator,
     SyntaxValidator,
 )
-from cypher_guardrail.backend import AsyncFalkorDBBackend, CypherError, FalkorDBBackend
+from cypher_guardrail.backend import AsyncFalkorDBBackend, FalkorDBBackend
 from cypher_guardrail.utils import (
     get_paths_after_inference,
     get_paths_after_inference_async,

@@ -6,7 +6,7 @@ try:
 except PackageNotFoundError:
     __version__ = "unknown"
 
-from cypher_guardrail._internal.core.errors import GraphNotFoundError
+from cypher_guardrail._internal.core.errors import CypherError, GraphNotFoundError
 from cypher_guardrail.live import AsyncLiveSnapshot, LiveSnapshot, StaleSnapshotError
 from cypher_guardrail.snapshot import Snapshot, SnapshotSource
 from cypher_guardrail.validators.properties_validator import (
@@ -27,6 +27,7 @@ __all__ = [
     "AsyncPropertiesValidator",
     "AsyncSchemaValidator",
     "AsyncSyntaxValidator",
+    "CypherError",
     "GraphNotFoundError",
     "LiveSnapshot",
     "PropertiesValidator",

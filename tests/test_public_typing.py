@@ -9,14 +9,13 @@ import pytest
 
 import cypher_guardrail
 from cypher_guardrail import utils
-from cypher_guardrail.backend import CypherError
 
 DUNDERS = {"__init__", "__enter__", "__exit__", "__aenter__", "__aexit__"}
 
 
 def _callables():
-    for name in [*cypher_guardrail.__all__, "CypherError"]:
-        exported = getattr(cypher_guardrail, name, None) or CypherError
+    for name in cypher_guardrail.__all__:
+        exported = getattr(cypher_guardrail, name)
         if not inspect.isclass(exported):
             continue
         for member, value in inspect.getmembers(exported):

@@ -19,7 +19,6 @@ from cypher_guardrail import (
     PropertiesValidator,
     SchemaValidator,
     SyntaxValidator,
-    backend,
     issues,
 )
 from cypher_guardrail.issues import (
@@ -348,17 +347,17 @@ def test_the_import_name_is_the_module_name_in_pyproject():
 
 def test_the_codes_of_cypher_guardrail_share_one_namespace():
     ours = [
-        backend.UNKNOWN_LABEL,
-        backend.UNKNOWN_REL_TYPE,
-        backend.UNKNOWN_PROPERTY,
-        backend.UNKNOWN_INDEX,
-        backend.PARAMETER_NOT_PROVIDED,
-        backend.ARITHMETIC_ERROR,
+        issues.UNKNOWN_LABEL,
+        issues.UNKNOWN_REL_TYPE,
+        issues.UNKNOWN_PROPERTY,
+        issues.UNKNOWN_INDEX,
+        issues.PARAMETER_NOT_PROVIDED,
+        issues.ARITHMETIC_ERROR,
     ]
     assert all(code.startswith("cypher_guardrail.") for code in ours)
     # the errors of the database keep the database's name
-    assert backend.SYNTAX_ERROR.startswith("FalkorDB.")
-    assert backend.EXECUTION_FAILED.startswith("FalkorDB.")
+    assert issues.SYNTAX_ERROR.startswith("FalkorDB.")
+    assert issues.EXECUTION_FAILED.startswith("FalkorDB.")
 
 
 def test_the_old_name_is_gone():
