@@ -8,6 +8,7 @@ types lookup included).
 import asyncio
 import dataclasses
 import threading
+from types import SimpleNamespace
 
 import pytest
 from redis.exceptions import ResponseError
@@ -1077,3 +1078,21 @@ def test_a_property_is_not_called_typeless_because_the_database_failed():
         )
 
     assert raised.value is TIMED_OUT
+
+
+def test_the_question_whether_a_query_can_write_stops_a_read_query_after_a_millisecond():
+    # FalkorDB takes `EXPLAIN` in a read-only request for part of the query, and runs it: a write is refused before
+    # that, a read query is stopped by the timeout
+    command = _io._explain_command(
+        SimpleNamespace(name="g"),
+        _io.Explain("g", "MATCH (n) RETURN n", read_only=True),
+    )
+
+    assert command == (
+        "GRAPH.RO_QUERY",
+        "g",
+        "EXPLAIN MATCH (n) RETURN n",
+        "TIMEOUT",
+        _io.READ_ONLY_EXPLAIN_TIMEOUT_MS,
+    )
+    assert _io.READ_ONLY_EXPLAIN_TIMEOUT_MS == 1

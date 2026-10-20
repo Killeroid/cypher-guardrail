@@ -3,7 +3,8 @@
 FalkorDB has some peculiarities that cypher-guardrail compensates for here, so the validators can stay simple:
 
 * ``database_name`` is the **graph name**. It may be omitted when a ``falkordb.Graph`` was supplied.
-* ``EXPLAIN`` is a separate command (``GRAPH.EXPLAIN``); sending ``EXPLAIN ...`` as a query would execute it.
+* ``EXPLAIN`` is a separate command (``GRAPH.EXPLAIN``); sending ``EXPLAIN ...`` as a query would execute it (only to ask
+  whether a query can write, a read query is sent so, with a timeout of a millisecond).
 * FalkorDB sends no notifications, so unknown label / relationship type / property warnings and missing
   parameters are derived from the graph schema and the query text.
 * Queries are run with ``GRAPH.RO_QUERY``, so a validator can never modify the graph.

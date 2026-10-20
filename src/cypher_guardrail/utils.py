@@ -56,8 +56,8 @@ async def get_paths_after_inference_async(
 
 def is_write(driver: Driver, query: str, database_name: str | None = None) -> bool:
     """Whether ``query`` can modify the graph: it creates, changes or deletes data, or an index, or calls a procedure
-    that writes. The database decides (it refuses such a query in a read-only request), and the query is not run:
-    it is only explained. This is the check that ``SyntaxValidator`` makes (``read_only``), on its own. (No data is
+    that writes. The database decides (it refuses such a query in a read-only request, in which a query that only reads is
+    run for a millisecond at most). This is the check that ``SyntaxValidator`` makes (``read_only``), on its own. (No data is
     written, but FalkorDB registers the names that a ``MERGE`` mentions when it explains it: a property key it did not
     have is then in the graph's list of keys.)
 

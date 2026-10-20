@@ -76,7 +76,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
             read_only (bool): Whether the queries may only read (default: True). A query that can modify the graph
                 (CREATE, MERGE, SET, DELETE, REMOVE, an index, a procedure that writes) is then an error
                 (``WRITE_QUERY_ERROR``); with False it is only a warning (``WRITE_QUERY_WARNING``) and the query is
-                still valid. The query is never executed.
+                still valid. A query that only reads is run for a millisecond at most, to ask the database.
             snapshot (Snapshot | None): A snapshot of the graph, which answers the lookups it can answer for sure
                 (the database is still asked to check the syntax). This is the hybrid mode.
             verify (str | None): Hybrid mode: ``"misses"`` (the default) asks the database before reporting a thing

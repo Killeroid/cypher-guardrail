@@ -211,7 +211,7 @@ def explain(
     Args:
         read_only: None does not look for writes. True or False does, and reports a query that can modify the
             graph as an error (True) or as a warning (False). FalkorDB decides what can write: it refuses such
-            a query in ``GRAPH.RO_QUERY``, and ``EXPLAIN`` there still executes nothing.
+            a query in ``GRAPH.RO_QUERY``, in which a read query is stopped after a millisecond (see ``io``).
         parameters: The names of the parameters the caller will send with the query (a dict of them will do), which
             are not reported as missing. The ones a ``CYPHER`` header gives are not either.
 

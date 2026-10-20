@@ -1,7 +1,7 @@
 # cypher-guardrail
 
 Syntax, schema and property-access validation of Cypher queries against a [FalkorDB](https://www.falkordb.com/) graph.
-It checks a query before it runs and never executes it or changes your data.
+It checks a query before it runs and never changes your data. It does not run your query either, apart from one request (see [How validation works](usage.md#how-validation-works-on-falkordb)).
 
 ```{toctree}
 :maxdepth: 2

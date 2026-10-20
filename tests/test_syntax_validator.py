@@ -8,6 +8,7 @@ import copy
 import os
 import subprocess
 import sys
+import time
 from typing import cast
 
 import pytest
@@ -28,6 +29,7 @@ from cypher_guardrail.issues import (
     WRITE_QUERY_WARNING,
     ConflictingVariablesIssue,
 )
+from cypher_guardrail.utils import is_write
 
 # ----------------------------------------------------------------------------------------------------
 # The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
@@ -889,3 +891,48 @@ def test_the_conflict_is_reported_under_the_name_the_query_gives(falkordb_client
     assert [i["variables"] for i in conflicts(metadata)] == [
         {"n": ["Goal", "Target", "Indicator"]}
     ]
+
+
+# ----------------------------------------------------------------------------------------------------
+# A query that only reads is not run to ask whether it can write
+
+
+@pytest.fixture
+def heavy_graph(falkordb_client):
+    graph = falkordb_client.select_graph("heavy_read")
+    graph.query("UNWIND range(1, 3000) AS i CREATE (:P {i: i})")
+    yield "heavy_read"
+    graph.delete()
+
+
+HEAVY = "MATCH (a:P), (b:P), (c:P) WHERE a.i + b.i + c.i = -1 RETURN count(*)"
+
+
+def test_a_query_that_would_run_for_a_minute_is_validated_in_a_moment(
+    falkordb_client, heavy_graph
+):
+    # FalkorDB runs a read query that is sent as `EXPLAIN ...` in a read-only request: it took a minute here
+    started = time.monotonic()
+
+    valid, metadata = SyntaxValidator(falkordb_client).validate(HEAVY, heavy_graph)
+
+    assert (valid, metadata) == (True, [])
+    assert time.monotonic() - started < 10
+
+
+def test_is_write_does_not_run_the_query_either(falkordb_client, heavy_graph):
+    started = time.monotonic()
+
+    assert is_write(falkordb_client, HEAVY, heavy_graph) is False
+    assert time.monotonic() - started < 10
+
+
+def test_a_heavy_query_that_writes_is_still_refused_as_a_write(
+    falkordb_client, heavy_graph
+):
+    query = HEAVY.replace("RETURN count(*)", "CREATE (:Z) RETURN count(*)")
+
+    valid, metadata = SyntaxValidator(falkordb_client).validate(query, heavy_graph)
+
+    assert valid is False
+    assert [i["code"] for i in metadata] == [WRITE_QUERY_ERROR]

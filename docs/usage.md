@@ -33,7 +33,7 @@ driver = FalkorDB("/path/to/graph.db")
 
 ### How validation works on FalkorDB
 
-* Validation never executes or modifies your data: queries are checked with `GRAPH.EXPLAIN` and everything else runs read-only (`GRAPH.RO_QUERY`). One FalkorDB quirk touches the graph's schema, though, see the last bullet.
+* Validation never modifies your data, and does not run your query: it is checked with `GRAPH.EXPLAIN`, and everything else runs read-only (`GRAPH.RO_QUERY`). The one exception is the question "can this query write?" (`SyntaxValidator` with `read_only`, and `is_write`): FalkorDB answers it only in a read-only request that takes the query for a query, so a query that only reads is *started* and stopped after a millisecond (`TIMEOUT 1`), and a query that writes is refused before anything runs. One FalkorDB quirk touches the graph's schema, though, see the last bullet.
 * FalkorDB sends no warnings of its own, so cypher-guardrail derives the *unknown label / relationship type / property* warnings from the graph schema, and detects missing `$parameters` from the query text.
 * Cypher that FalkorDB cannot parse, such as `(n:!Label)`, `[:A&B]` or `(n:A|B)`, is reported as a syntax error by `SyntaxValidator`.
 * **On older FalkorDB versions, a write with properties can make a property name look known.** Up to FalkorDB 4.18.8, which includes the 4.18.3 engine that FalkorDBLite 0.10.0 bundles, `CREATE (:X {p: 1})` and `MERGE (:X {p: 1})` register `p` in `db.propertyKeys()` as soon as the query is planned, even for `GRAPH.EXPLAIN` and for a `GRAPH.RO_QUERY` that is then refused (no node, relationship, label or index is created, and `SET n.p = 1` and reads never did this). `SyntaxValidator` checks every query with `EXPLAIN`, and with `read_only` it also hands the query to `RO_QUERY`, so validating such a write registers `p`. Afterwards `cypher_guardrail.Warning.UnknownPropertyKey` no longer fires for `p`, and a `Snapshot` captured later lists it. The effect is on that warning only (a property that no node with the label has is still reported by `cypher_guardrail.Warning.InvalidPropertyAccessByLabel`, which looks at the data). FalkorDB fixed it in 4.18.9 and 4.20.0: the names are now registered only when a write really runs. On an older engine, validate against a copy of the graph if you need the list of property names to stay exactly as your data has it.
@@ -71,7 +71,7 @@ SyntaxValidator(driver, read_only=False).validate(
 # (True, [{'code': 'cypher_guardrail.Warning.WriteQuery', 'description': '...'}])
 ```
 
-FalkorDB decides what can write, so a word inside a string (`WHERE n.title = 'DELETE me'`) is not mistaken for a write, and the query is never executed. The `AsyncSyntaxValidator` takes the same `read_only`. The other validators do not look at writes.
+FalkorDB decides what can write, so a word inside a string (`WHERE n.title = 'DELETE me'`) is not mistaken for a write, and the query is run for a millisecond at most (see above). The `AsyncSyntaxValidator` takes the same `read_only`. The other validators do not look at writes.
 
 To ask only that, without a validator, use `is_write` (and `is_write_async` for an async client):
 
@@ -82,7 +82,7 @@ is_write(driver, "MATCH (n:Goal) SET n.done = true", "kg")  # True
 is_write(driver, "MATCH (n:Goal) RETURN n", "kg")  # False
 ```
 
-It asks the database the same question (`EXPLAIN` in a read-only request, so the query is never run) and raises `CypherError` if the database rejects the query, because a query that cannot be read is not one known to be safe. No data is written, but FalkorDB registers the names that a `MERGE` mentions when it explains it, so a property key the graph did not have is in its list of keys afterwards (`SyntaxValidator` with `read_only` has the same effect).
+It asks the database the same question (`EXPLAIN` in a read-only request, which runs a query that only reads for a millisecond at most) and raises `CypherError` if the database rejects the query, because a query that cannot be read is not one known to be safe. No data is written, but FalkorDB registers the names that a `MERGE` mentions when it explains it, so a property key the graph did not have is in its list of keys afterwards (`SyntaxValidator` with `read_only` has the same effect).
 
 ### Parameterized queries
 

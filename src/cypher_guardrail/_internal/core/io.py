@@ -13,8 +13,10 @@ Requests are:
 
 * :class:`RoQuery`: ``GRAPH.RO_QUERY``. The answer is falkordb's ``QueryResult``.
 * :class:`Explain`: ``GRAPH.EXPLAIN``. The answer is ``None``: it only matters that the database accepts the query.
-  With ``read_only`` it is ``GRAPH.RO_QUERY "EXPLAIN ..."`` instead: still nothing is executed, but the database
-  also refuses a query that can write (a ``CypherError`` with the code ``NOT_READ_ONLY``).
+  With ``read_only`` it is ``GRAPH.RO_QUERY "EXPLAIN ..." TIMEOUT 1`` instead: the database refuses a query that can
+  write (a ``CypherError`` with the code ``NOT_READ_ONLY``) before running anything, and FalkorDB would *run* a read
+  query in it, so that is stopped after a millisecond (a timeout is not an answer about writes: the plain
+  ``EXPLAIN`` is then asked).
 * :class:`ListUdfs`: ``GRAPH.UDF LIST``. The answer is the raw reply (``_internal.core.udfs`` reads it).
 * :class:`Lookup`: a question about the graph ("does this path exist?", "which of these labels are unknown?"),
   not a query. The driver is given a *resolver*, a function that takes the lookup and returns a logic generator
@@ -155,6 +157,11 @@ def _answers_kept_for(transport):
 
 
 # ------------------------------------------------------------------------ transports
+READ_ONLY_EXPLAIN_TIMEOUT_MS = (
+    1  # how long a read query may run in the request that asks whether it can write
+)
+
+
 def _explain_command(graph, request):
     """The raw command that answers an :class:`Explain`, as the arguments of ``execute_command``.
 
@@ -162,7 +169,10 @@ def _explain_command(graph, request):
     commands (CREATE INDEX, DROP INDEX, ...) with a plain string instead.
     """
     if request.read_only:
-        return "GRAPH.RO_QUERY", graph.name, f"EXPLAIN {request.query}"
+        # FalkorDB takes `EXPLAIN` inside a query for part of the query and *runs* a read query. A write is refused
+        # before anything runs, which is the answer wanted, so a read query is stopped after a millisecond.
+        timeout = ("TIMEOUT", READ_ONLY_EXPLAIN_TIMEOUT_MS)
+        return "GRAPH.RO_QUERY", graph.name, f"EXPLAIN {request.query}", *timeout
     return "GRAPH.EXPLAIN", graph.name, request.query
 
 
