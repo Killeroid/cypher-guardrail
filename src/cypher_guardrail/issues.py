@@ -23,6 +23,7 @@ UNKNOWN_REL_TYPE: Final = "cypher_guardrail.Warning.UnknownRelationshipType"
 UNKNOWN_PROPERTY: Final = "cypher_guardrail.Warning.UnknownPropertyKey"
 PARAMETER_NOT_PROVIDED: Final = "cypher_guardrail.Warning.ParameterNotProvided"
 UNKNOWN_INDEX: Final = "cypher_guardrail.Warning.UnknownIndex"
+UNKNOWN_FUNCTION: Final = "cypher_guardrail.Warning.UnknownFunction"
 # Errors raised by FalkorDB itself
 SYNTAX_ERROR: Final = "FalkorDB.ClientError.Statement.SyntaxError"
 EXECUTION_FAILED: Final = "FalkorDB.DatabaseError.Statement.ExecutionFailed"
@@ -126,6 +127,19 @@ class UnknownIndexIssue(TypedDict):
     attribute: str | None
 
 
+class UnknownFunctionIssue(TypedDict):
+    """A function with a dotted name (``library.function``) is called but the FalkorDB instance has no such
+    user-defined function.
+
+    ``name`` is the name as the query writes it (without spaces or back-quotes). User-defined functions belong to the
+    instance, not to the graph. FalkorDB refuses the query when it runs (``Unknown function``).
+    """
+
+    code: Literal["cypher_guardrail.Warning.UnknownFunction"]
+    description: str
+    name: str
+
+
 class ConflictingVariablesIssue(TypedDict):
     """Variables that are given labels that do not occur together on a node of the graph.
 
@@ -215,6 +229,7 @@ Issue = (
     | PropertyTypeMismatchIssue
     | ParameterNotProvidedIssue
     | UnknownIndexIssue
+    | UnknownFunctionIssue
     | ConflictingVariablesIssue
     | UnknownPathIssue
     | VariableLengthPathIssue

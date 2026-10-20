@@ -8,6 +8,7 @@ import regex as re
 
 from cypher_guardrail import patterns
 from cypher_guardrail._internal.core import builders as _issues
+from cypher_guardrail._internal.core import functions
 from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail._internal.core.errors import CypherError
 from cypher_guardrail._internal.core.io import Concurrently, Request
@@ -550,6 +551,7 @@ class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
         }
         # The label of an index query procedure exists, but does an index back the call?
         indexed = yield from self._index_share(query, database_name, issues)
+        yield from self._unknown_functions(query, database_name, issues)
 
         # The score: the average of the shares of the nodes, relationships and paths that exist (1 when the query has
         # none of them: a query such as MATCH (n))
@@ -557,6 +559,19 @@ class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
             shares["relationships"], shares["nodes"], shares["paths"], indexed
         )
         return score, list(issues.values())
+
+    def _unknown_functions(
+        self, query, database_name, issues
+    ) -> Generator[Request, Any, None]:
+        """Add to ``issues`` the functions with a dotted name (``library.function``) that the query calls and the
+        instance does not have. They do not change the score."""
+        names = functions.called(query)
+        if not names:
+            return
+        graph = self.backend.graph_name(database_name)
+        for name in (yield from _queries.missing_functions(graph, tuple(names))):
+            issue = _issues.unknown_function(name)
+            issues[(issue["code"], issue["description"])] = issue
 
     def _index_share(
         self, query, database_name, issues

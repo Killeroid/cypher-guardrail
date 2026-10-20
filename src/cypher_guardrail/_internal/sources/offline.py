@@ -272,6 +272,7 @@ class SnapshotResolver:
         self._answers = {
             "missing_names": self._missing_names,
             "index_exists": self._index_exists,
+            "functions_missing": self._functions_missing,
             "path_exists": self._path_exists,
             "property_exists": self._property_exists,
             "property_types": self._property_types,
@@ -325,6 +326,15 @@ class SnapshotResolver:
             for index_label, index_entity, attributes in self.snapshot.indexes
         )
         return Resolution(exists, miss=not exists)
+
+    def _functions_missing(self, names: tuple[str, ...]) -> Resolution:
+        if self.snapshot.udfs is None:
+            # the snapshot never asked for the functions of the instance: it cannot say (the database can)
+            return Resolution((), reliable=False)
+        missing = tuple(
+            name for name in names if name not in self.snapshot.function_names
+        )
+        return Resolution(missing, miss=bool(missing))
 
     def _multilabels(self) -> Resolution:
         return Resolution(

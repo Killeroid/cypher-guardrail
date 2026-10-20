@@ -8,9 +8,8 @@ from collections.abc import Generator
 from typing import Any
 
 from cypher_guardrail import snapshot
-from cypher_guardrail._internal.core import udfs
 from cypher_guardrail._internal.core.errors import CypherError, is_missing_graph
-from cypher_guardrail._internal.core.io import Concurrently, ListUdfs, Request
+from cypher_guardrail._internal.core.io import Concurrently, Request
 from cypher_guardrail._internal.core.queries import execute
 from cypher_guardrail._internal.sources import online as _online
 
@@ -137,22 +136,6 @@ def _sample_scans(graph: str, labels, types, sample: int | None) -> tuple[tuple,
     return label_sets, edges
 
 
-def _udfs(graph: str, wanted: bool) -> Generator[Request, Any, udfs.Libraries | None]:
-    """The user-defined functions of the instance: None when they were not asked for, or when the server has no list of them.
-
-    They are not part of ``graph``: the graph only says which connection to ask on.
-    """
-    if not wanted:
-        return None
-    try:
-        reply = yield ListUdfs(graph)
-    except CypherError as error:
-        if udfs.is_unsupported(error):
-            return None
-        raise
-    return udfs.parse_list(reply)
-
-
 def scan_graph(
     graph: str, sample: int | None, with_types: bool = False, with_udfs: bool = True
 ) -> Generator[Request, Any, dict]:
@@ -161,7 +144,7 @@ def scan_graph(
         (
             _names(graph),
             _online.indexes(graph),
-            _udfs(graph, with_udfs),
+            _online.listed_udfs(graph, with_udfs),
             *_whole_graph_scans(graph, sample),
         )
     )
@@ -232,7 +215,7 @@ def fingerprint_logic(
         (
             _names(graph),
             _online.indexes(graph),
-            _udfs(graph, with_udfs),
+            _online.listed_udfs(graph, with_udfs),
             _scan(graph, "MATCH (n) RETURN count(n) AS c"),
             _scan(graph, "MATCH ()-[r]->() RETURN count(r) AS c"),
         )

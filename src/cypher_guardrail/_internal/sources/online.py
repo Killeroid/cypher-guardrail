@@ -14,8 +14,10 @@ from typing import Any
 import pandas as pd
 import regex as re
 
+from cypher_guardrail._internal.core import udfs
 from cypher_guardrail._internal.core.errors import CypherError, is_missing_graph
 from cypher_guardrail._internal.core.io import (
+    ListUdfs,
     Lookup,
     Recall,
     Remember,
@@ -102,6 +104,35 @@ def index_exists(
         )
         for index_label, index_entity, types in graph_indexes
     )
+
+
+def listed_udfs(
+    graph: str, wanted: bool = True
+) -> Generator[Request, Any, udfs.Libraries | None]:
+    """The user-defined functions of the instance: None when they were not asked for, or when the server has no list of them.
+
+    They are not part of ``graph``: the graph only says which connection to ask on.
+    """
+    if not wanted:
+        return None
+    try:
+        reply = yield ListUdfs(graph)
+    except CypherError as error:
+        if udfs.is_unsupported(error):
+            return None
+        raise
+    return udfs.parse_list(reply)
+
+
+def functions_missing(
+    graph: str, names: tuple[str, ...]
+) -> Generator[Request, Any, tuple[str, ...]]:
+    """The functions ``library.function`` that the instance does not have (see ``_queries.missing_functions``)."""
+    libraries = yield from listed_udfs(graph)
+    if libraries is None:  # it cannot say: nothing is reported
+        return ()
+    known = {f"{library}.{name}" for library, names_ in libraries for name in names_}
+    return tuple(name for name in names if name not in known)
 
 
 def path_exists(graph: str, path: str) -> Generator[Request, Any, bool]:
@@ -214,6 +245,7 @@ def label_combinations(
 _RESOLVERS = {
     "missing_names": missing_names,
     "index_exists": index_exists,
+    "functions_missing": functions_missing,
     "path_exists": path_exists,
     "property_exists": property_exists,
     "property_types": property_types,

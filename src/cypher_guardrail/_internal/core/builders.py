@@ -11,6 +11,7 @@ from cypher_guardrail.issues import (
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
+    UNKNOWN_FUNCTION,
     UNKNOWN_INDEX,
     UNKNOWN_LABEL,
     UNKNOWN_PATH,
@@ -26,6 +27,7 @@ from cypher_guardrail.issues import (
     InvalidPropertyAccessIssue,
     ParameterNotProvidedIssue,
     PropertyTypeMismatchIssue,
+    UnknownFunctionIssue,
     UnknownIndexIssue,
     UnknownLabelIssue,
     UnknownPathIssue,
@@ -148,6 +150,17 @@ def unknown_index(
         "on": "nodes" if on == "nodes" else "relationships",
         "label": label,
         "attribute": attribute,
+    }
+
+
+def unknown_function(name: str) -> UnknownFunctionIssue:
+    """``name`` is ``library.function``."""
+    return {
+        "code": UNKNOWN_FUNCTION,
+        "description": f"The query calls the function {name}, but the FalkorDB instance has no such built-in or "
+        "user-defined function (user-defined functions belong to the instance, not to the graph). FalkorDB refuses "
+        "the query when it runs: Unknown function.",
+        "name": name,
     }
 
 

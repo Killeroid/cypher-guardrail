@@ -159,6 +159,17 @@ def index_exists(
     return (yield Lookup("index_exists", graph, (kind, on, label, attribute)))
 
 
+def missing_functions(
+    graph: str, names: tuple[str, ...]
+) -> Generator[Request, Any, tuple[str, ...]]:
+    """Which of the functions ``library.function`` the FalkorDB instance does not have as user-defined functions.
+
+    They belong to the instance, not to the graph: ``graph`` says which connection to ask on. An instance that cannot
+    list its functions (an older FalkorDB) is taken to have them all.
+    """
+    return (yield Lookup("functions_missing", graph, (names,)))
+
+
 def execute(graph: str, query: str) -> Generator[Request, Any, list[dict]]:
     """Run a read query and return one dict per row, keyed by column name.
 

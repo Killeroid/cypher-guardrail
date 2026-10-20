@@ -13,7 +13,7 @@ from cypher_guardrail import CypherError, LiveSnapshot, Snapshot
 from cypher_guardrail._internal.capture_driver import fingerprint
 from cypher_guardrail._internal.core import udfs
 from cypher_guardrail._internal.core.io import ListUdfs, run_sync
-from cypher_guardrail._internal.sources.capture import _udfs
+from cypher_guardrail._internal.sources.online import listed_udfs
 
 CODE = (
     "function boost(x) { return x * 2; }\n"
@@ -116,7 +116,7 @@ class Server:
 
 
 def ask(server, wanted=True):
-    return run_sync(_udfs("g", wanted), server)
+    return run_sync(listed_udfs("g", wanted), server)
 
 
 def test_the_functions_of_the_instance_are_asked_once():

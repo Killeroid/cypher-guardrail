@@ -29,6 +29,7 @@ from cypher_guardrail.issues import (
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
     SYNTAX_ERROR,
+    UNKNOWN_FUNCTION,
     UNKNOWN_INDEX,
     UNKNOWN_LABEL,
     UNKNOWN_PATH,
@@ -116,6 +117,13 @@ CASES: dict[str, tuple[str, str, str, str, dict[str, Any]]] = {
         "CALL db.idx.vector.queryNodes('Doc', 'nope', 3, vecf32([1.0, 2.0])) YIELD node RETURN node",
         UNKNOWN_INDEX,
         {"index": "vector", "on": "nodes", "label": "Doc", "attribute": "nope"},
+    ),
+    "unknown function": (
+        "schema",
+        "kg",
+        "RETURN nolib.f(2)",
+        UNKNOWN_FUNCTION,
+        {"name": "nolib.f"},
     ),
     "conflicting variable": (
         "syntax",
@@ -251,6 +259,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         PARAMETER_NOT_PROVIDED,
         PROPERTY_TYPE_MISMATCH,
         SYNTAX_ERROR,
+        UNKNOWN_FUNCTION,
         UNKNOWN_INDEX,
         UNKNOWN_LABEL,
         UNKNOWN_PATH,
@@ -266,7 +275,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         typing.get_args(typing.get_type_hints(issues.DatabaseErrorIssue)["code"])
     )
     assert declared == constants
-    assert len(constants) == 17
+    assert len(constants) == 18
 
 
 def test_different_issues_of_one_code_are_all_reported(graphs):
