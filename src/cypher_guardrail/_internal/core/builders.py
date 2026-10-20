@@ -8,6 +8,7 @@ from typing import Literal, cast
 
 from cypher_guardrail._internal.core.errors import failure_field
 from cypher_guardrail.issues import (
+    AGGREGATE_TYPE_MISMATCH,
     CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
     INVALID_LIMIT_ERROR,
@@ -29,6 +30,7 @@ from cypher_guardrail.issues import (
     WRITE_QUERY_WARNING,
     WRONG_DIRECTION_PATH,
     WRONG_DIRECTION_VARIABLE_LENGTH_PATH,
+    AggregateTypeMismatchIssue,
     CartesianProductIssue,
     ConflictingVariablesIssue,
     DatabaseErrorIssue,
@@ -175,6 +177,26 @@ def unknown_index(
         "on": "nodes" if on == "nodes" else "relationships",
         "label": label,
         "attribute": attribute,
+    }
+
+
+def aggregate_type_mismatch(
+    function: str,
+    kind: Literal["node", "relationship"],
+    name: str,
+    property: str,
+    types: list[str],
+) -> AggregateTypeMismatchIssue:
+    return {
+        "code": AGGREGATE_TYPE_MISMATCH,
+        "description": f"The query calls {function}() on the property {property} of {name}, whose values are "
+        f"{' or '.join(types)}, and {function} needs numbers: FalkorDB fails when the query runs "
+        "(Type mismatch: expected Integer, Float, or Null).",
+        "function": function,
+        "kind": kind,
+        "name": name,
+        "property": property,
+        "types": list(types),
     }
 
 

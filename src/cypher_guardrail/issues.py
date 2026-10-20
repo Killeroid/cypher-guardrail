@@ -46,6 +46,7 @@ WRITE_QUERY_ERROR: Final = "cypher_guardrail.Error.WriteQuery"
 CONFLICTING_VARIABLES: Final = "cypher_guardrail.Error.ConflictingVariables"
 INVALID_PROPERTY_ACCESS: Final = "cypher_guardrail.Warning.InvalidPropertyAccess"
 PROPERTY_TYPE_MISMATCH: Final = "cypher_guardrail.Warning.PropertyTypeMismatch"
+AGGREGATE_TYPE_MISMATCH: Final = "cypher_guardrail.Warning.AggregateTypeMismatch"
 UNKNOWN_PATH: Final = "cypher_guardrail.Warning.UnknownPath"
 VARIABLE_LENGTH_PATH: Final = "cypher_guardrail.Warning.VariableLengthPath"
 WRONG_DIRECTION_PATH: Final = "cypher_guardrail.Warning.WrongDirectionPath"
@@ -112,6 +113,25 @@ class PropertyTypeMismatchIssue(TypedDict):
     expected_types: list[str]
     value: str
     value_type: str
+
+
+class AggregateTypeMismatchIssue(TypedDict):
+    """The query calls an aggregate that needs numbers (``sum``, ``avg``, ``stDev``, ``stDevP``, ``percentileCont`` or
+    ``percentileDisc``) on a property none of whose values is a number (``check_types=True``).
+
+    Unlike a comparison, FalkorDB fails when it runs such a query: ``Type mismatch: expected Integer, Float, or Null
+    but was String``. ``function`` is the aggregate, ``property`` the property it is called on, ``kind`` and ``name``
+    the node label or relationship type (see :class:`InvalidPropertyAccessIssue`), and ``types`` the types of the
+    values the property has (``typeof``: ``String``, ``Boolean``, ...).
+    """
+
+    code: Literal["cypher_guardrail.Warning.AggregateTypeMismatch"]
+    description: str
+    function: str
+    kind: Literal["node", "relationship"]
+    name: str
+    property: str
+    types: list[str]
 
 
 class ParameterNotProvidedIssue(TypedDict):
@@ -293,6 +313,7 @@ Issue = (
     | UnknownPropertyKeyIssue
     | InvalidPropertyAccessIssue
     | PropertyTypeMismatchIssue
+    | AggregateTypeMismatchIssue
     | ParameterNotProvidedIssue
     | UnknownIndexIssue
     | UnknownFunctionIssue

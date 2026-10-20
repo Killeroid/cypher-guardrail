@@ -19,9 +19,15 @@ What is left out: anything in a clause that writes (``CREATE``, ``MERGE``, ``SET
 (``n.year = 2019 + 1``, ``n.year + 1 = 2021``, ``toString(n.year) = '2020'``), and ``null``.
 
 A literal is a string (``'..'`` or ``".."``), a number (an integer, or a float with a ``.`` or an exponent) or a boolean.
+
+The same reading finds the aggregates that need numbers (``sum``, ``avg``, ``stDev``, ``stDevP``, ``percentileCont``
+and ``percentileDisc``) called on a property by itself, ``sum(n.price)``: unlike a comparison, FalkorDB does fail when
+the values are strings (``Type mismatch: expected Integer, Float, or Null but was String``). ``min``, ``max``,
+``collect`` and ``count`` take any value, and are not looked at.
 """
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 _TOKEN = re.compile(
@@ -84,6 +90,39 @@ class Comparison:
     property: str
     value: str
     value_type: str
+
+
+# The aggregates that need numbers, in lower case, with the name FalkorDB documents
+NUMERIC_AGGREGATES = {
+    "sum": "sum",
+    "avg": "avg",
+    "stdev": "stDev",
+    "stdevp": "stDevP",
+    "percentilecont": "percentileCont",
+    "percentiledisc": "percentileDisc",
+}
+
+
+@dataclass(frozen=True)
+class Aggregate:
+    """An aggregate that needs numbers, called on a property: ``sum(n.price)``.
+
+    Attributes:
+        function: The function, as FalkorDB documents it (``"stDev"``, ``"percentileCont"``).
+        variable: The variable the property is read from.
+        property: The property.
+        label: Always None: the label is the one the query gives the variable (the fields below are those of
+            :class:`Comparison`, so the two are asked the same way).
+        entity: Always None.
+        value_type: ``"Integer"``: what the function needs is a number.
+    """
+
+    function: str
+    variable: str
+    property: str
+    label: str | None = None
+    entity: str | None = None
+    value_type: str = "Integer"
 
 
 def _tokens(query: str) -> list[tuple[str, str]]:
@@ -287,10 +326,8 @@ def _map_comparisons(tokens, i):
             return
 
 
-def comparisons(query: str) -> list[Comparison]:
-    """The comparisons of a property with a literal in ``query``, as the module docstring says, each once, in order."""
-    tokens = _tokens(query)
-    found: list[Comparison] = []
+def _reading(tokens) -> Iterator[int]:
+    """The positions of the tokens that are in a clause that reads (not in one that writes)."""
     writing = False
     for i, token in enumerate(tokens):
         before, after = _at(tokens, i - 1), _at(tokens, i + 1)
@@ -301,8 +338,42 @@ def comparisons(query: str) -> list[Comparison]:
                 writing = False
             elif word in _WRITE:
                 writing = True
-        if writing:
+        if not writing:
+            yield i
+
+
+def aggregates(query: str) -> list[Aggregate]:
+    """The aggregates that need numbers, called on a property by itself, in the clauses that read: each once, in order.
+
+    ``sum(n.price)``, ``avg(DISTINCT n.price)`` and ``percentileCont(n.price, 0.5)`` are found; ``sum(n.a + n.b)``,
+    ``sum(toInteger(n.price))`` and ``sum(1)`` are not (the argument is an expression, not a property).
+    """
+    tokens = _tokens(query)
+    found: list[Aggregate] = []
+    for i in _reading(tokens):
+        kind, text = tokens[i]
+        function = NUMERIC_AGGREGATES.get(text.lower()) if kind == "id" else None
+        if (
+            function is None
+            or _punct(_at(tokens, i - 1), ".")  # `lib.sum(`: not the aggregate
+            or not _punct(_at(tokens, i + 1), "(")
+        ):
             continue
+        start = i + 3 if _word(_at(tokens, i + 2), "DISTINCT") else i + 2
+        read = _property_at(tokens, start)
+        if read is None or not _punct(_at(tokens, read[2]), ")", ","):
+            continue
+        aggregate = Aggregate(function, read[0], read[1])
+        if aggregate not in found:
+            found.append(aggregate)
+    return found
+
+
+def comparisons(query: str) -> list[Comparison]:
+    """The comparisons of a property with a literal in ``query``, as the module docstring says, each once, in order."""
+    tokens = _tokens(query)
+    found: list[Comparison] = []
+    for i in _reading(tokens):
         for comparison in (
             *_variable_comparisons(tokens, i),
             *_reversed_comparison(tokens, i),

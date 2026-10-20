@@ -43,7 +43,15 @@ from cypher_guardrail import (
 from cypher_guardrail import issues as _issues_module
 
 DIRECTORY = Path(__file__).parent
-CASE_FILES = ("syntax", "schema", "properties", "valid", "udf", "performance")
+CASE_FILES = (
+    "syntax",
+    "schema",
+    "properties",
+    "valid",
+    "udf",
+    "performance",
+    "aggregates",
+)
 ANY_DATABASE_ERROR = "FalkorDB.*"
 MODES = ("online", "offline", "hybrid")
 # What only SyntaxValidator reports: it needs the database, so it is not part of the other modes

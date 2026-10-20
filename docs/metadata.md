@@ -21,6 +21,7 @@ print(missing_labels)  # ['Ghost']
 | `cypher_guardrail.Warning.UnknownPropertyKey` | Properties | `property` |
 | `cypher_guardrail.Warning.InvalidPropertyAccess` | Properties | `kind` (`node` or `relationship`), `name`, `properties` (list) |
 | `cypher_guardrail.Warning.PropertyTypeMismatch` | Properties (`check_types=True`) | `kind` (`node` or `relationship`), `name`, `property`, `expected_types` (list), `value`, `value_type` |
+| `cypher_guardrail.Warning.AggregateTypeMismatch` | Properties (`check_types=True`) | `function` (`sum`, `avg`, `stDev`, `stDevP`, `percentileCont`, `percentileDisc`), `kind` (`node` or `relationship`), `name`, `property`, `types` (list: what the values are): an aggregate that needs numbers on a property that has none, which FalkorDB fails on when the query runs |
 | `cypher_guardrail.Warning.UnknownIndex` | Schema | `index` (`fulltext` or `vector`), `on` (`nodes` or `relationships`), `label` (the label or relationship type), `attribute` (vector queries, else `None`) |
 | `cypher_guardrail.Warning.UnknownFunction` | Schema | `name` (`library.function`, as the query writes it: a function with a dotted name that is not built in and that the instance does not have; it does not change the score, see [User-defined functions](usage.md#user-defined-functions-udfs)) |
 | `cypher_guardrail.Warning.UnknownPath` | Schema | `path` (as extracted, without variables), `original_path` (as written in the query) |

@@ -638,72 +638,57 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
     def _type_issues(
         self, query, database_name
     ) -> Generator[Request, Any, list[Issue]]:
-        """The properties the query compares with a literal of a type that none of their values has.
+        """The properties the query compares with a literal of a type that none of their values has, and the ones it
+        calls an aggregate that needs numbers on when none of their values is a number.
 
-        Only the comparisons whose label the query gives are checked: the ``{map}`` of a pattern with a label, and
+        Only the uses whose label the query gives are checked: the ``{map}`` of a pattern with a label, and
         ``variable.property`` where the variable has a label in the query. A variable whose label is inferred is
         left out, so that a guess is never reported. A property with several types (mixed data) is fine if the literal
-        has any of them; a property with no value, and a snapshot without types, say nothing.
+        has any of them (or one of them is a number); a property with no value, and a snapshot without types, say
+        nothing.
         """
         if not self.check_types:
             return []
         graph = self.backend.graph_name(database_name)
-        questions = yield from self._typed_comparisons(query, graph, database_name)
-        # What the values of each property are does not depend on the literal, so the questions are asked together
+        questions = yield from self._typed_uses(query, graph, database_name)
+        # What the values of each property are does not depend on the use, so the questions are asked together
         keys = list(
             dict.fromkeys(
-                (label, entity, comparison.property, comparison.value_type)
-                for label, entity, comparison in questions
+                (label, entity, use.property, use.value_type)
+                for label, entity, use in questions
             )
         )
         found = yield Concurrently(
             tuple(_queries.property_types(graph, *key) for key in keys)
         )
         answers = dict(zip(keys, found, strict=True))
-        mismatches: dict[tuple, list[str]] = {}  # each once, in the order of the query
-        for label, entity, comparison in questions:
-            observed = answers[
-                (label, entity, comparison.property, comparison.value_type)
-            ]
-            if observed and not fits(comparison.value_type, observed):
-                mismatches.setdefault(
-                    (
-                        entity,
-                        label,
-                        comparison.property,
-                        comparison.value,
-                        comparison.value_type,
-                    ),
-                    list(observed),
-                )
         return [
-            _issues.property_type_mismatch(
-                entity, label, prop, types, value, value_type
-            )
-            for (entity, label, prop, value, value_type), types in mismatches.items()
+            *_comparison_issues(questions, answers),
+            *_aggregate_issues(questions, answers),
         ]
 
-    def _typed_comparisons(
+    def _typed_uses(
         self, query, graph, database_name
     ) -> Generator[Request, Any, list[tuple]]:
-        """``(label, "node" or "relationship", comparison)`` for each comparison with a literal whose label is known."""
+        """``(label, "node" or "relationship", use)`` for each comparison with a literal, and each aggregate that needs
+        numbers, whose label is known."""
         questions = []
         query, _ = separate_variables(
             query
         )  # so that the variables are the ones of their scope
         # The branches of a UNION are separate queries: a variable of one is not the variable of another
         for branch in patterns.split_union(query):
-            found = literals.comparisons(branch)
+            found = [*literals.comparisons(branch), *literals.aggregates(branch)]
             if not found:
                 continue
             var_label_map, _, _ = yield from self._get_var_labels_props(
                 branch, database_name
             )
-            for comparison in found:
-                label, entity = comparison.label, comparison.entity
+            for use in found:
+                label, entity = use.label, use.entity
                 if label is None or entity is None:
                     # a `variable.property`: the variable's label is in the query
-                    labelled = var_label_map.get(comparison.variable)
+                    labelled = var_label_map.get(use.variable)
                     if (
                         labelled is None or "|" in labelled[1]
                     ):  # no label, or alternatives
@@ -711,8 +696,41 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
                     entity, label = labelled
                     if not (yield from _queries.name_exists(graph, entity, label)):
                         continue  # not a label of the graph: the schema validator reports it
-                questions.append((label, entity, comparison))
+                questions.append((label, entity, use))
         return questions
+
+
+def _comparison_issues(questions, answers) -> list[Issue]:
+    """The comparisons with a literal of a type that none of the values of the property has, each once."""
+    mismatches: dict[tuple, list[str]] = {}  # in the order of the query
+    for label, entity, use in questions:
+        if not isinstance(use, literals.Comparison):
+            continue
+        observed = answers[(label, entity, use.property, use.value_type)]
+        if observed and not fits(use.value_type, observed):
+            key = (entity, label, use.property, use.value, use.value_type)
+            mismatches.setdefault(key, list(observed))
+    return [
+        _issues.property_type_mismatch(entity, label, prop, types, value, value_type)
+        for (entity, label, prop, value, value_type), types in mismatches.items()
+    ]
+
+
+def _aggregate_issues(questions, answers) -> list[Issue]:
+    """The aggregates that need numbers, called on a property that has none, each once."""
+    mismatches: dict[tuple, list[str]] = {}  # in the order of the query
+    for label, entity, use in questions:
+        if not isinstance(use, literals.Aggregate):
+            continue
+        observed = answers[(label, entity, use.property, use.value_type)]
+        if observed and not fits(use.value_type, observed):
+            mismatches.setdefault(
+                (use.function, entity, label, use.property), list(observed)
+            )
+    return [
+        _issues.aggregate_type_mismatch(function, entity, label, prop, types)
+        for (function, entity, label, prop), types in mismatches.items()
+    ]
 
 
 class PropertiesValidator(_PropertiesValidator[Driver | SnapshotSource]):

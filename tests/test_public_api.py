@@ -22,6 +22,7 @@ from cypher_guardrail import (
     issues,
 )
 from cypher_guardrail.issues import (
+    AGGREGATE_TYPE_MISMATCH,
     ARITHMETIC_ERROR,
     CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
@@ -286,6 +287,7 @@ def test_the_fields_are_the_ones_the_type_of_the_code_declares(graphs, case):
 
 def test_every_code_has_a_type_and_the_types_name_their_codes():
     constants = {
+        AGGREGATE_TYPE_MISMATCH,
         ARITHMETIC_ERROR,
         CARTESIAN_PRODUCT,
         CONFLICTING_VARIABLES,
@@ -315,7 +317,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         typing.get_args(typing.get_type_hints(issues.DatabaseErrorIssue)["code"])
     )
     assert declared == constants
-    assert len(constants) == 24
+    assert len(constants) == 25
 
 
 def test_different_issues_of_one_code_are_all_reported(graphs):
