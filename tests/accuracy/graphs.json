@@ -20,7 +20,10 @@
    "CREATE FULLTEXT INDEX FOR (m:Movie) ON (m.title)",
    "CREATE VECTOR INDEX FOR (m:Movie) ON (m.embedding) OPTIONS {dimension: 3, similarityFunction: 'euclidean'}",
    "CREATE FULLTEXT INDEX FOR ()-[a:ACTED_IN]-() ON (a.role)"
-  ]
+  ],
+  "udfs": {
+   "scoring": "function boost(x) { return x * 2; }\nfunction shout(s) { return s.toUpperCase(); }\nfalkor.register('boost', boost);\nfalkor.register('shout', shout);"
+  }
  },
  "collision": {
   "seed": [

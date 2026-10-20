@@ -43,7 +43,7 @@ from cypher_guardrail import (
 from cypher_guardrail import issues as _issues_module
 
 DIRECTORY = Path(__file__).parent
-CASE_FILES = ("syntax", "schema", "properties", "valid")
+CASE_FILES = ("syntax", "schema", "properties", "valid", "udf")
 ANY_DATABASE_ERROR = "FalkorDB.*"
 MODES = ("online", "offline", "hybrid")
 # What only SyntaxValidator reports: it needs the database, so it is not part of the other modes
@@ -75,7 +75,7 @@ class Case:
     mode_gaps: dict[str, str] = field(default_factory=dict)
 
 
-def load_graphs() -> dict[str, dict[str, list[str]]]:
+def load_graphs() -> dict[str, dict[str, Any]]:
     return json.loads((DIRECTORY / "graphs.json").read_text())
 
 
@@ -111,6 +111,17 @@ def seed(client, graphs=None) -> None:
         graph = client.select_graph(name)
         for statement in spec["seed"] + spec.get("indexes", []):
             graph.query(statement)
+        # UDFs belong to the instance, not to the graph: the spec of a graph only says where they are written
+        for library, code in spec.get("udfs", {}).items():
+            client.execute_command("GRAPH.UDF", "LOAD", "REPLACE", library, code)
+
+
+def unseed(client, graphs=None) -> None:
+    """Remove what ``seed`` created: the graphs and the UDF libraries."""
+    for name, spec in (graphs or load_graphs()).items():
+        client.select_graph(name).delete()
+        for library in spec.get("udfs", {}):
+            client.execute_command("GRAPH.UDF", "DELETE", library)
 
 
 def snapshots_of(client, graphs=None) -> dict[str, Snapshot]:

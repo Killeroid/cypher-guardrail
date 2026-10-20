@@ -5,6 +5,8 @@ precision and recall, and not only compared with what they answered before (that
 
 * `graphs.json`: the graphs the queries are written for (a movie graph with indexes, and one where a node label and a
   relationship type have the same name), as the Cypher that creates them.
+* `udf.json`: queries that call user-defined functions (the `scoring` library, loaded with the graph: UDFs belong to the
+  instance, not to the graph, which is why `seed` and `unseed` take them from the spec of a graph).
 * `syntax.json`, `schema.json`, `properties.json`: queries with the issues they must report, each with valid look-alikes
   (`near_miss`) of the issue it is about. `valid.json`: queries that must report nothing (the KG Valid Query of the README).
 * `harness.py`: how a case is written, run and scored.

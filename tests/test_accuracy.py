@@ -31,8 +31,7 @@ def accuracy_graphs(falkordb_client):
     graphs = harness.load_graphs()
     harness.seed(falkordb_client, graphs)
     yield graphs
-    for name in graphs:
-        falkordb_client.select_graph(name).delete()
+    harness.unseed(falkordb_client, graphs)
 
 
 @pytest.fixture(scope="module")

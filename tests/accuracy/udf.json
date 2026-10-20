@@ -1,0 +1,14 @@
+[
+ {"id": "udf.valid.1", "graph": "movies", "query": "MATCH (m:Movie) RETURN scoring.boost(m.rating)", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.valid.2", "graph": "movies", "query": "MATCH (m:Movie) WHERE scoring.boost(m.rating) > 15 RETURN m.title", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.valid.3", "graph": "movies", "query": "MATCH (p:Person) RETURN scoring.shout(p.name) AS name", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.valid.4", "graph": "movies", "query": "MATCH (m:Movie) WITH m, scoring.boost(m.rating) AS b RETURN m.title, b ORDER BY b DESC", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.valid.5", "graph": "movies", "query": "MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) RETURN scoring.shout(p.name), scoring.boost(m.released)", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.valid.6", "graph": "movies", "query": "RETURN scoring.shout('m.title') AS text", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.valid.7", "graph": "movies", "query": "MATCH (m)<-[:ACTED_IN]-(p:Person) RETURN scoring.boost(m.released)", "validators": ["syntax", "schema", "properties"], "issues": [], "kg_valid": true},
+ {"id": "udf.property.1", "graph": "movies", "query": "MATCH (m:Movie) RETURN scoring.shout(m.name)", "validators": ["properties"], "issues": [{"code": "Warning.InvalidPropertyAccess", "kind": "node", "name": "Movie", "properties": ["name"]}], "score": 0.0},
+ {"id": "udf.property.2", "graph": "movies", "query": "MATCH (p:Person) WHERE scoring.boost(p.born) > 3900 RETURN scoring.shout(p.title)", "validators": ["properties"], "issues": [{"code": "Warning.InvalidPropertyAccess", "kind": "node", "name": "Person", "properties": ["title"]}], "score": 0.5},
+ {"id": "udf.schema.1", "graph": "movies", "query": "MATCH (m:Film) RETURN scoring.boost(m.rating)", "validators": ["schema"], "issues": [{"code": "Warning.UnknownLabel", "label": "Film"}], "score": 0.0},
+ {"id": "udf.syntax.1", "graph": "movies", "query": "RETURN nolib.f(2)", "validators": ["syntax"], "issues": [{"code": "FalkorDB.*"}], "valid": false},
+ {"id": "udf.syntax.2", "graph": "movies", "query": "MATCH (m:Movie) RETURN scoring.nope(m.rating)", "validators": ["syntax"], "issues": [{"code": "FalkorDB.*"}], "valid": false}
+]
