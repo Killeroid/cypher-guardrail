@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Generator
 from typing import Any, Generic, TypeVar
 
@@ -280,18 +281,38 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
                 snapshot says is not there, ``"never"`` trusts the snapshot.
             check_types (bool): Also report a property that the query compares with a literal of a type that none of
                 its values has (``cypher_guardrail.Warning.PropertyTypeMismatch``): see :meth:`PropertiesValidator.validate`.
-                Off by default. With a snapshot it needs one captured with ``types=True``.
+                Off by default. With a snapshot it needs one captured with ``types=True``: offline, without types, it
+                does nothing and says so once, with a ``UserWarning``.
 
         Raises:
             TypeError: If the driver is not a FalkorDB client or graph.
         """
         self.driver = driver
         self.check_types = check_types
+        self._warned_untyped = False
         self.backend = self._open_backend(driver, snapshot, verify)
 
     def _open_backend(self, driver, snapshot, verify):
         """The backend the validator runs on. The async validators override this."""
         return get_backend(driver, snapshot=snapshot, verify=verify)
+
+    def _warn_if_the_types_cannot_be_checked(self) -> None:
+        """Say, once, that ``check_types=True`` does nothing here: no database answers (offline), and the snapshot
+        holds no types. Otherwise the check would be silent and look as if every comparison were fine."""
+        if (
+            self.check_types
+            and not self._warned_untyped
+            and self.backend.mode == "offline"
+            and not self.backend.current_snapshot.has_property_types
+        ):
+            self._warned_untyped = True
+            warnings.warn(
+                "check_types=True does nothing: the snapshot has no property types, and there is no database to ask. "
+                "Capture it with Snapshot.capture(client, graph, types=True), or give node_property_types to "
+                "Snapshot.from_schema.",
+                UserWarning,
+                stacklevel=4,  # the caller of validate: the decorator that pins the snapshot is a frame too
+            )
 
     def _query_prop_exist(
         self, kind, label, property, database_name=None
@@ -799,6 +820,7 @@ class PropertiesValidator(_PropertiesValidator[Driver | SnapshotSource]):
         Raises:
             GraphNotFoundError: If the validation asked the database about a graph that does not exist.
         """
+        self._warn_if_the_types_cannot_be_checked()
         return self.backend.run(self._validate(query, database_name, strict))
 
 
@@ -858,4 +880,5 @@ class AsyncPropertiesValidator(_PropertiesValidator[AsyncDriver | SnapshotSource
         self, query: str, database_name: str | None = None, strict: bool = False
     ) -> tuple[float | None, list[Issue]]:
         """The async version of :meth:`PropertiesValidator.validate`: the same arguments and result."""
+        self._warn_if_the_types_cannot_be_checked()
         return await self.backend.run(self._validate(query, database_name, strict))

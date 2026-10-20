@@ -344,6 +344,12 @@ class SnapshotBackend(_Backend):
             lambda current: _modes.snapshot_resolver(current, self.stats)
         )
 
+    @property
+    def current_snapshot(self):
+        """The snapshot that answers now: the pinned one inside a validation, else what the source has."""
+        assert self._pins is not None  # a snapshot backend always has them
+        return self._pins.snapshot
+
     def graph_name(self, database_name):
         """``database_name``, which must be the graph of the snapshot; or that graph. Raises ValueError otherwise."""
         known = self._source.graph

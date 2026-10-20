@@ -184,12 +184,12 @@ def test_offline_the_snapshot_answers_when_it_has_the_types(falkordb_client):
 def test_offline_a_snapshot_without_the_types_says_nothing(falkordb_client):
     snapshot = Snapshot.capture(falkordb_client, "kg")
 
-    assert (
-        PropertiesValidator(snapshot, check_types=True).validate(
-            "MATCH (g:Goal) RETURN sum(g.title)"
-        )[1]
-        == []
-    )
+    validator = PropertiesValidator(snapshot, check_types=True)
+
+    with pytest.warns(UserWarning, match="no property types"):
+        found = validator.validate("MATCH (g:Goal) RETURN sum(g.title)")[1]
+
+    assert found == []
 
 
 def test_hybrid_a_mismatch_of_the_snapshot_is_checked_with_the_database(

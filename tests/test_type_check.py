@@ -777,9 +777,10 @@ def test_a_snapshot_without_the_types_says_nothing_offline_and_asks_the_database
     untyped = Snapshot.capture(falkordb_client, "kg")
     assert not untyped.has_property_types
 
-    offline = PropertiesValidator(untyped, check_types=True).validate(GOAL)
+    with pytest.warns(UserWarning, match="no property types"):
+        offline = PropertiesValidator(untyped, check_types=True).validate(GOAL)
     hybrid = PropertiesValidator(falkordb_client, snapshot=untyped, check_types=True)
-    answer = hybrid.validate(GOAL, "kg")
+    answer = hybrid.validate(GOAL, "kg")  # no warning: the database is asked
 
     assert mismatches(offline[1]) == []
     assert len(mismatches(answer[1])) == 1
@@ -949,3 +950,93 @@ def test_every_branch_of_a_union_has_its_comparisons_checked(falkordb_client):
     )
 
     assert [i["name"] for i in mismatches(metadata)] == ["Goal", "Target"]
+
+
+# ------------------------------------------------------------------ the check that cannot run says so
+
+
+def untyped_snapshot():
+    return Snapshot.from_schema(nodes={"Goal": ["code"]}, relationships=[])
+
+
+def test_check_types_with_a_snapshot_that_has_no_types_warns(recwarn):
+    validator = PropertiesValidator(untyped_snapshot(), check_types=True)
+
+    validator.validate(GOAL)
+
+    (warning,) = recwarn.list
+    assert issubclass(warning.category, UserWarning)
+    assert "no property types" in str(warning.message)
+    assert "types=True" in str(warning.message)  # and what to do
+    assert warning.filename == __file__  # the call that asked, not the library
+
+
+def test_it_says_so_once_for_a_validator(recwarn):
+    validator = PropertiesValidator(untyped_snapshot(), check_types=True)
+
+    for _ in range(3):
+        validator.validate(GOAL)
+
+    assert len(recwarn.list) == 1
+
+
+def test_each_validator_says_so_for_itself():
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter(
+            "always"
+        )  # (the same text at the same line is shown once otherwise)
+        for _ in range(2):
+            PropertiesValidator(untyped_snapshot(), check_types=True).validate(GOAL)
+
+    assert len(caught) == 2
+
+
+def test_it_is_not_said_when_the_check_can_run_or_was_not_asked_for(
+    falkordb_client, recwarn
+):
+    typed = Snapshot.capture(falkordb_client, "kg", types=True)
+    PropertiesValidator(typed, check_types=True).validate(GOAL)  # it has the types
+    PropertiesValidator(untyped_snapshot()).validate(GOAL)  # check_types is off
+    PropertiesValidator(
+        falkordb_client, snapshot=untyped_snapshot(), check_types=True
+    ).validate(GOAL, "kg")  # the hybrid mode asks the database
+    PropertiesValidator(falkordb_client, check_types=True).validate(
+        GOAL, "kg"
+    )  # online
+
+    assert recwarn.list == []
+
+
+def test_a_live_snapshot_that_has_no_types_is_the_same(falkordb_client, recwarn):
+    from datetime import timedelta
+
+    from cypher_guardrail import LiveSnapshot
+
+    live = LiveSnapshot(falkordb_client, "kg", refresh_every=timedelta(hours=1))
+    live.refresh()
+
+    PropertiesValidator(live, check_types=True).validate(GOAL)
+
+    assert [str(w.message) for w in recwarn.list if w.category is UserWarning] == [
+        recwarn.list[0].message.args[0]
+    ]
+    assert "no property types" in str(recwarn.list[0].message)
+
+
+def test_the_async_validator_says_it_too(run_async):
+    import warnings
+
+    from cypher_guardrail import AsyncPropertiesValidator
+
+    async def ask(_client):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            await AsyncPropertiesValidator(
+                untyped_snapshot(), check_types=True
+            ).validate(GOAL)
+        return caught
+
+    (warning,) = run_async(ask)
+    assert "no property types" in str(warning.message)
