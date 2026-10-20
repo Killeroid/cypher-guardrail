@@ -24,7 +24,9 @@ A pattern this parser does not read (a back-quoted name, a brace in a string, ..
 nothing is known against it. A name that is not ASCII, outside back-quotes, is a syntax error here as it is in FalkorDB.
 """
 
+from contextlib import suppress
 from dataclasses import dataclass
+from enum import IntEnum
 from itertools import product
 from typing import Any
 
@@ -37,6 +39,18 @@ from cypher_guardrail._internal.core.valuetypes import fits
 from cypher_guardrail._internal.sources import online as _online
 from cypher_guardrail.patterns import strip_literals_and_comments, unquote_name
 from cypher_guardrail.snapshot import Snapshot
+
+
+class Fit(IntEnum):
+    """How well a pattern fits what the snapshot knows."""
+
+    NO = 0  # certainly not: a "no" is certain, as long as the snapshot is complete
+    MAYBE = 1  # the kinds fit, the data may not (a property value, a variable used twice, a chain of hops)
+    CERTAIN = 2  # the kinds fit and nothing else is in question
+
+
+# A chain of this many hops or more is only a "maybe": its hops may be of different real nodes
+MIN_CHAIN_HOPS = 2
 
 
 @dataclass(frozen=True)
@@ -343,29 +357,31 @@ class SnapshotResolver:
         return Resolution(types, miss=not fits(literal_type, types))
 
     # ------------------------------------------------------------------------ paths
-    def _fits(self, state: State, node: _Node) -> int:
-        """How well a kind of node fits a node of a pattern: 0 not at all, 1 "maybe" (properties), 2 certainly."""
+    def _fits(self, state: State, node: _Node) -> Fit:
+        """How well a kind of node fits a node of a pattern (properties make it a "maybe")."""
         if not set(node.labels) <= state:
-            return 0
+            return Fit.NO
         if not node.keys:
-            return 2
+            return Fit.CERTAIN
         for key in node.keys:
             if state:
                 if not all(
                     key in self.snapshot.node_properties_of(label) for label in state
                 ):
-                    return 0
+                    return Fit.NO
             elif key not in self._names("property_keys"):
-                return 0
-        return 1
+                return Fit.NO
+        return Fit.MAYBE
 
-    def _edge_fits(self, kind: str, relationship: _Relationship) -> int:
+    def _edge_fits(self, kind: str, relationship: _Relationship) -> Fit:
         if relationship.types and kind not in relationship.types:
-            return 0
+            return Fit.NO
         if not relationship.keys:
-            return 2
+            return Fit.CERTAIN
         properties = self.snapshot.relationship_properties_of(kind)
-        return 1 if all(key in properties for key in relationship.keys) else 0
+        if all(key in properties for key in relationship.keys):
+            return Fit.MAYBE
+        return Fit.NO
 
     def _oriented(self, pattern: _Pattern):
         """The edges the relationship of the pattern may follow, as ``(from, type, to)`` in the order of the pattern."""
@@ -394,18 +410,18 @@ class SnapshotResolver:
         assert relationship is not None
         # the same variable on both ends is the same node
         same_node = bool(left.variable) and left.variable == right.variable
-        cap = 1 if same_node else 2
+        cap = Fit.MAYBE if same_node else Fit.CERTAIN
 
         def end_fit(a, b, quality):
             if same_node and a != b:
-                return 0
+                return Fit.NO
             return min(self._fits(a, left), self._fits(b, right), quality, cap)
 
         lo, hi = relationship.lo, relationship.hi
         if lo == 0:
             for state in self._states:
                 # one node is both ends: it must fit both nodes of the pattern
-                fit = end_fit(state, state, 2)
+                fit = end_fit(state, state, Fit.CERTAIN)
                 if fit:
                     yield state, state, None, fit
         if (hi is None or hi >= 1) and lo <= 1:
@@ -413,14 +429,14 @@ class SnapshotResolver:
                 fit = end_fit(a, b, self._edge_fits(kind, relationship))
                 if fit:
                     yield a, b, kind, fit
-        if hi is None or hi >= 2:
+        if hi is None or hi >= MIN_CHAIN_HOPS:
             yield from self._chains(pattern, end_fit, first_only=settle)
 
     def _chains(self, pattern: _Pattern, end_fit, first_only: bool = False):
         """The matches of 2 or more hops between kinds of nodes, each pair of kinds once. They are all "maybe"s."""
         relationship = pattern.relationship
         assert relationship is not None
-        lo, hi = max(relationship.lo, 2), relationship.hi
+        lo, hi = max(relationship.lo, MIN_CHAIN_HOPS), relationship.hi
         steps: dict[State, set[State]] = {}
         for a, kind, b in self._oriented(pattern):
             if self._edge_fits(kind, relationship):
@@ -439,8 +455,8 @@ class SnapshotResolver:
                     break
                 if hops >= lo:
                     for end in frontier - reached:
-                        if end_fit(start, end, 1):
-                            yield start, end, None, 1
+                        if end_fit(start, end, Fit.MAYBE):
+                            yield start, end, None, Fit.MAYBE
                             if first_only:
                                 return
                     reached |= frontier
@@ -455,10 +471,10 @@ class SnapshotResolver:
         if parsed is None:
             # Not a node or a one-hop path this reads: nothing is known against it, so a maybe (never a "no")
             return Resolution(True, reliable=False)
-        best = 0
+        best = Fit.NO
         for *_, fit in self._hops(parsed, settle=True):
             best = max(best, fit)
-            if best == 2:  # certain: nothing that follows can say more
+            if best == Fit.CERTAIN:  # nothing that follows can say more
                 break
         if best == 0 and self._may_be_missing_from_the_sample(parsed):
             return Resolution(True, reliable=False, miss=True, sampled=True)
@@ -492,10 +508,8 @@ class SnapshotResolver:
             # Nothing to infer: the database is asked an empty query and rejects it
             return Resolution((None, node_vars, rel_vars), miss=True)
         parsed = None
-        try:
+        with suppress(CypherError):
             parsed = _parse(path)
-        except CypherError:
-            pass
         if parsed is None:
             # What the database rejects, or what is not understood here, is "no table"
             return Resolution((None, node_vars, rel_vars), reliable=False, miss=True)
@@ -526,7 +540,7 @@ class SnapshotResolver:
             new_rows = set(product(*per_variable, *rel_values))
             if new_rows:
                 rows |= new_rows
-                reliable = reliable and fit == 2
+                reliable = reliable and fit == Fit.CERTAIN
         frame = (
             pd.DataFrame(sorted(rows), columns=columns)
             if rows

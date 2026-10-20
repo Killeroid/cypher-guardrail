@@ -328,7 +328,7 @@ class SnapshotBackend(_Backend):
         self._source = snapshot
         self._pins = _modes.Pins(snapshot)
         self.default_graph = snapshot.graph or None
-        self._select_graph = lambda name: None  # there is no graph to select
+        self._select_graph = lambda _: None  # there is no graph to select
         self._transport = _modes.OfflineTransport()
         self.stats = _modes.LookupStats()
         self.mode = "offline"

@@ -589,13 +589,12 @@ class _SchemaValidator(_modes.ModeInfo):
                         (common_paths) / len(paths)
                     )
 
+            elif rels:
+                score = 0.5 * ((common_rels) / len(rels)) + 0.5 * (
+                    (common_paths) / len(paths)
+                )
             else:
-                if rels:
-                    score = 0.5 * ((common_rels) / len(rels)) + 0.5 * (
-                        (common_paths) / len(paths)
-                    )
-                else:
-                    score = (common_paths) / len(paths)
+                score = (common_paths) / len(paths)
         else:
             # No paths: the labels, and the relationship types of index query procedures
             parts = []

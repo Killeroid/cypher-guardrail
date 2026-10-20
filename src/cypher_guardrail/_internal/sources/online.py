@@ -126,10 +126,10 @@ def property_exists(
 
 
 def property_types(
-    graph: str, label: str, kind: str, prop: str, literal_type: str
+    graph: str, label: str, kind: str, prop: str, _literal_type: str
 ) -> Generator[Request, Any, tuple[str, ...]]:
     """The types of the values of property ``prop`` of the nodes (``kind`` 'node') or relationships ('relationship')
-    with ``label``, as ``typeof`` names them, sorted. ``literal_type`` is not needed to ask the database.
+    with ``label``, as ``typeof`` names them, sorted. ``_literal_type`` is not needed to ask the database.
 
     ``()`` if the database cannot say (e.g. the graph does not exist): no type is then known, and none is reported.
     """
@@ -231,8 +231,7 @@ def identify_variables_and_construct_query(pattern):
 
         return query, node_vars, rel_vars
 
-    else:
-        return "", node_vars, rel_vars
+    return "", node_vars, rel_vars
 
 
 def label_combinations(

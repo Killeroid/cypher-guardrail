@@ -127,6 +127,8 @@ _CLAUSES = frozenset(
 )
 
 _OPENING = {"(": ")", "[": "]", "{": "}"}
+# The tokens of an alias in a WITH or a RETURN: AS and the name
+_TOKENS_OF_AN_ALIAS = 2
 
 
 class _Token(NamedTuple):
@@ -273,7 +275,7 @@ class _Scopes:
             if last - first == 1 and self._is(first, "punct", "*"):
                 carried.update(visible)
             elif (
-                last - first >= 2
+                last - first >= _TOKENS_OF_AN_ALIAS
                 and self._word(last - 2, "AS")
                 and self._is(last - 1, "word")
             ):

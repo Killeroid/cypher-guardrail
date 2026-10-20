@@ -43,7 +43,7 @@ from cypher_guardrail.issues import (
 
 def database_error(code: str, message: str) -> DatabaseErrorIssue:
     """The database rejected the query, or it divides by zero. ``code`` is SYNTAX_ERROR, EXECUTION_FAILED or ARITHMETIC_ERROR."""
-    return cast(DatabaseErrorIssue, {"code": code, "description": message})
+    return cast("DatabaseErrorIssue", {"code": code, "description": message})
 
 
 def write_query(read_only: bool) -> WriteQueryErrorIssue | WriteQueryWarningIssue:

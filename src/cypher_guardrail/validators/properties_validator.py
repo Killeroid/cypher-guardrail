@@ -819,12 +819,9 @@ class _PropertiesValidator(_modes.ModeInfo):
         prop_pattern = r"\{[^}]*\}"
         no_prop_paths = [re.sub(prop_pattern, "", path) for path in one_hop_paths]
 
-        inference_paths = []
         # A bare variable, (a) or [r], is one to infer
         pattern = r"\(\w+\)|\[\w+\]"
-        inference_paths = [path for path in no_prop_paths if re.search(pattern, path)]
-
-        return inference_paths
+        return [path for path in no_prop_paths if re.search(pattern, path)]
 
 
 class PropertiesValidator(_PropertiesValidator):

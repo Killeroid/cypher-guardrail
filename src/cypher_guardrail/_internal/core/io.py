@@ -294,6 +294,7 @@ def _answer_remembered(request, answers):
         return None if answers is None else answers.get(("remembered", request.key))
     if answers is not None:
         answers[("remembered", request.key)] = request.value
+    return None
 
 
 def _answer_sync(request, transport, resolver, answers):

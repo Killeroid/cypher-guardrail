@@ -162,7 +162,7 @@ def quote_name(name):
 
 def unquote_name(name):
     """``name`` without the back-quotes it is written between (a name that is not quoted is returned as it is)."""
-    return name[1:-1] if len(name) >= 2 and name[0] == name[-1] == "`" else name
+    return name[1:-1] if len(name) > 1 and name[0] == name[-1] == "`" else name
 
 
 # What is not code (strings, comments), which a quoted key must not be searched in, and a quoted name
