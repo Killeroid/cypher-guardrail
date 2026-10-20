@@ -31,7 +31,9 @@ module-name = "cypher_guardrail"
 
 [dependency-groups]
 dev = [
+    "coverage>=7.16.2",
     "falkordblite<0.11 ; python_full_version >= '3.12'",
+    "import-linter>=2.15",
     "pytest>=9.1.1",
     "ruff>=0.17.0",
     "ty>=0.0.87",
@@ -101,3 +103,42 @@ Documentation = "https://cypher-guardrail.readthedocs.io/en/latest/"
 Changelog = "https://github.com/Killeroid/cypher-guardrail/blob/main/CHANGELOG.md"
 Issues = "https://github.com/Killeroid/cypher-guardrail/issues"
 Repository = "https://github.com/Killeroid/cypher-guardrail"
+
+[tool.coverage.run]
+branch = true
+source = ["src/cypher_guardrail"]
+
+[tool.coverage.report]
+fail_under = 95
+skip_empty = true
+show_missing = true
+
+# The layers of the package, from the one that uses the others to the one that uses none. A module imports from the
+# layers below it, never from one above. (The refactoring plan removes the exceptions listed under ignore_imports.)
+[tool.importlinter]
+root_package = "cypher_guardrail"
+
+[[tool.importlinter.contracts]]
+name = "The layers of the package"
+type = "layers"
+layers = [
+    "cypher_guardrail.validators",
+    "cypher_guardrail.live | cypher_guardrail.utils",
+    "cypher_guardrail.backend",
+    "cypher_guardrail._internal.sources",
+    "cypher_guardrail.snapshot",
+    "cypher_guardrail._internal.core",
+    "cypher_guardrail.issues",
+    "cypher_guardrail.patterns",
+]
+# The three imports that go against the layers today; Phase 2 of the refactoring removes them, and then this list goes.
+ignore_imports = [
+    "cypher_guardrail.snapshot -> cypher_guardrail._internal.sources.capture",
+    "cypher_guardrail.issues -> cypher_guardrail._internal.core.errors",
+    "cypher_guardrail._internal.sources.capture -> cypher_guardrail.backend",
+]
+
+[tool.metrics]
+max_complexity = 20
+max_function_lines = 182
+mangled_methods = 21
