@@ -445,3 +445,13 @@ def test_the_issues_have_the_fields_of_their_types(code, issue):
     assert set(one) == set(typing.get_type_hints(issue))
     assert typing.get_args(typing.get_type_hints(issue)["code"]) == (code,)
     assert issue in typing.get_args(issue_types.Issue)
+
+
+def test_a_shortest_path_next_to_an_unbounded_path_is_not_named():
+    query = (
+        "MATCH (a:Person)-[:KNOWS*]->(c), (b) RETURN shortestPath((a)-[:KNOWS*]->(b))"
+    )
+
+    found = performance.warnings(query, UNBOUNDED, ALL)
+
+    assert [i.get("path") for i in found] == ["(a:Person)-[:KNOWS*]->(c)"]

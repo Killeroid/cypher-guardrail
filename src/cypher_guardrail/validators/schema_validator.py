@@ -9,6 +9,7 @@ import regex as re
 from cypher_guardrail import patterns
 from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import functions
+from cypher_guardrail._internal.core import performance as _performance
 from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail._internal.core.errors import CypherError
 from cypher_guardrail._internal.core.io import Concurrently, Request
@@ -262,6 +263,7 @@ class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
         *,
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
+        check_unbounded_paths: bool = False,
     ) -> None:
         """
         Initialize the validator with a FalkorDB client.
@@ -275,11 +277,16 @@ class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
                 the offline mode.
             verify (str | None): Hybrid mode: ``"misses"`` (the default) asks the database before reporting a thing the
                 snapshot says is not there, ``"never"`` trusts the snapshot.
+            check_unbounded_paths (bool): Also warn about a variable-length path with no upper limit
+                (``-[:KNOWS*]->``, ``*2..``) with ``cypher_guardrail.Warning.UnboundedPath``, from the text of the
+                query alone (no database needed; ``shortestPath`` is left out). Off by default. A warning does not
+                change the score.
 
         Raises:
             TypeError: If the driver is not a FalkorDB client or graph.
         """
         self.driver = driver
+        self.check_unbounded_paths = check_unbounded_paths
         self.backend = self._open_backend(driver, snapshot, verify)
 
     def _open_backend(self, driver, snapshot, verify):
@@ -552,6 +559,10 @@ class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
         # The label of an index query procedure exists, but does an index back the call?
         indexed = yield from self._index_share(query, database_name, issues)
         yield from self._unknown_functions(query, database_name, issues)
+        if self.check_unbounded_paths:
+            for path in _performance.written_unbounded_paths(query):
+                issue = _issues.unbounded_path(path)
+                issues[(issue["code"], issue["description"])] = issue
 
         # The score: the average of the shares of the nodes, relationships and paths that exist (1 when the query has
         # none of them: a query such as MATCH (n))
@@ -671,6 +682,7 @@ class AsyncSchemaValidator(_SchemaValidator[AsyncDriver | SnapshotSource]):
         max_concurrency: int = 8,
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
+        check_unbounded_paths: bool = False,
     ) -> None:
         """
         Initialize the validator with an async FalkorDB client.
@@ -685,13 +697,22 @@ class AsyncSchemaValidator(_SchemaValidator[AsyncDriver | SnapshotSource]):
                 the offline mode.
             verify (str | None): Hybrid mode: ``"misses"`` (the default) asks the database before reporting a thing the
                 snapshot says is not there, ``"never"`` trusts the snapshot.
+            check_unbounded_paths (bool): Also warn about a variable-length path with no upper limit
+                (``-[:KNOWS*]->``, ``*2..``) with ``cypher_guardrail.Warning.UnboundedPath``, from the text of the
+                query alone (no database needed; ``shortestPath`` is left out). Off by default. A warning does not
+                change the score.
 
         Raises:
             TypeError: If the driver is not an async FalkorDB client or graph.
             ValueError: If ``max_concurrency`` is less than 1.
         """
         self._max_concurrency = max_concurrency
-        super().__init__(driver, snapshot=snapshot, verify=verify)
+        super().__init__(
+            driver,
+            snapshot=snapshot,
+            verify=verify,
+            check_unbounded_paths=check_unbounded_paths,
+        )
 
     def _open_backend(self, driver, snapshot, verify):
         return get_async_backend(

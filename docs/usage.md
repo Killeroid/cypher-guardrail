@@ -113,6 +113,8 @@ Four patterns pass every check and are the usual cause of a slow generated query
 
 They are heuristics, so each can be chosen: `check_performance=True` is all of them, and a collection of names is those (`{"cartesian_product", "unlabeled_scan", "unbounded_path"}`, or some of them). The default, `False`, asks and reports nothing more. They need the database, as `SyntaxValidator` does, so there is no offline mode. What FalkorDB's plan does not name is not seen: `MATCH (a) WITH a MATCH (b)` is a product too, and is not reported.
 
+**Unbounded paths with no database.** `SchemaValidator(..., check_unbounded_paths=True)` (and `AsyncSchemaValidator`) reports the same `cypher_guardrail.Warning.UnboundedPath` from the text of the query alone, so it works offline, from a snapshot, and gives the same answer in the three modes. It is off by default and does not change the score. It reads what is written (`-[:KNOWS*]->`, `-[*]->`, `*2..`, `*0..`), not what the plan does, so a path that FalkorDB would not run unbounded is the only thing it can get wrong, and the one such case it knows is left out: `shortestPath(...)` and `allShortestPaths(...)`, which FalkorDB searches breadth first. A query that is checked by both validators gets the warning twice: keep one of them, or drop the repeats by `code` and `path`.
+
 The fourth pattern, an aggregate over a property that has strings (`sum(n.name)`), is not slow but fails when it runs (`Type mismatch`): it is `PropertiesValidator(check_types=True)`, see [Type mismatches](#type-mismatches-opt-in).
 
 ## Schema Validator

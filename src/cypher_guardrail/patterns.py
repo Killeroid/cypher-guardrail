@@ -75,6 +75,11 @@ REL_SOURCE = r"""
 # A path exactly as written in the query: nodes joined by -[rel]->, <-[rel]-, --, -->, <--, ...
 PATH_ORIGINAL_SOURCE = rf"({NODE_SOURCE}\s*(?:<?\s*-\s*(?:{REL_SOURCE})?\s*-\s*>?|\s*<\s*-\s*-\s*|\s*-\s*-\s*>\s*|\s*-\s*-\s*)\s*{NODE_SOURCE})"
 
+# A path with a variable-length relationship in any form (`-[*]->`, `-[r*2..]->`, `-[:R*]->`); group 1 is the path
+PATH_VARIABLE_LENGTH_SOURCE = (
+    rf"({NODE_SOURCE}\s*<?\s*-\s*\[[^\[\]]*\*[^\[\]]*\]\s*-\s*>?\s*{NODE_SOURCE})"
+)
+
 # A path after `--` was replaced by `-[]-`, so every relationship is explicit
 PATH_EDITED_SOURCE = (
     rf"({NODE_SOURCE}\s*<?\s*-\s*{REL_SOURCE}\s*-\s*>?\s*{NODE_SOURCE})"
@@ -122,6 +127,7 @@ NODE = _compile(NODE_SOURCE)
 REL = _compile(REL_SOURCE)
 PATH_ORIGINAL = _compile(PATH_ORIGINAL_SOURCE)
 PATH_EDITED = _compile(PATH_EDITED_SOURCE)
+PATH_VARIABLE_LENGTH = _compile(PATH_VARIABLE_LENGTH_SOURCE)
 LABELED_NODE = _compile(LABELED_NODE_SOURCE)
 LABELED_REL = _compile(LABELED_REL_SOURCE)
 

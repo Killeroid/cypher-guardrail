@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* **`SchemaValidator(..., check_unbounded_paths=True)` reports `cypher_guardrail.Warning.UnboundedPath` from the text of the query**, so it works with no database (offline, from a snapshot) and gives the same answer in the three modes. It is off by default, does not change the score, and leaves out `shortestPath(...)` and `allShortestPaths(...)`. `AsyncSchemaValidator` takes it too. `SyntaxValidator(check_performance=...)` is unchanged, except that a `shortestPath(...)` next to an unbounded path is no longer named as one.
+
 ## 1.4.0 (2026-10-20)
 
 ### Fixed

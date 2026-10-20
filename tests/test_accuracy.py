@@ -108,6 +108,7 @@ def test_every_case_is_well_formed():
             "check_multilabeled_nodes",
             "parameters",
             "check_performance",
+            "check_unbounded_paths",
             "check_types",
             "strict",
         }, where

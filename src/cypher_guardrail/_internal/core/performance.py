@@ -126,6 +126,36 @@ def _unbounded(rel: str) -> bool:
     return not high if dots else not low
 
 
+_SHORTEST = re.compile(r"\b(?:all)?shortestpaths?\s*\(", re.IGNORECASE)
+
+
+def _without_shortest_paths(text: str) -> str:
+    """``text`` without the arguments of ``shortestPath(...)`` and ``allShortestPaths(...)``: FalkorDB searches
+    those breadth first, whatever the hops say, so they are not unbounded."""
+    kept, position = [], 0
+    for call in _SHORTEST.finditer(text):
+        if call.start() < position:
+            continue
+        kept.append(text[position : call.start()])
+        depth, position = 1, call.end()
+        while position < len(text) and depth:
+            depth += {"(": 1, ")": -1}.get(text[position], 0)
+            position += 1
+    return "".join(kept) + text[position:]
+
+
+def written_unbounded_paths(query: str) -> list[str]:
+    """The variable-length paths with no upper limit, as the query writes them (from the text alone)."""
+    text = _without_shortest_paths(patterns.strip_literals_and_comments(query))
+    return list(
+        dict.fromkeys(
+            path.strip()
+            for path in patterns.PATH_VARIABLE_LENGTH.findall(text, overlapped=True)
+            if any(_unbounded(rel) for rel in _REL.findall(path))
+        )
+    )
+
+
 def _unbounded_paths(root: plans.Op, query: str) -> list[Issue]:
     """A variable-length path with no upper limit, as the query writes it (the plan says there is one: ``*1..INF``)."""
     unbounded = [
@@ -135,11 +165,5 @@ def _unbounded_paths(root: plans.Op, query: str) -> list[Issue]:
     ]
     if not unbounded:
         return []
-    text = patterns.strip_literals_and_comments(query)
-    written = [
-        path.strip()
-        for path in patterns.PATH_ORIGINAL.findall(text, overlapped=True)
-        if any(_unbounded(rel) for rel in _REL.findall(path))
-    ]
-    paths = list(dict.fromkeys(written)) or [op.detail for op in unbounded[:1]]
+    paths = written_unbounded_paths(query) or [op.detail for op in unbounded[:1]]
     return [_issues.unbounded_path(path) for path in paths]

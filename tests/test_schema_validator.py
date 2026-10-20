@@ -1,10 +1,15 @@
 """SchemaValidator against a real FalkorDB: labels, relationship types, paths, directions and index procedures."""
 
 import pytest
-from support import code_set
+from support import LAB, code_set
 
 from cypher_guardrail import PropertiesValidator, SchemaValidator, Snapshot
-from cypher_guardrail.issues import UNKNOWN_INDEX, UNKNOWN_LABEL, UNKNOWN_REL_TYPE
+from cypher_guardrail.issues import (
+    UNBOUNDED_PATH,
+    UNKNOWN_INDEX,
+    UNKNOWN_LABEL,
+    UNKNOWN_REL_TYPE,
+)
 
 # ----------------------------------------------------------------------------------------------------
 # The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
@@ -675,3 +680,95 @@ def test_a_cypher_header_changes_nothing_for_the_schema_and_properties_validator
         assert validator.validate(header + query, db_name) == validator.validate(
             query, db_name
         )
+
+
+# `check_unbounded_paths`: the text-only form of the UnboundedPath warning, so it works with no database
+UNBOUNDED_QUERIES = [
+    ("MATCH (a)-[:R*]->(b) RETURN b", "(a)-[:R*]->(b)"),
+    ("MATCH (a)-[:R*2..]->(b) RETURN b", "(a)-[:R*2..]->(b)"),
+    ("MATCH (a)-[:R*0..]->(b) RETURN b", "(a)-[:R*0..]->(b)"),
+    ("MATCH (a)-[ * ]->(b) RETURN b", "(a)-[ * ]->(b)"),
+    ("MATCH (a) WHERE (a)-[:R*]->() RETURN a", "(a)-[:R*]->()"),
+    ("MATCH (a) RETURN [(a)-[:R*]->(b) | b]", "(a)-[:R*]->(b)"),
+]
+BOUNDED_QUERIES = [
+    "MATCH (a)-[:R*..3]->(b) RETURN b",
+    "MATCH (a)-[:R*2]->(b) RETURN b",
+    "MATCH (a)-[:R*1..3]->(b) RETURN b",
+    "MATCH (a)-[:R]->(b) RETURN b",
+    "MATCH (a), (b) RETURN shortestPath((a)-[:R*]->(b))",
+    "MATCH (a), (b) RETURN shortestPath((a)-[:R*2..]->(b))",
+    "MATCH (a:A) RETURN '(a)-[:R*]->(b)'",
+    "MATCH (a:A) RETURN a // (a)-[:R*]->(b)",
+]
+
+
+def unbounded_paths(issues):
+    return [i["path"] for i in issues if i["code"] == UNBOUNDED_PATH]
+
+
+@pytest.mark.parametrize(("query", "path"), UNBOUNDED_QUERIES)
+def test_an_unbounded_path_is_reported_as_written_when_asked(query, path):
+    _, issues = SchemaValidator(LAB, check_unbounded_paths=True).validate(query)
+
+    assert unbounded_paths(issues) == [path]
+
+
+@pytest.mark.parametrize(("query", "_"), UNBOUNDED_QUERIES)
+def test_an_unbounded_path_is_not_reported_unless_asked(query, _):
+    assert unbounded_paths(SchemaValidator(LAB).validate(query)[1]) == []
+
+
+@pytest.mark.parametrize("query", BOUNDED_QUERIES)
+def test_a_bounded_path_or_a_shortest_path_or_a_string_is_not_unbounded(query):
+    _, issues = SchemaValidator(LAB, check_unbounded_paths=True).validate(query)
+
+    assert unbounded_paths(issues) == []
+
+
+def test_a_shortest_path_next_to_an_unbounded_path_is_left_out():
+    query = "MATCH (a)-[:R*]->(c), (b) RETURN shortestPath((a)-[:R*]->(b))"
+
+    _, issues = SchemaValidator(LAB, check_unbounded_paths=True).validate(query)
+
+    assert unbounded_paths(issues) == ["(a)-[:R*]->(c)"]
+
+
+@pytest.mark.parametrize(("query", "_"), UNBOUNDED_QUERIES)
+def test_the_warning_does_not_change_the_score(query, _):
+    asked = SchemaValidator(LAB, check_unbounded_paths=True).validate(query)
+    plain = SchemaValidator(LAB).validate(query)
+
+    assert asked[0] == plain[0]
+    assert [i for i in asked[1] if i["code"] != UNBOUNDED_PATH] == plain[1]
+
+
+def test_an_unbounded_path_is_reported_once_however_often_it_is_written():
+    query = "MATCH (a)-[:R*]->(b) WITH a, b MATCH (a)-[:R*]->(b) RETURN b"
+
+    _, issues = SchemaValidator(LAB, check_unbounded_paths=True).validate(query)
+
+    assert unbounded_paths(issues) == ["(a)-[:R*]->(b)"]
+
+
+def test_the_async_validator_reports_the_same_unbounded_paths():
+    import asyncio
+
+    from cypher_guardrail import AsyncSchemaValidator
+
+    async def ask(query):
+        validator = AsyncSchemaValidator(LAB, check_unbounded_paths=True)
+        return await validator.validate(query)
+
+    for query, _ in UNBOUNDED_QUERIES:
+        assert asyncio.run(ask(query)) == SchemaValidator(
+            LAB, check_unbounded_paths=True
+        ).validate(query)
+
+
+def test_two_unbounded_paths_that_share_a_node_are_both_reported():
+    query = "MATCH (a)-[:R*]->(b)-[:S*2..]->(c) RETURN c"
+
+    _, issues = SchemaValidator(LAB, check_unbounded_paths=True).validate(query)
+
+    assert unbounded_paths(issues) == ["(a)-[:R*]->(b)", "(b)-[:S*2..]->(c)"]
