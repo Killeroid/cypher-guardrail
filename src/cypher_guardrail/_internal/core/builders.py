@@ -6,12 +6,16 @@ The sentences are the ones the validators have always reported: consumers may ma
 
 from typing import Literal, cast
 
+from cypher_guardrail._internal.core.errors import failure_field
 from cypher_guardrail.issues import (
     CONFLICTING_VARIABLES,
+    INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
+    UNBOUND_VARIABLE_ERROR,
     UNKNOWN_FUNCTION,
+    UNKNOWN_FUNCTION_ERROR,
     UNKNOWN_INDEX,
     UNKNOWN_LABEL,
     UNKNOWN_PATH,
@@ -25,6 +29,7 @@ from cypher_guardrail.issues import (
     ConflictingVariablesIssue,
     DatabaseErrorIssue,
     InvalidPropertyAccessIssue,
+    Issue,
     ParameterNotProvidedIssue,
     PropertyTypeMismatchIssue,
     UnknownFunctionIssue,
@@ -41,9 +46,23 @@ from cypher_guardrail.issues import (
 )
 
 
-def database_error(code: str, message: str) -> DatabaseErrorIssue:
-    """The database rejected the query, or it divides by zero. ``code`` is SYNTAX_ERROR, EXECUTION_FAILED or ARITHMETIC_ERROR."""
-    return cast("DatabaseErrorIssue", {"code": code, "description": message})
+def database_error(code: str, message: str) -> Issue:
+    """The database rejected the query, or it divides by zero. ``code`` is SYNTAX_ERROR, EXECUTION_FAILED or
+    ARITHMETIC_ERROR, or one of the three failures that have a field of their own (UNBOUND_VARIABLE_ERROR,
+    UNKNOWN_FUNCTION_ERROR, INVALID_LIMIT_ERROR)."""
+    field = _FIELD_OF.get(code)
+    if field is None:
+        return cast("DatabaseErrorIssue", {"code": code, "description": message})
+    value = failure_field(code, message) or ""
+    return cast("Issue", {"code": code, "description": message, field: value})
+
+
+# the field that the issue of each of the failures has
+_FIELD_OF = {
+    UNBOUND_VARIABLE_ERROR: "variable",
+    UNKNOWN_FUNCTION_ERROR: "name",
+    INVALID_LIMIT_ERROR: "clause",
+}
 
 
 def write_query(read_only: bool) -> WriteQueryErrorIssue | WriteQueryWarningIssue:

@@ -2,6 +2,10 @@
 
 ## 1.4.0 (unreleased)
 
+### Fixed
+
+* **Asking whether a query can write no longer runs a query that only reads.** `SyntaxValidator` (with `read_only`, the default) and `is_write` send the query to FalkorDB as `GRAPH.RO_QUERY "EXPLAIN ..."`, and FalkorDB *runs* a read query sent so: a query of three cartesian products over 3000 nodes took more than a minute to validate. The request now has `TIMEOUT 1`, so a read query is stopped after a millisecond (and the plain `EXPLAIN` that follows says whether it is valid), and a write is still refused before anything runs.
+
 ### Added
 
 * **A snapshot keeps the user-defined functions (UDFs) of the FalkorDB instance.** `Snapshot.capture` (and `capture_async`, and `LiveSnapshot`) also asks `GRAPH.UDF LIST` (one request, names only: FalkorDB tells no signatures, and the code of a function is never asked for or kept) and keeps the libraries and their functions in `snapshot.udfs`, with `functions_of(library)`, `function_names` and `has_udfs` to read them, and `from_schema(..., udfs=...)` to write them by hand. `udfs=False` does not ask. A server that has no such command, or does not let the user run it, gives `None`; a server with no UDFs gives `()`. UDFs belong to the instance, so a graph that does not exist yet still has them.
@@ -11,6 +15,7 @@
 
 ### Changed
 
+* **Three failures that were `ExecutionFailed` have a code and a field of their own**: `cypher_guardrail.Error.UnboundVariable` (`variable`; FalkorDB says `'x' not defined`), `cypher_guardrail.Error.UnknownFunction` (`name`; `Unknown function 'f'`) and `cypher_guardrail.Error.InvalidLimit` (`clause`, `LIMIT` or `SKIP`; the value is not a positive integer). The query is still invalid, and the description is still the message of FalkorDB. A check for `ExecutionFailed` no longer matches these three; `CypherError.code` of the database errors that `is_write` and the backend raise is the new one too.
 * **A snapshot with UDFs is `format_version` 2.** A snapshot without them (a server that has none to list, `udfs=False`, or written by hand) is still 1, so older versions can read it; a file of format 1 still loads here. Older versions refuse a file of format 2 with "Unknown snapshot format_version 2".
 
 ## 1.3.0 (2026-10-20)

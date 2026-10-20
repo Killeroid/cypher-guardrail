@@ -12,7 +12,9 @@ all of them, so a type checker can tell them apart by ``code``::
 The fields hold plain strings, lists and dicts, so an issue can be turned into JSON as it is. The three codes
 for errors that the database itself raised (``SYNTAX_ERROR``, ``EXECUTION_FAILED`` and ``ARITHMETIC_ERROR``)
 have no fields besides the two: the message is all there is, and so it is for the two codes that say a query can
-write (``WRITE_QUERY_WARNING`` and ``WRITE_QUERY_ERROR``).
+write (``WRITE_QUERY_WARNING`` and ``WRITE_QUERY_ERROR``). Three failures that FalkorDB words the same way every time
+have a code and a field of their own: ``UNBOUND_VARIABLE_ERROR`` (``variable``), ``UNKNOWN_FUNCTION_ERROR`` (``name``)
+and ``INVALID_LIMIT_ERROR`` (``clause``).
 """
 
 from typing import Final, Literal, TypedDict
@@ -27,6 +29,10 @@ UNKNOWN_FUNCTION: Final = "cypher_guardrail.Warning.UnknownFunction"
 # Errors raised by FalkorDB itself
 SYNTAX_ERROR: Final = "FalkorDB.ClientError.Statement.SyntaxError"
 EXECUTION_FAILED: Final = "FalkorDB.DatabaseError.Statement.ExecutionFailed"
+# Failures that the database reports in a few words, and that cypher-guardrail gives a code and fields of their own
+UNBOUND_VARIABLE_ERROR: Final = "cypher_guardrail.Error.UnboundVariable"
+UNKNOWN_FUNCTION_ERROR: Final = "cypher_guardrail.Error.UnknownFunction"
+INVALID_LIMIT_ERROR: Final = "cypher_guardrail.Error.InvalidLimit"
 # Reported by cypher-guardrail: FalkorDB only catches a constant division by zero (see ``to_cypher_error``)
 ARITHMETIC_ERROR: Final = "cypher_guardrail.Error.ArithmeticError"
 # The query can modify the graph: a warning, or an error when the validator was told to allow only reads
@@ -221,6 +227,34 @@ class DatabaseErrorIssue(TypedDict):
     description: str
 
 
+class UnboundVariableIssue(TypedDict):
+    """The query uses a variable that no clause before it defines (FalkorDB: ``'x' not defined``)."""
+
+    code: Literal["cypher_guardrail.Error.UnboundVariable"]
+    description: str
+    variable: str
+
+
+class UnknownFunctionErrorIssue(TypedDict):
+    """The database does not know a function the query calls (FalkorDB: ``Unknown function 'f'``).
+
+    The warning of the schema validator (``UnknownFunctionIssue``) says the same of a function with a dotted name,
+    without a database.
+    """
+
+    code: Literal["cypher_guardrail.Error.UnknownFunction"]
+    description: str
+    name: str
+
+
+class InvalidLimitIssue(TypedDict):
+    """``LIMIT`` or ``SKIP`` has a value that is not a positive integer (a string, a negative number, a property)."""
+
+    code: Literal["cypher_guardrail.Error.InvalidLimit"]
+    description: str
+    clause: Literal["LIMIT", "SKIP"]
+
+
 Issue = (
     UnknownLabelIssue
     | UnknownRelationshipTypeIssue
@@ -238,4 +272,7 @@ Issue = (
     | WriteQueryWarningIssue
     | WriteQueryErrorIssue
     | DatabaseErrorIssue
+    | UnboundVariableIssue
+    | UnknownFunctionErrorIssue
+    | InvalidLimitIssue
 )

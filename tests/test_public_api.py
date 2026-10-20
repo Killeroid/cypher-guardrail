@@ -25,11 +25,14 @@ from cypher_guardrail.issues import (
     ARITHMETIC_ERROR,
     CONFLICTING_VARIABLES,
     EXECUTION_FAILED,
+    INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
     SYNTAX_ERROR,
+    UNBOUND_VARIABLE_ERROR,
     UNKNOWN_FUNCTION,
+    UNKNOWN_FUNCTION_ERROR,
     UNKNOWN_INDEX,
     UNKNOWN_LABEL,
     UNKNOWN_PATH,
@@ -175,9 +178,37 @@ CASES: dict[str, tuple[str, str, str, str, dict[str, Any]]] = {
     "execution failed": (
         "syntax",
         "kg",
-        "RETURN nonexistent_fn(1)",
+        "CALL db.nonexistent() YIELD x RETURN x",
         EXECUTION_FAILED,
         {},
+    ),
+    "unbound variable": (
+        "syntax",
+        "kg",
+        "MATCH (n:Goal) RETURN m.title",
+        UNBOUND_VARIABLE_ERROR,
+        {"variable": "m"},
+    ),
+    "unknown function (an error of the database)": (
+        "syntax",
+        "kg",
+        "RETURN nonexistent_fn(1)",
+        UNKNOWN_FUNCTION_ERROR,
+        {"name": "nonexistent_fn"},
+    ),
+    "invalid limit": (
+        "syntax",
+        "kg",
+        "MATCH (n:Goal) RETURN n LIMIT 'ten'",
+        INVALID_LIMIT_ERROR,
+        {"clause": "LIMIT"},
+    ),
+    "invalid skip": (
+        "syntax",
+        "kg",
+        "MATCH (n:Goal) RETURN n SKIP -2",
+        INVALID_LIMIT_ERROR,
+        {"clause": "SKIP"},
     ),
     "division by zero": ("syntax", "kg", "RETURN 1 / 0", ARITHMETIC_ERROR, {}),
 }
@@ -255,11 +286,14 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         ARITHMETIC_ERROR,
         CONFLICTING_VARIABLES,
         EXECUTION_FAILED,
+        INVALID_LIMIT_ERROR,
         INVALID_PROPERTY_ACCESS,
         PARAMETER_NOT_PROVIDED,
         PROPERTY_TYPE_MISMATCH,
         SYNTAX_ERROR,
+        UNBOUND_VARIABLE_ERROR,
         UNKNOWN_FUNCTION,
+        UNKNOWN_FUNCTION_ERROR,
         UNKNOWN_INDEX,
         UNKNOWN_LABEL,
         UNKNOWN_PATH,
@@ -275,7 +309,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         typing.get_args(typing.get_type_hints(issues.DatabaseErrorIssue)["code"])
     )
     assert declared == constants
-    assert len(constants) == 18
+    assert len(constants) == 21
 
 
 def test_different_issues_of_one_code_are_all_reported(graphs):

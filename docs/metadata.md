@@ -28,6 +28,9 @@ print(missing_labels)  # ['Ghost']
 | `cypher_guardrail.Error.ConflictingVariables` | Syntax | `variables` (`{variable: [labels]}`) |
 | `cypher_guardrail.Warning.ParameterNotProvided` | Syntax | `parameters` (list) |
 | `cypher_guardrail.Error.WriteQuery`, `cypher_guardrail.Warning.WriteQuery` | Syntax | none: the query can modify the graph (see [Read-only queries](usage.md#read-only-queries)) |
+| `cypher_guardrail.Error.UnboundVariable` | Syntax | `variable`: the query uses a variable that no clause before it defines (FalkorDB: `'x' not defined`) |
+| `cypher_guardrail.Error.UnknownFunction` | Syntax | `name`: the database does not know a function the query calls (`Unknown function 'f'`). `cypher_guardrail.Warning.UnknownFunction` says it of a function with a dotted name, without a database |
+| `cypher_guardrail.Error.InvalidLimit` | Syntax | `clause` (`LIMIT` or `SKIP`): the value is not a positive integer |
 | `FalkorDB.ClientError.Statement.SyntaxError`, `FalkorDB.DatabaseError.Statement.ExecutionFailed`, `cypher_guardrail.Error.ArithmeticError` | Syntax | none: the message is all there is |
 
 * **Plain data.** The fields are strings, lists and dicts, so an issue can be turned into JSON as it is. For `cypher_guardrail.Warning.InvalidPropertyAccess`, a name with alternatives (`A|B`) is reported as the first one.

@@ -4,9 +4,17 @@ Kept apart from ``backend`` so the I/O layer (``core/io.py``) and the query logi
 without importing the backend, which imports both.
 """
 
+import re
 from typing import Final
 
-from cypher_guardrail.issues import ARITHMETIC_ERROR, EXECUTION_FAILED, SYNTAX_ERROR
+from cypher_guardrail.issues import (
+    ARITHMETIC_ERROR,
+    EXECUTION_FAILED,
+    INVALID_LIMIT_ERROR,
+    SYNTAX_ERROR,
+    UNBOUND_VARIABLE_ERROR,
+    UNKNOWN_FUNCTION_ERROR,
+)
 
 # Not reported: the code of the CypherError for "GRAPH.RO_QUERY refuses this query because it can write"
 NOT_READ_ONLY: Final = "cypher_guardrail.Error.NotReadOnly"
@@ -69,7 +77,31 @@ def to_cypher_error(error):
         or message.startswith("Error: empty query")
     ):
         return CypherError(SYNTAX_ERROR, message)
-    return CypherError(EXECUTION_FAILED, message)
+    return CypherError(_code_of_execution_failure(message), message)
+
+
+# How FalkorDB words the failures that have a code of their own (the first word of each is the field the issue has)
+_WORDED = (
+    (UNBOUND_VARIABLE_ERROR, re.compile(r"^'([^']*)' not defined")),
+    (UNKNOWN_FUNCTION_ERROR, re.compile(r"^Unknown function '([^']*)'")),
+    (INVALID_LIMIT_ERROR, re.compile(r"^(LIMIT|SKIP) specified value of invalid type")),
+)
+
+
+def _code_of_execution_failure(message: str) -> str:
+    """The code of a failure that is not a syntax error: its own when FalkorDB words it in one of the known ways."""
+    return next(
+        (code for code, pattern in _WORDED if pattern.search(message.strip())),
+        EXECUTION_FAILED,
+    )
+
+
+def failure_field(code: str, message: str) -> str | None:
+    """The field that an issue of ``code`` has, read from ``message``: the variable, the function or the clause."""
+    for known, pattern in _WORDED:
+        if known == code and (match := pattern.search(message.strip())):
+            return match[1]
+    return None
 
 
 def is_missing_graph(error: CypherError) -> bool:

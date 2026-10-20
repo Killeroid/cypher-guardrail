@@ -607,7 +607,7 @@ def test_a_query_that_is_wrong_besides_its_parameters_is_still_wrong(
     )
 
     assert valid is False
-    assert code_set(metadata) == {"FalkorDB.DatabaseError.Statement.ExecutionFailed"}
+    assert code_set(metadata) == {"cypher_guardrail.Error.UnboundVariable"}
 
 
 @pytest.mark.parametrize(

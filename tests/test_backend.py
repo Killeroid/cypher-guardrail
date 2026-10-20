@@ -85,8 +85,25 @@ class TestExecute:
 
     def test_execution_error_becomes_cypher_error(self, backend, db_name):
         with pytest.raises(CypherError) as error:
-            backend.execute("RETURN nonexistent_fn(1)", db_name)
+            backend.execute("CALL db.nonexistent() YIELD x RETURN x", db_name)
         assert error.value.code == "FalkorDB.DatabaseError.Statement.ExecutionFailed"
+
+    @pytest.mark.parametrize(
+        ("query", "code"),
+        [
+            ("RETURN nonexistent_fn(1)", "cypher_guardrail.Error.UnknownFunction"),
+            ("RETURN x", "cypher_guardrail.Error.UnboundVariable"),
+            ("MATCH (n) RETURN n LIMIT -1", "cypher_guardrail.Error.InvalidLimit"),
+            ("MATCH (n) RETURN n SKIP 'a'", "cypher_guardrail.Error.InvalidLimit"),
+        ],
+    )
+    def test_failures_that_have_a_code_of_their_own(
+        self, backend, db_name, query, code
+    ):
+        with pytest.raises(CypherError) as error:
+            backend.execute(query, db_name)
+        assert error.value.code == code
+        assert error.value.message  # the words of FalkorDB are kept
 
     def test_division_by_zero_is_an_arithmetic_error(self, backend, db_name):
         with pytest.raises(CypherError) as error:
