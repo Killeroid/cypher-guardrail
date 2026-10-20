@@ -1202,7 +1202,7 @@ def test_with_a_real_async_database_the_live_snapshot_follows_the_graph(
 
 @pytest.fixture
 def fingerprinted(falkordb_client):
-    from cypher_guardrail._internal.sources.capture import fingerprint
+    from cypher_guardrail._internal.capture_driver import fingerprint
 
     graph = falkordb_client.select_graph("live_fingerprint")
     graph.query("CREATE (:A {p: 1})-[:R]->(:B {q: 1}), (:A {p: 2})")
@@ -1239,7 +1239,7 @@ def test_each_part_of_the_fingerprint_notices_its_own_change(fingerprinted, chan
 
 
 def test_the_fingerprint_of_a_graph_that_does_not_exist_is_empty(falkordb_client):
-    from cypher_guardrail._internal.sources.capture import fingerprint
+    from cypher_guardrail._internal.capture_driver import fingerprint
 
     assert fingerprint(falkordb_client, "live_no_such_graph") == ((), (), (), (), 0, 0)
 
@@ -1257,7 +1257,7 @@ def test_removing_one_relationship_and_adding_another_is_not_noticed(fingerprint
 
 
 def test_the_async_fingerprint_is_the_same(falkordb_client, run_async, fingerprinted):
-    from cypher_guardrail._internal.sources.capture import (
+    from cypher_guardrail._internal.capture_driver import (
         fingerprint,
         fingerprint_async,
     )

@@ -5,7 +5,7 @@
 """
 
 from cypher_guardrail import Snapshot
-from cypher_guardrail._internal.core.errors import PARAMETER_NOT_PROVIDED
+from cypher_guardrail.issues import PARAMETER_NOT_PROVIDED
 
 
 def codes(metadata):

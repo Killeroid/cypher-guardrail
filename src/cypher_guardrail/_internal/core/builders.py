@@ -6,7 +6,7 @@ The sentences are the ones the validators have always reported: consumers may ma
 
 from typing import Literal, cast
 
-from cypher_guardrail._internal.core.errors import (
+from cypher_guardrail.issues import (
     CONFLICTING_VARIABLES,
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
@@ -21,8 +21,6 @@ from cypher_guardrail._internal.core.errors import (
     WRITE_QUERY_WARNING,
     WRONG_DIRECTION_PATH,
     WRONG_DIRECTION_VARIABLE_LENGTH_PATH,
-)
-from cypher_guardrail.issues import (
     ConflictingVariablesIssue,
     DatabaseErrorIssue,
     InvalidPropertyAccessIssue,

@@ -14,11 +14,7 @@ from typing import Any
 import pandas as pd
 import regex as re
 
-from cypher_guardrail._internal.core.errors import (
-    SYNTAX_ERROR,
-    CypherError,
-    is_missing_graph,
-)
+from cypher_guardrail._internal.core.errors import CypherError, is_missing_graph
 from cypher_guardrail._internal.core.io import (
     Lookup,
     Recall,
@@ -27,6 +23,7 @@ from cypher_guardrail._internal.core.io import (
     RoQuery,
 )
 from cypher_guardrail._internal.core.queries import execute, query_to_df
+from cypher_guardrail.issues import SYNTAX_ERROR
 
 # the lookup kind "missing_names" is asked about one of these
 _NAME_PROCEDURES = {

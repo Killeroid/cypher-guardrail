@@ -6,12 +6,12 @@ import pandas as pd
 import regex as re
 
 from cypher_guardrail._internal.core import queries as _queries
-from cypher_guardrail._internal.core.errors import WRITE_QUERY_ERROR
 from cypher_guardrail._internal.core.io import Concurrently, Lookup, Request
 from cypher_guardrail._internal.sources.online import (
     identify_variables_and_construct_query,  # noqa: F401
 )
 from cypher_guardrail.backend import get_async_backend, get_backend
+from cypher_guardrail.issues import WRITE_QUERY_ERROR
 
 
 def get_paths_after_inference(driver, all_paths_with_vars, database_name=None):

@@ -13,13 +13,7 @@ import pytest
 from redis.exceptions import ResponseError
 
 from cypher_guardrail._internal.core import io as _io
-from cypher_guardrail._internal.core.errors import (
-    ARITHMETIC_ERROR,
-    EXECUTION_FAILED,
-    SYNTAX_ERROR,
-    CypherError,
-    is_missing_graph,
-)
+from cypher_guardrail._internal.core.errors import CypherError, is_missing_graph
 from cypher_guardrail._internal.core.io import (
     AsyncTransport,
     Concurrently,
@@ -34,6 +28,7 @@ from cypher_guardrail._internal.core.io import (
     snapshot,
 )
 from cypher_guardrail._internal.sources import online as _online
+from cypher_guardrail.issues import ARITHMETIC_ERROR, EXECUTION_FAILED, SYNTAX_ERROR
 
 # ----------------------------------------------------------------------------------------------------
 # The I/O layer: drivers, snapshots and transports, with fakes instead of a database.

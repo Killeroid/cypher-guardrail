@@ -124,6 +124,7 @@ type = "layers"
 layers = [
     "cypher_guardrail.validators",
     "cypher_guardrail.live | cypher_guardrail.utils",
+    "cypher_guardrail._internal.capture_driver",
     "cypher_guardrail.backend",
     "cypher_guardrail._internal.sources",
     "cypher_guardrail.snapshot",
@@ -131,11 +132,10 @@ layers = [
     "cypher_guardrail.issues",
     "cypher_guardrail.patterns",
 ]
-# The three imports that go against the layers today; Phase 2 of the refactoring removes them, and then this list goes.
+# The one import that goes against the layers: Snapshot.capture, a method of the data class, runs the capture that is
+# written above it (the import is inside the method).
 ignore_imports = [
-    "cypher_guardrail.snapshot -> cypher_guardrail._internal.sources.capture",
-    "cypher_guardrail.issues -> cypher_guardrail._internal.core.errors",
-    "cypher_guardrail._internal.sources.capture -> cypher_guardrail.backend",
+    "cypher_guardrail.snapshot -> cypher_guardrail._internal.capture_driver",
 ]
 
 [tool.metrics]

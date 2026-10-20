@@ -573,7 +573,7 @@ class Snapshot(SnapshotSource):
             ValueError: If there is no graph name, ``sample`` is not a positive whole number, or ``types`` is
                 True together with a ``sample``.
         """
-        from cypher_guardrail._internal.sources.capture import capture
+        from cypher_guardrail._internal.capture_driver import capture
 
         return capture(driver, graph, sample=sample, types=types)
 
@@ -588,7 +588,7 @@ class Snapshot(SnapshotSource):
         max_concurrency: int = 8,
     ) -> "Snapshot":
         """The async version of :meth:`capture`, for a ``falkordb.asyncio`` client or graph."""
-        from cypher_guardrail._internal.sources.capture import capture_async
+        from cypher_guardrail._internal.capture_driver import capture_async
 
         return await capture_async(
             driver,

@@ -15,26 +15,31 @@ have no fields besides the two: the message is all there is, and so it is for th
 write (``WRITE_QUERY_WARNING`` and ``WRITE_QUERY_ERROR``).
 """
 
-from typing import Literal, TypedDict
+from typing import Final, Literal, TypedDict
 
-from cypher_guardrail._internal.core.errors import (  # noqa: F401
-    ARITHMETIC_ERROR,
-    CONFLICTING_VARIABLES,
-    EXECUTION_FAILED,
-    INVALID_PROPERTY_ACCESS,
-    PARAMETER_NOT_PROVIDED,
-    PROPERTY_TYPE_MISMATCH,
-    SYNTAX_ERROR,
-    UNKNOWN_INDEX,
-    UNKNOWN_LABEL,
-    UNKNOWN_PATH,
-    UNKNOWN_PROPERTY,
-    UNKNOWN_REL_TYPE,
-    VARIABLE_LENGTH_PATH,
-    WRITE_QUERY_ERROR,
-    WRITE_QUERY_WARNING,
-    WRONG_DIRECTION_PATH,
-    WRONG_DIRECTION_VARIABLE_LENGTH_PATH,
+# The codes cypher-guardrail reports in its metadata. FalkorDB has no notifications of its own, so cypher-guardrail produces these itself.
+UNKNOWN_LABEL: Final = "cypher_guardrail.Warning.UnknownLabel"
+UNKNOWN_REL_TYPE: Final = "cypher_guardrail.Warning.UnknownRelationshipType"
+UNKNOWN_PROPERTY: Final = "cypher_guardrail.Warning.UnknownPropertyKey"
+PARAMETER_NOT_PROVIDED: Final = "cypher_guardrail.Warning.ParameterNotProvided"
+UNKNOWN_INDEX: Final = "cypher_guardrail.Warning.UnknownIndex"
+# Errors raised by FalkorDB itself
+SYNTAX_ERROR: Final = "FalkorDB.ClientError.Statement.SyntaxError"
+EXECUTION_FAILED: Final = "FalkorDB.DatabaseError.Statement.ExecutionFailed"
+# Reported by cypher-guardrail: FalkorDB only catches a constant division by zero (see ``to_cypher_error``)
+ARITHMETIC_ERROR: Final = "cypher_guardrail.Error.ArithmeticError"
+# The query can modify the graph: a warning, or an error when the validator was told to allow only reads
+WRITE_QUERY_WARNING: Final = "cypher_guardrail.Warning.WriteQuery"
+WRITE_QUERY_ERROR: Final = "cypher_guardrail.Error.WriteQuery"
+# More codes cypher-guardrail reports.
+CONFLICTING_VARIABLES: Final = "cypher_guardrail.Error.ConflictingVariables"
+INVALID_PROPERTY_ACCESS: Final = "cypher_guardrail.Warning.InvalidPropertyAccess"
+PROPERTY_TYPE_MISMATCH: Final = "cypher_guardrail.Warning.PropertyTypeMismatch"
+UNKNOWN_PATH: Final = "cypher_guardrail.Warning.UnknownPath"
+VARIABLE_LENGTH_PATH: Final = "cypher_guardrail.Warning.VariableLengthPath"
+WRONG_DIRECTION_PATH: Final = "cypher_guardrail.Warning.WrongDirectionPath"
+WRONG_DIRECTION_VARIABLE_LENGTH_PATH: Final = (
+    "cypher_guardrail.Warning.WrongDirectionVariableLengthPath"
 )
 
 

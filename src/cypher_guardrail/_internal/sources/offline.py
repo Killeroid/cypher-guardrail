@@ -33,10 +33,11 @@ from typing import Any
 import pandas as pd
 import regex as re
 
-from cypher_guardrail._internal.core.errors import SYNTAX_ERROR, CypherError
+from cypher_guardrail._internal.core.errors import CypherError
 from cypher_guardrail._internal.core.io import Lookup
 from cypher_guardrail._internal.core.valuetypes import fits
 from cypher_guardrail._internal.sources import online as _online
+from cypher_guardrail.issues import SYNTAX_ERROR
 from cypher_guardrail.patterns import strip_literals_and_comments, unquote_name
 from cypher_guardrail.snapshot import Snapshot
 

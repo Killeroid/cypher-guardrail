@@ -12,7 +12,6 @@ from cypher_guardrail._internal.core.errors import CypherError, is_missing_graph
 from cypher_guardrail._internal.core.io import Concurrently, Request
 from cypher_guardrail._internal.core.queries import execute
 from cypher_guardrail._internal.sources import online as _online
-from cypher_guardrail.backend import get_async_backend, get_backend
 
 
 def _quote(name: str) -> str:
@@ -23,7 +22,7 @@ def _quote(name: str) -> str:
     return f"`{name}`"
 
 
-_check_sample = snapshot._check_sample
+check_sample = snapshot._check_sample
 
 
 def _scan(graph: str, query: str) -> Generator[Request, Any, list[dict]]:
@@ -37,7 +36,7 @@ def _scan(graph: str, query: str) -> Generator[Request, Any, list[dict]]:
         return []
 
 
-def _check_types(sample, types):
+def check_types(sample, types):
     if types and sample is not None:
         raise ValueError(
             "types=True needs the whole graph: a sample can miss a type, and a type that was missed would be "
@@ -57,7 +56,7 @@ def _types_of(rows):
     return found
 
 
-def _capture(
+def scan_graph(
     graph: str, sample: int | None, with_types: bool = False
 ) -> Generator[Request, Any, dict]:
     """The pieces of a snapshot of ``graph``: names and indexes first, then the scans that need the names."""
@@ -184,7 +183,7 @@ def _names(
     return labels, types, keys
 
 
-def _fingerprint(graph: str) -> Generator[Request, Any, tuple]:
+def fingerprint_logic(graph: str) -> Generator[Request, Any, tuple]:
     """What a refresh looks at to see whether the graph has changed: its names, its indexes and how many nodes and
     relationships it has. A few cheap queries, where a capture scans the graph."""
     names, index_rows, nodes, edges = yield Concurrently(
@@ -206,21 +205,6 @@ def _fingerprint(graph: str) -> Generator[Request, Any, tuple]:
     )
 
 
-def fingerprint(driver, graph=None) -> tuple:
-    """The fingerprint of ``graph`` (see ``_fingerprint``): equal fingerprints mean the structure very likely has not changed.
-
-    It is a heuristic: removing a relationship and adding another leaves the counts as they were.
-    """
-    backend = get_backend(driver)
-    return backend.run(_fingerprint(backend.graph_name(graph)))
-
-
-async def fingerprint_async(driver, graph=None, *, max_concurrency=8) -> tuple:
-    """The async version of :func:`fingerprint`."""
-    backend = get_async_backend(driver, max_concurrency)
-    return await backend.run(_fingerprint(backend.graph_name(graph)))
-
-
 def _property_types(found: dict):
     """The ``property_types`` of a snapshot of what was found: None when the types were not asked for."""
     if "node_value_types" not in found:
@@ -237,9 +221,7 @@ def _property_types(found: dict):
     )
 
 
-def _assemble(
-    graph: str, found: dict, sample: int | None = None
-) -> "snapshot.Snapshot":
+def assemble(graph: str, found: dict, sample: int | None = None) -> "snapshot.Snapshot":
     """The snapshot of what was found.
 
     The queries do not run at one instant, so a label, a type or a property created between two of them can show
@@ -280,23 +262,3 @@ def _assemble(
         property_types=_property_types(found),
         sample=sample,
     )
-
-
-def capture(driver, graph=None, *, sample=None, types=False):
-    """The :class:`~cypher_guardrail.snapshot.Snapshot` of ``graph`` on a ``falkordb`` client or graph."""
-    _check_sample(sample)
-    _check_types(sample, types)
-    backend = get_backend(driver)
-    name = backend.graph_name(graph)
-    return _assemble(name, backend.run(_capture(name, sample, types)), sample)
-
-
-async def capture_async(
-    driver, graph=None, *, sample=None, types=False, max_concurrency=8
-):
-    """The async version of :func:`capture`."""
-    _check_sample(sample)
-    _check_types(sample, types)
-    backend = get_async_backend(driver, max_concurrency)
-    name = backend.graph_name(graph)
-    return _assemble(name, await backend.run(_capture(name, sample, types)), sample)

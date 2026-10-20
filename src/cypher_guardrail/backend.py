@@ -26,7 +26,9 @@ from cypher_guardrail._internal.core import io as _io
 from cypher_guardrail._internal.core import queries as _queries
 
 # The codes and CypherError are part of this module's API, though they are defined in cypher_guardrail._internal.core.errors
-from cypher_guardrail._internal.core.errors import (  # noqa: F401
+from cypher_guardrail._internal.core.errors import CypherError  # noqa: F401
+from cypher_guardrail._internal.sources import hybrid as _modes
+from cypher_guardrail.issues import (  # noqa: F401
     ARITHMETIC_ERROR,
     EXECUTION_FAILED,
     PARAMETER_NOT_PROVIDED,
@@ -35,9 +37,7 @@ from cypher_guardrail._internal.core.errors import (  # noqa: F401
     UNKNOWN_LABEL,
     UNKNOWN_PROPERTY,
     UNKNOWN_REL_TYPE,
-    CypherError,
 )
-from cypher_guardrail._internal.sources import hybrid as _modes
 from cypher_guardrail.snapshot import SnapshotSource
 
 

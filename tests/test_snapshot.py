@@ -522,7 +522,7 @@ def test_a_captured_snapshot_survives_a_save_and_a_load(falkordb_client, tmp_pat
 
 def test_names_found_in_the_data_but_not_in_the_names_asked_first_are_added():
     # The queries do not run at one instant: something created between two of them shows up in the data only
-    from cypher_guardrail._internal.sources.capture import _assemble
+    from cypher_guardrail._internal.sources.capture import assemble as _assemble
 
     found = {
         "labels": frozenset({"A"}),

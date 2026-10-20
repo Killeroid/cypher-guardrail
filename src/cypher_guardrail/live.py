@@ -35,7 +35,8 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager
 from datetime import UTC, datetime, timedelta
 
-from cypher_guardrail._internal.sources import capture as _capture
+from cypher_guardrail._internal import capture_driver as _capture
+from cypher_guardrail._internal.sources import capture as _logic
 from cypher_guardrail.snapshot import Snapshot, SnapshotSource
 
 _NEVER = datetime.min.replace(tzinfo=UTC)
@@ -173,8 +174,8 @@ class _Tracker:
 def _check_names(graph, sample, types):
     if not isinstance(graph, str) or not graph:
         raise ValueError(f"graph must be the name of a graph, not {graph!r}")
-    _capture._check_sample(sample)
-    _capture._check_types(sample, types)
+    _logic.check_sample(sample)
+    _logic.check_types(sample, types)
 
 
 def _read(path, graph, tracker, now):
