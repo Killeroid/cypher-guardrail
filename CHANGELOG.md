@@ -1,10 +1,11 @@
 # Changelog
 
-## 1.3.0 (unreleased)
+## 1.3.0 (2026-10-20)
 
 ### Added
 
 * **The public API is fully type annotated.** Every parameter and result of the validators, the snapshots, `LiveSnapshot` and `AsyncLiveSnapshot`, `GraphNotFoundError` and the helpers of `cypher_guardrail.utils` has a type, and a test keeps it so. `cypher_guardrail.drivers` has the types of what they take: `Driver` (a `falkordb.FalkorDB` client, FalkorDBLite or a `falkordb.Graph`), `AsyncDriver` (the same for `falkordb.asyncio`) and `Verify` (`"misses"` or `"never"`). The sync validators and `LiveSnapshot` take a `Driver`, and the async ones an `AsyncDriver`, so a type checker now turns away an async client given to a sync validator. `validate()` returns `tuple[float, list[Issue]]` (`tuple[bool, ...]` for `SyntaxValidator`, `tuple[float | None, ...]` for `PropertiesValidator`).
+* **`cypher_guardrail.CypherError`** is exported from the package (it was only importable from `cypher_guardrail.backend`).
 
 ### Deprecated
 
