@@ -22,7 +22,11 @@ from typing import Any
 
 from cypher_guardrail.drivers import AsyncDriver, Driver
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 1  # the format of a snapshot without user-defined functions
+FORMAT_VERSION_UDFS = (
+    2  # the format of one that has them (it is the same, with ``udfs``)
+)
+_FORMAT_VERSIONS = (FORMAT_VERSION, FORMAT_VERSION_UDFS)
 _ENTITIES = ("NODE", "RELATIONSHIP")
 
 
@@ -85,6 +89,14 @@ def _by_name(mapping, what) -> tuple[tuple[str, tuple[str, ...]], ...]:
             for name, values in dict(mapping).items()
         )
     )
+
+
+def _label_sets(nodes, given):
+    """The label sets of a snapshot written by hand: the ones given, and a label of its own for each label of ``nodes``
+    that is in none of them (it is found only together with the others)."""
+    sets = [tuple(labels) for labels in given]
+    together = {label for labels in sets for label in labels}
+    return (*((label,) for label in nodes if label not in together), *sets)
 
 
 def _keys_of(nodes, relationship_properties):
@@ -156,7 +168,8 @@ class Snapshot(SnapshotSource):
     Attributes:
         graph: The name of the graph it was captured from (``""`` when written by hand).
         captured_at: When it was captured, ISO 8601 in UTC (None when written by hand).
-        format_version: The version of the format of ``to_dict()`` (only ``1`` exists).
+        format_version: The version of the format of ``to_dict()``: ``2`` for a snapshot that has ``udfs``, ``1`` for the
+            others (which older versions of cypher-guardrail can read). It follows from ``udfs``: it is not chosen.
         labels: The node labels (``db.labels()``).
         relationship_types: The relationship types (``db.relationshipTypes()``).
         property_keys: The property keys (``db.propertyKeys()``).
@@ -169,6 +182,10 @@ class Snapshot(SnapshotSource):
             the types of the values each property has (FalkorDB's ``typeof``: ``"String"``, ``"Integer"``,
             ``"Float"``, ``"Boolean"``, ...), several when the data is mixed. None when the types were not
             captured (``capture(..., types=True)``, or ``from_schema(..., node_property_types=...)``).
+        udfs: ``((library, (function, ...)), ...)``: the user-defined functions of the FalkorDB instance, called as
+            ``library.function(...)`` (names only: FalkorDB tells no signatures). They belong to the instance, not to the
+            graph. None when they were not captured (``capture(..., udfs=False)``) or the server has no list of them;
+            ``()`` when it has none.
         sample: None when the whole graph was scanned. The ``sample`` of ``capture(..., sample=N)`` otherwise: the
             snapshot then has at most N nodes (or relationships) of each label (or type), so a path or a property
             that it lacks may just not be in the sample. The validators do not take its "not there" for an answer
@@ -187,6 +204,7 @@ class Snapshot(SnapshotSource):
     node_properties: tuple = ()
     relationship_properties: tuple = ()
     property_types: tuple | None = None
+    udfs: tuple | None = None
     sample: int | None = None
 
     def current(self) -> "Snapshot":
@@ -194,10 +212,10 @@ class Snapshot(SnapshotSource):
         return self
 
     def __post_init__(self):
-        if self.format_version != FORMAT_VERSION:
+        if self.format_version not in _FORMAT_VERSIONS:
             raise ValueError(
                 f"Unknown snapshot format_version {self.format_version}: this version of cypher-guardrail reads "
-                f"only format_version {FORMAT_VERSION}."
+                f"the format_versions {', '.join(map(str, _FORMAT_VERSIONS))}."
             )
         if not isinstance(self.graph, str):
             raise TypeError(f"graph must be a string, not {self.graph!r}")
@@ -236,7 +254,11 @@ class Snapshot(SnapshotSource):
                 if self.property_types is None
                 else self._property_types(self.property_types)
             ),
+            "udfs": None if self.udfs is None else self._udfs(self.udfs),
         }
+        normalised["format_version"] = (
+            FORMAT_VERSION if normalised["udfs"] is None else FORMAT_VERSION_UDFS
+        )
         for name, value in normalised.items():
             object.__setattr__(self, name, value)
         self._check()
@@ -263,6 +285,14 @@ class Snapshot(SnapshotSource):
                 )
             )
         return tuple(sorted(found))
+
+    @staticmethod
+    def _udfs(udfs):
+        """The libraries and their functions: names are strings."""
+        libraries = dict(udfs)
+        for library in libraries:
+            Snapshot._text(library, "the libraries of udfs")
+        return _by_name(libraries, "udfs")
 
     @staticmethod
     def _property_types(property_types):
@@ -342,6 +372,26 @@ class Snapshot(SnapshotSource):
         """Whether the types of the properties were captured (or given)."""
         return self.property_types is not None
 
+    @property
+    def has_udfs(self) -> bool:
+        """Whether the user-defined functions were captured (or given): see :attr:`udfs`."""
+        return self.udfs is not None
+
+    @cached_property
+    def _udf_map(self) -> dict[str, tuple[str, ...]]:
+        return dict(self.udfs or ())
+
+    def functions_of(self, library: str) -> tuple[str, ...]:
+        """The user-defined functions of a library (``()`` for an unknown library, and when there are no UDFs)."""
+        return self._udf_map.get(library, ())
+
+    @cached_property
+    def function_names(self) -> frozenset[str]:
+        """The user-defined functions as they are called: ``{"library.function", ...}``."""
+        return frozenset(
+            f"{library}.{name}" for library, names in self.udfs or () for name in names
+        )
+
     @cached_property
     def _property_type_map(self) -> dict[tuple[str, str], dict[str, tuple[str, ...]]]:
         return {
@@ -392,6 +442,8 @@ class Snapshot(SnapshotSource):
                 ]
             ),
         }
+        if self.udfs is not None:
+            data["udfs"] = {library: list(names) for library, names in self.udfs}
         if self.sample is not None:
             data["sample"] = self.sample
         return data
@@ -409,17 +461,22 @@ class Snapshot(SnapshotSource):
             raise ValueError("This is not a snapshot: expected a dict")  # noqa: TRY004
         if "format_version" not in data:
             raise ValueError("This is not a snapshot: it has no format_version")
-        if data["format_version"] != FORMAT_VERSION:
+        if data["format_version"] not in _FORMAT_VERSIONS:
             raise ValueError(
                 f"Unknown snapshot format_version {data['format_version']}: this version of cypher-guardrail "
-                f"reads only format_version {FORMAT_VERSION}."
+                f"reads the format_versions {', '.join(map(str, _FORMAT_VERSIONS))}."
             )
-        # `property_types` is optional: a snapshot written without the types has none. So is `sample`: a snapshot of
-        # the whole graph does not have it
-        expected = set(cls().to_dict()) - {"property_types"}
+        if "udfs" in data and data["format_version"] < FORMAT_VERSION_UDFS:
+            raise ValueError(
+                f"The snapshot has udfs, which need format_version {FORMAT_VERSION_UDFS}"
+            )
+        # `property_types` is optional: a snapshot written without the types has none. So are `udfs` (not captured) and
+        # `sample` (a snapshot of the whole graph does not have it)
+        optional = {"property_types", "udfs", "sample"}
+        expected = set(cls().to_dict()) - optional
         if missing := sorted(expected - set(data)):
             raise ValueError(f"The snapshot lacks the fields {', '.join(missing)}")
-        if unknown := sorted(set(data) - expected - {"property_types", "sample"}):
+        if unknown := sorted(set(data) - expected - optional):
             raise ValueError(f"The snapshot has unknown fields: {', '.join(unknown)}")
         try:
             return cls(
@@ -432,6 +489,7 @@ class Snapshot(SnapshotSource):
                     if data.get("property_types") is None
                     else _tuple(data["property_types"])
                 ),
+                udfs=None if data.get("udfs") is None else _tuple(data["udfs"]),
                 **{
                     name: _tuple(data[name])
                     for name in (
@@ -510,6 +568,7 @@ class Snapshot(SnapshotSource):
         graph: str = "",
         node_property_types: Mapping[str, _Names] | None = None,
         relationship_property_types: Mapping[str, _Names] | None = None,
+        udfs: _Names | None = None,
     ) -> "Snapshot":
         """A snapshot written by hand, for when there is no database to capture it from.
 
@@ -531,14 +590,13 @@ class Snapshot(SnapshotSource):
                 (FalkorDB's ``typeof`` names: ``"String"``, ``"Integer"``, ``"Float"``, ``"Boolean"``, ...).
                 Optional: without it (and ``relationship_property_types``) the snapshot has no types.
             relationship_property_types: The same for relationship types.
+            udfs: ``{library: [functions]}``: the user-defined functions, called as ``library.function(...)``.
 
         Raises:
             ValueError: If a relationship or a set of labels names a label that is not in ``nodes``, or a
                 property with a type is not one of the properties of its label.
         """
         relationships = [tuple(r) for r in relationships]
-        given_sets = [tuple(s) for s in node_label_sets]
-        together = {label for labels in given_sets for label in labels}  # (not alone)
         relationship_properties = dict(relationship_properties or {})
         types = {kind for _, kind, _ in relationships} | set(relationship_properties)
         return cls(
@@ -547,10 +605,7 @@ class Snapshot(SnapshotSource):
             relationship_types=tuple(types),
             property_keys=_tuple(_keys_of(nodes, relationship_properties)),
             indexes=tuple(tuple(i) for i in indexes),
-            node_label_sets=(
-                *((label,) for label in nodes if label not in together),
-                *given_sets,
-            ),
+            node_label_sets=_label_sets(nodes, node_label_sets),
             edges=tuple((_ends(a), kind, _ends(b)) for a, kind, b in relationships),
             node_properties=_tuple(nodes),
             relationship_properties=tuple(
@@ -559,6 +614,7 @@ class Snapshot(SnapshotSource):
             property_types=_typed_properties(
                 node_property_types, relationship_property_types
             ),
+            udfs=None if udfs is None else _tuple(dict(udfs)),
         )
 
     # --------------------------------------------------------------------- from a database
@@ -570,6 +626,7 @@ class Snapshot(SnapshotSource):
         *,
         sample: int | None = None,
         types: bool = False,
+        udfs: bool = True,
     ) -> "Snapshot":
         """Capture the snapshot of a graph, with read-only queries.
 
@@ -585,6 +642,9 @@ class Snapshot(SnapshotSource):
                 ``PropertiesValidator(..., check_types=True)``. It reads the same data as the scan for the
                 properties, so it costs no more queries. It needs the whole graph (no ``sample``): a sample can
                 miss a type, and a type that was missed would be reported as a mismatch.
+            udfs: True (the default) also lists the user-defined functions of the instance (``GRAPH.UDF LIST``: one
+                request, names only, never their code), as ``udfs``. A server that has no such command, or does not
+                let the user run it, gives None. False does not ask.
 
         Raises:
             ValueError: If there is no graph name, ``sample`` is not a positive whole number, or ``types`` is
@@ -592,16 +652,17 @@ class Snapshot(SnapshotSource):
         """
         from cypher_guardrail._internal.capture_driver import capture
 
-        return capture(driver, graph, sample=sample, types=types)
+        return capture(driver, graph, sample=sample, types=types, udfs=udfs)
 
     @classmethod
-    async def capture_async(
+    async def capture_async(  # noqa: PLR0913 - the options of capture, and max_concurrency
         cls,
         driver: AsyncDriver,
         graph: str | None = None,
         *,
         sample: int | None = None,
         types: bool = False,
+        udfs: bool = True,
         max_concurrency: int = 8,
     ) -> "Snapshot":
         """The async version of :meth:`capture`, for a ``falkordb.asyncio`` client or graph."""
@@ -612,5 +673,6 @@ class Snapshot(SnapshotSource):
             graph,
             sample=sample,
             types=types,
+            udfs=udfs,
             max_concurrency=max_concurrency,
         )

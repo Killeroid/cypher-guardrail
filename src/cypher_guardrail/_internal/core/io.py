@@ -15,6 +15,7 @@ Requests are:
 * :class:`Explain`: ``GRAPH.EXPLAIN``. The answer is ``None``: it only matters that the database accepts the query.
   With ``read_only`` it is ``GRAPH.RO_QUERY "EXPLAIN ..."`` instead: still nothing is executed, but the database
   also refuses a query that can write (a ``CypherError`` with the code ``NOT_READ_ONLY``).
+* :class:`ListUdfs`: ``GRAPH.UDF LIST``. The answer is the raw reply (``_internal.core.udfs`` reads it).
 * :class:`Lookup`: a question about the graph ("does this path exist?", "which of these labels are unknown?"),
   not a query. The driver is given a *resolver*, a function that takes the lookup and returns a logic generator
   whose return value is the answer. The online resolver (``cypher_guardrail._internal.sources.online``) answers by asking the database,
@@ -65,6 +66,16 @@ class Explain:
 
 
 @dataclass(frozen=True)
+class ListUdfs:
+    """Ask for the user-defined functions of the instance (``GRAPH.UDF LIST``). The answer is the raw reply.
+
+    UDFs are not graph-scoped: ``graph`` only says which connection to ask on.
+    """
+
+    graph: str
+
+
+@dataclass(frozen=True)
 class Concurrently:
     """Logic generators (a tuple) that do not depend on each other and can run at the same time.
 
@@ -102,7 +113,7 @@ class Lookup:
 
 
 # What a logic generator may yield
-Request = RoQuery | Explain | Lookup | Concurrently | Remember | Recall
+Request = RoQuery | Explain | ListUdfs | Lookup | Concurrently | Remember | Recall
 
 
 # ---------------------------------------------------------------------- snapshots
@@ -171,6 +182,8 @@ class SyncTransport:
         try:
             if isinstance(request, RoQuery):
                 return graph.ro_query(request.query)
+            if isinstance(request, ListUdfs):
+                return graph.execute_command("GRAPH.UDF", "LIST")
             graph.execute_command(*_explain_command(graph, request))
         except ResponseError as e:
             raise to_cypher_error(e) from e
@@ -216,6 +229,8 @@ class AsyncTransport:
             try:
                 if isinstance(request, RoQuery):
                     return await graph.ro_query(request.query)
+                if isinstance(request, ListUdfs):
+                    return await graph.execute_command("GRAPH.UDF", "LIST")
                 await graph.execute_command(*_explain_command(graph, request))
             except ResponseError as e:
                 raise to_cypher_error(e) from e

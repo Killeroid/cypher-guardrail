@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 (unreleased)
+
+### Added
+
+* **A snapshot keeps the user-defined functions (UDFs) of the FalkorDB instance.** `Snapshot.capture` (and `capture_async`, and `LiveSnapshot`) also asks `GRAPH.UDF LIST` (one request, names only: FalkorDB tells no signatures, and the code of a function is never asked for or kept) and keeps the libraries and their functions in `snapshot.udfs`, with `functions_of(library)`, `function_names` and `has_udfs` to read them, and `from_schema(..., udfs=...)` to write them by hand. `udfs=False` does not ask. A server that has no such command, or does not let the user run it, gives `None`; a server with no UDFs gives `()`. UDFs belong to the instance, so a graph that does not exist yet still has them.
+* **The fingerprint of a live snapshot includes the UDFs**, so a `GRAPH.UDF LOAD`, `DELETE` or `FLUSH` makes the next refresh capture again.
+
+### Changed
+
+* **A snapshot with UDFs is `format_version` 2.** A snapshot without them (a server that has none to list, `udfs=False`, or written by hand) is still 1, so older versions can read it; a file of format 1 still loads here. Older versions refuse a file of format 2 with "Unknown snapshot format_version 2".
+
 ## 1.3.0 (2026-10-20)
 
 ### Added

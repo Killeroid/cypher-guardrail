@@ -222,6 +222,7 @@ class _LiveBase(SnapshotSource, Generic[_C]):
         retry_after: timedelta,
         sample: int | None,
         types: bool,
+        udfs: bool,
         path: str | os.PathLike | None,
         clock: Callable[[], datetime],
     ) -> None:
@@ -230,6 +231,7 @@ class _LiveBase(SnapshotSource, Generic[_C]):
         self._graph = graph
         self._sample = sample
         self._types = types
+        self._udfs = udfs
         self._path = path
         self._clock = clock
         self._t = _Tracker(refresh_every, max_age, full_every, retry_after)
@@ -295,6 +297,8 @@ class LiveSnapshot(_LiveBase[Driver]):
         retry_after: How long to wait after a failed refresh before trying again. Default 30 seconds.
         sample: Passed to :meth:`Snapshot.capture` (see there for what it costs in accuracy).
         types: Passed to :meth:`Snapshot.capture`: also record the types of the values of the properties.
+        udfs: Passed to :meth:`Snapshot.capture`: also record the user-defined functions of the instance. A
+            ``GRAPH.UDF LOAD`` or ``DELETE`` then makes the next refresh capture again.
         path: A file to keep the snapshot in. It is read at the start and written, atomically, after each capture.
         clock: A function that returns the current time as a timezone-aware ``datetime``. For tests.
 
@@ -314,6 +318,7 @@ class LiveSnapshot(_LiveBase[Driver]):
         retry_after: timedelta = timedelta(seconds=30),
         sample: int | None = None,
         types: bool = False,
+        udfs: bool = True,
         path: str | os.PathLike | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
@@ -326,6 +331,7 @@ class LiveSnapshot(_LiveBase[Driver]):
             retry_after=retry_after,
             sample=sample,
             types=types,
+            udfs=udfs,
             path=path,
             clock=clock,
         )
@@ -396,11 +402,15 @@ class LiveSnapshot(_LiveBase[Driver]):
         self.close()
 
     def _fingerprint(self) -> tuple:
-        return _capture.fingerprint(self._client, self._graph)
+        return _capture.fingerprint(self._client, self._graph, udfs=self._udfs)
 
     def _capture(self) -> Snapshot:
         return Snapshot.capture(
-            self._client, self._graph, sample=self._sample, types=self._types
+            self._client,
+            self._graph,
+            sample=self._sample,
+            types=self._types,
+            udfs=self._udfs,
         )
 
     def _after_fork(self) -> None:
@@ -483,6 +493,7 @@ class AsyncLiveSnapshot(_LiveBase[AsyncDriver]):
         retry_after: timedelta = timedelta(seconds=30),
         sample: int | None = None,
         types: bool = False,
+        udfs: bool = True,
         path: str | os.PathLike | None = None,
         max_concurrency: int = 8,
         clock: Callable[[], datetime] = _utc_now,
@@ -496,6 +507,7 @@ class AsyncLiveSnapshot(_LiveBase[AsyncDriver]):
             retry_after=retry_after,
             sample=sample,
             types=types,
+            udfs=udfs,
             path=path,
             clock=clock,
         )
@@ -564,7 +576,10 @@ class AsyncLiveSnapshot(_LiveBase[AsyncDriver]):
 
     async def _fingerprint(self) -> tuple:
         return await _capture.fingerprint_async(
-            self._client, self._graph, max_concurrency=self._max_concurrency
+            self._client,
+            self._graph,
+            udfs=self._udfs,
+            max_concurrency=self._max_concurrency,
         )
 
     async def _capture(self) -> Snapshot:
@@ -573,6 +588,7 @@ class AsyncLiveSnapshot(_LiveBase[AsyncDriver]):
             self._graph,
             sample=self._sample,
             types=self._types,
+            udfs=self._udfs,
             max_concurrency=self._max_concurrency,
         )
 

@@ -134,9 +134,9 @@ def test_a_sample_in_a_snapshot_must_be_a_positive_whole_number(value):
 
 def test_an_unknown_format_version_is_refused():
     data = sample().to_dict()
-    data["format_version"] = 2
+    data["format_version"] = 3
 
-    with pytest.raises(ValueError, match="format_version 2"):
+    with pytest.raises(ValueError, match="format_version 3"):
         Snapshot.from_dict(data)
     del data["format_version"]
     with pytest.raises(ValueError, match="format_version"):
@@ -144,9 +144,9 @@ def test_an_unknown_format_version_is_refused():
 
 
 def test_a_newer_format_is_reported_as_such_even_though_it_has_fields_we_do_not_know():
-    data = {**sample().to_dict(), "format_version": 2, "something_new": []}
+    data = {**sample().to_dict(), "format_version": 3, "something_new": []}
 
-    with pytest.raises(ValueError, match="format_version 2"):
+    with pytest.raises(ValueError, match="format_version 3"):
         Snapshot.from_dict(data)
 
 
@@ -304,41 +304,45 @@ def test_the_snapshot_of_the_kg_graph(falkordb_client, monkeypatch):
     assert set(keys_of_the_data) <= set(snapshot.property_keys)
     snapshot = dataclasses.replace(snapshot, property_keys=keys_of_the_data)
 
-    assert snapshot == Snapshot.from_dict(
-        {
-            "format_version": 1,
-            "graph": "kg",
-            "captured_at": "2026-10-19T12:00:00+00:00",
-            "labels": ["Area", "GeoArea", "Goal", "Indicator", "Nuts1", "Target"],
-            "relationship_types": ["HAS_INDICATOR", "HAS_NUTS1", "HAS_TARGET"],
-            "property_keys": ["code", "name", "text", "title", "unit", "weight"],
-            "indexes": [],
-            "node_label_sets": [
-                ["Area", "GeoArea"],
-                ["Goal"],
-                ["Indicator"],
-                ["Nuts1"],
-                ["Target"],
-            ],
-            "edges": [
-                [["Area", "GeoArea"], "HAS_NUTS1", ["Nuts1"]],
-                [["Goal"], "HAS_TARGET", ["Target"]],
-                [["Target"], "HAS_INDICATOR", ["Indicator"]],
-            ],
-            "node_properties": {
-                "Area": ["code", "name"],
-                "GeoArea": ["code", "name"],
-                "Goal": ["code", "title"],
-                "Indicator": ["code", "unit"],
-                "Nuts1": ["code", "name"],
-                "Target": ["code", "text"],
-            },
-            "relationship_properties": {
-                "HAS_INDICATOR": ["weight"],
-                "HAS_NUTS1": [],
-                "HAS_TARGET": [],
-            },
-        }
+    assert (
+        snapshot
+        == Snapshot.from_dict(
+            {
+                "format_version": 2,  # the server lists UDFs (none here), which is the format with ``udfs``
+                "graph": "kg",
+                "captured_at": "2026-10-19T12:00:00+00:00",
+                "udfs": {},
+                "labels": ["Area", "GeoArea", "Goal", "Indicator", "Nuts1", "Target"],
+                "relationship_types": ["HAS_INDICATOR", "HAS_NUTS1", "HAS_TARGET"],
+                "property_keys": ["code", "name", "text", "title", "unit", "weight"],
+                "indexes": [],
+                "node_label_sets": [
+                    ["Area", "GeoArea"],
+                    ["Goal"],
+                    ["Indicator"],
+                    ["Nuts1"],
+                    ["Target"],
+                ],
+                "edges": [
+                    [["Area", "GeoArea"], "HAS_NUTS1", ["Nuts1"]],
+                    [["Goal"], "HAS_TARGET", ["Target"]],
+                    [["Target"], "HAS_INDICATOR", ["Indicator"]],
+                ],
+                "node_properties": {
+                    "Area": ["code", "name"],
+                    "GeoArea": ["code", "name"],
+                    "Goal": ["code", "title"],
+                    "Indicator": ["code", "unit"],
+                    "Nuts1": ["code", "name"],
+                    "Target": ["code", "text"],
+                },
+                "relationship_properties": {
+                    "HAS_INDICATOR": ["weight"],
+                    "HAS_NUTS1": [],
+                    "HAS_TARGET": [],
+                },
+            }
+        )
     )
 
 

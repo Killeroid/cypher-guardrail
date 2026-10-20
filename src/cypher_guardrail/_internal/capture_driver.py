@@ -8,21 +8,29 @@ from cypher_guardrail.backend import get_async_backend, get_backend
 from cypher_guardrail.snapshot import Snapshot
 
 
-def fingerprint(driver: object, graph: str | None = None) -> tuple:
+def fingerprint(
+    driver: object, graph: str | None = None, *, udfs: bool = True
+) -> tuple:
     """The fingerprint of ``graph`` (see ``fingerprint_logic``): equal fingerprints mean the structure very likely has not changed.
 
     It is a heuristic: removing a relationship and adding another leaves the counts as they were.
     """
     backend = get_backend(driver)
-    return backend.run(_capture.fingerprint_logic(backend.graph_name(graph)))
+    return backend.run(_capture.fingerprint_logic(backend.graph_name(graph), udfs))
 
 
 async def fingerprint_async(
-    driver: object, graph: str | None = None, *, max_concurrency: int = 8
+    driver: object,
+    graph: str | None = None,
+    *,
+    udfs: bool = True,
+    max_concurrency: int = 8,
 ) -> tuple:
     """The async version of :func:`fingerprint`."""
     backend = get_async_backend(driver, max_concurrency)
-    return await backend.run(_capture.fingerprint_logic(backend.graph_name(graph)))
+    return await backend.run(
+        _capture.fingerprint_logic(backend.graph_name(graph), udfs)
+    )
 
 
 def capture(
@@ -31,6 +39,7 @@ def capture(
     *,
     sample: int | None = None,
     types: bool = False,
+    udfs: bool = True,
 ) -> Snapshot:
     """The :class:`~cypher_guardrail.snapshot.Snapshot` of ``graph`` on a ``falkordb`` client or graph."""
     _capture.check_sample(sample)
@@ -38,16 +47,17 @@ def capture(
     backend = get_backend(driver)
     name = backend.graph_name(graph)
     return _capture.assemble(
-        name, backend.run(_capture.scan_graph(name, sample, types)), sample
+        name, backend.run(_capture.scan_graph(name, sample, types, udfs)), sample
     )
 
 
-async def capture_async(
+async def capture_async(  # noqa: PLR0913 - the options of Snapshot.capture_async
     driver: object,
     graph: str | None = None,
     *,
     sample: int | None = None,
     types: bool = False,
+    udfs: bool = True,
     max_concurrency: int = 8,
 ) -> Snapshot:
     """The async version of :func:`capture`."""
@@ -56,5 +66,5 @@ async def capture_async(
     backend = get_async_backend(driver, max_concurrency)
     name = backend.graph_name(graph)
     return _capture.assemble(
-        name, await backend.run(_capture.scan_graph(name, sample, types)), sample
+        name, await backend.run(_capture.scan_graph(name, sample, types, udfs)), sample
     )

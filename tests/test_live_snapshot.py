@@ -693,7 +693,13 @@ def test_the_options_of_the_capture_are_the_ones_it_is_given(monkeypatch):
 
     live._capture()
 
-    assert seen == {"sample": None, "types": True, "client": None, "graph": "g"}
+    assert seen == {
+        "sample": None,
+        "types": True,
+        "udfs": True,
+        "client": None,
+        "graph": "g",
+    }
 
 
 # --------------------------------------------------------------------- used by the validators
@@ -1214,7 +1220,7 @@ def test_an_unchanged_graph_has_the_same_fingerprint(fingerprinted):
     _, fingerprint = fingerprinted
 
     assert fingerprint() == fingerprint()
-    assert fingerprint()[4:] == (3, 1)  # nodes, relationships
+    assert fingerprint()[4:6] == (3, 1)  # nodes, relationships
 
 
 @pytest.mark.parametrize(
@@ -1241,7 +1247,15 @@ def test_each_part_of_the_fingerprint_notices_its_own_change(fingerprinted, chan
 def test_the_fingerprint_of_a_graph_that_does_not_exist_is_empty(falkordb_client):
     from cypher_guardrail._internal.capture_driver import fingerprint
 
-    assert fingerprint(falkordb_client, "live_no_such_graph") == ((), (), (), (), 0, 0)
+    assert fingerprint(falkordb_client, "live_no_such_graph") == (
+        (),
+        (),
+        (),
+        (),
+        0,
+        0,
+        (),
+    )
 
 
 def test_removing_one_relationship_and_adding_another_is_not_noticed(fingerprinted):
