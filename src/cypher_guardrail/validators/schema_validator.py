@@ -78,6 +78,25 @@ def _zero_or_more_hops(path):
     )
 
 
+def _score(relationships, nodes, paths, indexed):
+    """The score: the average of the shares of the relationships, nodes and paths that exist (a kind that the query
+    does not use is None and is left out; a query with none of them scores 1: a query such as MATCH (n)).
+
+    ``indexed`` is the share of the index query procedures that have an index, if the query calls any: they weigh as
+    much as everything else in the query together.
+    """
+    # (the order of the terms, and adding them one by one rather than with ``sum``, which compensates the rounding,
+    # are part of the value of the score)
+    terms = [share for share in (relationships, nodes, paths) if share is not None]
+    weight = 1 / len(terms) if terms else 0
+    score = functools.reduce(operator.add, (term * weight for term in terms), 0.0)
+    if not terms:
+        score = 1
+    if indexed is not None:
+        score = (score + indexed) / 2
+    return score
+
+
 def _found_share(results, issues):
     """The share of the checks of one kind (node, relationship or path) that found the pattern.
 
@@ -255,14 +274,14 @@ class _SchemaValidator(_modes.ModeInfo):
         """The backend the validator runs on. The async validators override this."""
         return get_backend(driver, snapshot=snapshot, verify=verify)
 
-    def __get_path_exists(
+    def _get_path_exists(
         self, path, database_name
     ) -> Generator[Request, Any, tuple[bool, list]]:
         """Whether the pattern matches anything in the graph, and the warnings about unknown labels and types."""
         graph = self.backend.graph_name(database_name)
         return (yield from _queries.path_exists(graph, path))
 
-    def __check_path_exists(
+    def _check_path_exists(
         self, pattern, original_path_map, database_name=None
     ) -> Generator[Request, Any, tuple[bool, list]]:
         """
@@ -284,7 +303,7 @@ class _SchemaValidator(_modes.ModeInfo):
         """
         metadata = []  # the warnings found
         try:
-            pattern_exists, notifications = yield from self.__get_path_exists(
+            pattern_exists, notifications = yield from self._get_path_exists(
                 pattern, database_name
             )
 
@@ -305,7 +324,7 @@ class _SchemaValidator(_modes.ModeInfo):
                 # Every label and type is known, so the pattern simply does not exist. Only a path can be
                 # explained (wrong direction, ...); a node or relationship is just reported as missing.
                 original_paths = (original_path_map or {}).get(pattern, [])
-                yield from self.__diagnose_missing_path(
+                yield from self._diagnose_missing_path(
                     pattern, original_paths, database_name, metadata
                 )
             return pattern_exists, metadata
@@ -313,12 +332,12 @@ class _SchemaValidator(_modes.ModeInfo):
             # The pattern cannot be executed (syntax or execution error), so it does not exist
             return False, metadata
 
-    def __diagnose_missing_path(
+    def _diagnose_missing_path(
         self, pattern, original_paths, database_name, metadata
     ) -> Generator[Request, Any, None]:
         """
         Explain why a path whose labels and relationship types are all valid does not exist, and append the
-        explanations to ``metadata``: one for each original path (see ``__explain_missing_path``).
+        explanations to ``metadata``: one for each original path (see ``_explain_missing_path``).
 
         Args:
             pattern (str): The extracted path (labels and types only) that does not exist.
@@ -330,13 +349,13 @@ class _SchemaValidator(_modes.ModeInfo):
         for original in original_paths:
             metadata.append(
                 (
-                    yield from self.__explain_missing_path(
+                    yield from self._explain_missing_path(
                         pattern, shown, original, database_name
                     )
                 )
             )
 
-    def __explain_missing_path(
+    def _explain_missing_path(
         self, pattern, shown, original, database_name
     ) -> Generator[Request, Any, Issue]:
         """Why the path ``original`` (read as ``pattern``) does not exist. In order of preference the cause is:
@@ -349,7 +368,7 @@ class _SchemaValidator(_modes.ModeInfo):
         any_hops = _zero_or_more_hops(original)
         if (
             any_hops is not None
-            and (yield from self.__get_path_exists(any_hops, database_name))[0]
+            and (yield from self._get_path_exists(any_hops, database_name))[0]
         ):
             return _issues.variable_length_path(shown, original, any_hops)
         # a path with no arrow has no other way round
@@ -363,21 +382,21 @@ class _SchemaValidator(_modes.ModeInfo):
         if (
             flipped is not None
             and flipped_pattern is not None
-            and (yield from self.__get_path_exists(flipped_pattern, database_name))[0]
+            and (yield from self._get_path_exists(flipped_pattern, database_name))[0]
         ):
             # It only exists the other way round
             return _issues.wrong_direction_path(shown, original, flipped)
         flipped_any_hops = _zero_or_more_hops(flipped) if flipped else None
         if (
             flipped_any_hops is not None
-            and (yield from self.__get_path_exists(flipped_any_hops, database_name))[0]
+            and (yield from self._get_path_exists(flipped_any_hops, database_name))[0]
         ):
             return _issues.wrong_direction_variable_length_path(
                 shown, original, flipped_any_hops
             )
         return _issues.unknown_path(shown, original)
 
-    def __extract_internal(
+    def _extract_internal(
         self, query, database_name=None
     ) -> Generator[Request, Any, tuple[list, list, list, dict]]:
         """
@@ -413,7 +432,7 @@ class _SchemaValidator(_modes.ModeInfo):
                 branch_rels,
                 branch_paths,
                 branch_original_paths,
-            ) = yield from self.__extract_masked(masked, branch, database_name)
+            ) = yield from self._extract_masked(masked, branch, database_name)
             if len(branches) == 1:  # the query as it is: nothing to merge
                 return (
                     branch_nodes,
@@ -436,10 +455,10 @@ class _SchemaValidator(_modes.ModeInfo):
                 original_path_map.setdefault(path, []).extend(written)
         return sorted(nodes), sorted(rels), sorted(paths), original_path_map
 
-    def __extract_masked(
+    def _extract_masked(
         self, query, original, database_name=None
     ) -> Generator[Request, Any, tuple[list, list, list, dict]]:
-        """The work of :meth:`__extract_internal`, on the query with its strings hidden. ``original`` is the query as
+        """The work of :meth:`_extract_internal`, on the query with its strings hidden. ``original`` is the query as
         written: an index procedure has its label in a string."""
         index_calls = patterns.index_procedure_calls(original)
         # The paths as written in the query (original paths)
@@ -472,7 +491,7 @@ class _SchemaValidator(_modes.ModeInfo):
     ) -> Generator[Request, Any, tuple[list, list, list]]:
         """The logic of ``extract``, as a generator."""
         self.backend.check_database(database_name)
-        nodes, rels, paths, _ = yield from self.__extract_internal(query, database_name)
+        nodes, rels, paths, _ = yield from self._extract_internal(query, database_name)
         return nodes, rels, [_without_variables(path) for path in paths]
 
     @_queries.graph_checked
@@ -483,7 +502,7 @@ class _SchemaValidator(_modes.ModeInfo):
         self.backend.check_database(database_name)
         # The node labels, the relationship types and the one-hop paths of the query (with inferred labels and types),
         # and the mapping of each extracted path to the paths as written in the query
-        nodes, rels, paths, original_path_map = yield from self.__extract_internal(
+        nodes, rels, paths, original_path_map = yield from self._extract_internal(
             query, database_name
         )
 
@@ -493,12 +512,12 @@ class _SchemaValidator(_modes.ModeInfo):
             tuple(
                 [
                     # a node is its own path as written: if it has nothing behind it, the issue names it
-                    self.__check_path_exists(node, {node: [node]}, database_name)
+                    self._check_path_exists(node, {node: [node]}, database_name)
                     for node in nodes
                 ]
-                + [self.__check_path_exists(rel, None, database_name) for rel in rels]
+                + [self._check_path_exists(rel, None, database_name) for rel in rels]
                 + [
-                    self.__check_path_exists(path, original_path_map, database_name)
+                    self._check_path_exists(path, original_path_map, database_name)
                     for path in paths
                 ]
             )
@@ -519,29 +538,16 @@ class _SchemaValidator(_modes.ModeInfo):
             )
         }
         # The label of an index query procedure exists, but does an index back the call?
-        indexed = yield from self.__index_share(query, database_name, issues)
+        indexed = yield from self._index_share(query, database_name, issues)
 
         # The score: the average of the shares of the nodes, relationships and paths that exist (1 when the query has
         # none of them: a query such as MATCH (n))
-        # (the order of the terms, and adding them one by one rather than with ``sum``, which compensates the rounding, are part of the
-        # value of the score: the relationships come first)
-        terms = [
-            share
-            for share in (shares["relationships"], shares["nodes"], shares["paths"])
-            if share is not None
-        ]
-        weight = 1 / len(terms) if terms else 0
-        score = (
-            functools.reduce(operator.add, (term * weight for term in terms), 0.0)
-            if terms
-            else 1
+        score = _score(
+            shares["relationships"], shares["nodes"], shares["paths"], indexed
         )
-        if indexed is not None:
-            # The index calls weigh as much as everything else in the query together
-            score = (score + indexed) / 2
         return score, list(issues.values())
 
-    def __index_share(
+    def _index_share(
         self, query, database_name, issues
     ) -> Generator[Request, Any, float | None]:
         """The share of the index query procedures of the query that have an index (None when it calls none).

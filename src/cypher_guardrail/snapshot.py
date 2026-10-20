@@ -84,6 +84,15 @@ def _by_name(mapping, what) -> tuple[tuple[str, tuple[str, ...]], ...]:
     )
 
 
+def _keys_of(nodes, relationship_properties):
+    """Every property of the labels and of the relationship types."""
+    return {
+        key
+        for properties in (*nodes.values(), *relationship_properties.values())
+        for key in properties
+    }
+
+
 def _need(names, known, what, where):
     """Raise if a name that ``where`` mentions is not one of the ``known`` names."""
     for name in names:
@@ -521,39 +530,27 @@ class Snapshot(SnapshotSource):
         """
         relationships = [tuple(r) for r in relationships]
         given_sets = [tuple(s) for s in node_label_sets]
-        together = {label for labels in given_sets for label in labels}
+        together = {label for labels in given_sets for label in labels}  # (not alone)
         relationship_properties = dict(relationship_properties or {})
         types = {kind for _, kind, _ in relationships} | set(relationship_properties)
-        property_types = _typed_properties(
-            node_property_types, relationship_property_types
-        )
         return cls(
             graph=graph,
             labels=tuple(nodes),
             relationship_types=tuple(types),
-            property_keys=_tuple(
-                {
-                    *(p for properties in nodes.values() for p in properties),
-                    *(
-                        p
-                        for properties in relationship_properties.values()
-                        for p in properties
-                    ),
-                }
-            ),
+            property_keys=_tuple(_keys_of(nodes, relationship_properties)),
             indexes=tuple(tuple(i) for i in indexes),
             node_label_sets=(
                 *((label,) for label in nodes if label not in together),
                 *given_sets,
             ),
-            edges=tuple(
-                (_ends(start), kind, _ends(end)) for start, kind, end in relationships
-            ),
+            edges=tuple((_ends(a), kind, _ends(b)) for a, kind, b in relationships),
             node_properties=_tuple(nodes),
             relationship_properties=tuple(
                 (kind, relationship_properties.get(kind, ())) for kind in types
             ),
-            property_types=property_types,
+            property_types=_typed_properties(
+                node_property_types, relationship_property_types
+            ),
         )
 
     # --------------------------------------------------------------------- from a database

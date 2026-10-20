@@ -122,7 +122,7 @@ class _SyntaxValidator(_modes.ModeInfo):
                 metadata.append(
                     _issues.database_error(ARITHMETIC_ERROR, "Division by zero.")
                 )
-            conflict = yield from self.__conflicting_variables(code, graph)
+            conflict = yield from self._conflicting_variables(code, graph)
             if conflict:
                 metadata.append(conflict)
 
@@ -136,7 +136,7 @@ class _SyntaxValidator(_modes.ModeInfo):
             metadata.append(_issues.database_error(e.code, e.message))
             return False, metadata
 
-    def __conflicting_variables(
+    def _conflicting_variables(
         self, code, graph
     ) -> Generator[Request, Any, Issue | None]:
         """The issue about the variables that the query gives different labels (None when there is no such variable)."""

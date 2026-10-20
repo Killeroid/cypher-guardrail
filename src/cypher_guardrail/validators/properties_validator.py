@@ -279,7 +279,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         """The backend the validator runs on. The async validators override this."""
         return get_backend(driver, snapshot=snapshot, verify=verify)
 
-    def __query_prop_exist(
+    def _query_prop_exist(
         self, kind, label, property, database_name=None
     ) -> Generator[Request, Any, tuple[bool, list]]:
         """Check if this property exists for the defined label.
@@ -314,26 +314,26 @@ class _PropertiesValidator(_modes.ModeInfo):
                 return False, metadata
         return property_exists, metadata
 
-    def __check_properties(
+    def _check_properties(
         self, checks, database_name
     ) -> Generator[Request, Any, list[tuple[bool, list]]]:
         """Check several properties together: ``checks`` is a list of ``(kind, label, property)``.
 
         Returns:
-            What ``__query_prop_exist`` returns for each of them, in the same order.
+            What ``_query_prop_exist`` returns for each of them, in the same order.
         """
         return list(
             (
                 yield Concurrently(
                     tuple(
-                        self.__query_prop_exist(kind, label, property, database_name)
+                        self._query_prop_exist(kind, label, property, database_name)
                         for kind, label, property in checks
                     )
                 )
             )
         )
 
-    def __get_inferred_labels_properties(
+    def _get_inferred_labels_properties(
         self,
         strict,
         var_label_map,
@@ -375,7 +375,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         # DataFrames of the label combinations found for the variables
         frames = yield from paths_after_inference(graph, inference_paths)
         for frame in frames:
-            chosen = yield from self.__choose_row(
+            chosen = yield from self._choose_row(
                 _candidate_rows(frame, var_props_map),
                 strict,
                 var_props_map,
@@ -386,7 +386,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                 label_props_map = _extend(label_props_map, label, props)
         return label_props_map
 
-    def __choose_row(
+    def _choose_row(
         self, rows, strict, var_props_map, kind_of, database_name
     ) -> Generator[Request, Any, dict | None]:
         """The labels, with their properties, of the label combination (row) that the properties are attributed to.
@@ -403,7 +403,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                 for variable in row.index
                 for accessed in var_props_map[variable]
             ]
-            results = yield from self.__check_properties(checks, database_name)
+            results = yield from self._check_properties(checks, database_name)
             label_props: dict = {}
             for variable in row.index:
                 label = (kind_of(variable), row[variable])
@@ -415,7 +415,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                 fallback, most = label_props, valid
         return None if strict else fallback
 
-    def __infer_disjoint_labels(
+    def _infer_disjoint_labels(
         self, var_label_map, label_props_map, query, database_name
     ) -> Generator[Request, Any, tuple[dict, dict, str]]:
         """
@@ -443,7 +443,7 @@ class _PropertiesValidator(_modes.ModeInfo):
             kind, examined_label = examined_key
             if "|" not in examined_label:  # alternatives: Label1|Label2|...
                 continue
-            updated_label = yield from self.__narrowed(
+            updated_label = yield from self._narrowed(
                 kind, examined_label, label_props_map[examined_key], database_name
             )
             if updated_label is None:  # every alternative has all the properties
@@ -463,12 +463,12 @@ class _PropertiesValidator(_modes.ModeInfo):
 
         return var_label_map, label_props_map, query
 
-    def __narrowed(
+    def _narrowed(
         self, kind, alternatives, properties, database_name
     ) -> Generator[Request, Any, str | None]:
         """The alternatives (``A|B``) that have the most of the ``properties``, joined; None if all have all of them."""
         labels = alternatives.split("|")
-        results = yield from self.__check_properties(
+        results = yield from self._check_properties(
             [(kind, label, accessed) for label in labels for accessed in properties],
             database_name,
         )
@@ -487,7 +487,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         # the alternatives that have that many; several that tie stay alternatives
         return "|".join(label for label, count in correct.items() if count == most)
 
-    def __get_var_labels_props(
+    def _get_var_labels_props(
         self, query, database_name
     ) -> Generator[Request, Any, tuple[dict, dict, dict]]:
         """
@@ -532,7 +532,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         var_props_map = restore_variables(var_props_map, written_keys)
 
         # Alternatives (Label1|Label2) that access properties are narrowed to the ones that have them
-        var_label_map, label_props_map, query = yield from self.__infer_disjoint_labels(
+        var_label_map, label_props_map, query = yield from self._infer_disjoint_labels(
             var_label_map, label_props_map, query, database_name
         )
 
@@ -551,7 +551,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         var_props_map: dict = {}
         label_props_map: dict = {}
         for branch in patterns.split_union(query):
-            branch_vars, branch_labels = yield from self.__extract_branch(
+            branch_vars, branch_labels = yield from self._extract_branch(
                 branch, database_name, strict
             )
             for var, props in branch_vars.items():
@@ -560,7 +560,7 @@ class _PropertiesValidator(_modes.ModeInfo):
                 _extend(label_props_map, label, props)
         return restore_variables(var_props_map, renames), label_props_map
 
-    def __extract_branch(
+    def _extract_branch(
         self, query, database_name, strict
     ) -> Generator[Request, Any, tuple[dict, dict]]:
         """The properties of one query (or of one branch of a UNION)."""
@@ -569,11 +569,11 @@ class _PropertiesValidator(_modes.ModeInfo):
             var_label_map,
             label_props_map,
             var_props_map,
-        ) = yield from self.__get_var_labels_props(query, database_name)
+        ) = yield from self._get_var_labels_props(query, database_name)
 
         # Infer the labels of the variables that have none but access properties
         if var_props_map:
-            label_props_map = yield from self.__get_inferred_labels_properties(
+            label_props_map = yield from self._get_inferred_labels_properties(
                 strict,
                 var_label_map,
                 label_props_map,
@@ -601,7 +601,7 @@ class _PropertiesValidator(_modes.ModeInfo):
             # have the same number of valid properties
             label = label.split("|")[0]
             checked.extend((kind, label, property) for property in properties)
-        results = yield from self.__check_properties(checked, database_name)
+        results = yield from self._check_properties(checked, database_name)
 
         metadata: list[Issue] = []  # the problems found
         incorrect = {}  # (kind, label) -> its properties that do not exist
@@ -622,10 +622,10 @@ class _PropertiesValidator(_modes.ModeInfo):
                 for (kind, label), props in incorrect.items()
             )
         # Only a warning: it does not change the score
-        metadata.extend((yield from self.__type_issues(query, database_name)))
+        metadata.extend((yield from self._type_issues(query, database_name)))
         return precision, metadata
 
-    def __type_issues(
+    def _type_issues(
         self, query, database_name
     ) -> Generator[Request, Any, list[Issue]]:
         """The properties the query compares with a literal of a type that none of their values has.
@@ -638,7 +638,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         if not self.check_types:
             return []
         graph = self.backend.graph_name(database_name)
-        questions = yield from self.__typed_comparisons(query, graph, database_name)
+        questions = yield from self._typed_comparisons(query, graph, database_name)
         # What the values of each property are does not depend on the literal, so the questions are asked together
         keys = list(
             dict.fromkeys(
@@ -673,7 +673,7 @@ class _PropertiesValidator(_modes.ModeInfo):
             for (entity, label, prop, value, value_type), types in mismatches.items()
         ]
 
-    def __typed_comparisons(
+    def _typed_comparisons(
         self, query, graph, database_name
     ) -> Generator[Request, Any, list[tuple]]:
         """``(label, "node" or "relationship", comparison)`` for each comparison with a literal whose label is known."""
@@ -686,7 +686,7 @@ class _PropertiesValidator(_modes.ModeInfo):
             found = literals.comparisons(branch)
             if not found:
                 continue
-            var_label_map, _, _ = yield from self.__get_var_labels_props(
+            var_label_map, _, _ = yield from self._get_var_labels_props(
                 branch, database_name
             )
             for comparison in found:

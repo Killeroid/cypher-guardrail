@@ -421,10 +421,7 @@ class SnapshotResolver:
         """
         relationship = pattern.relationship
         if pattern.right is None or relationship is None:
-            for state in self._states:
-                fit = self._fits(state, pattern.left)
-                if fit:
-                    yield state, state, None, fit
+            yield from self._node_hops(pattern.left)
             return
         lo, hi = relationship.lo, relationship.hi
         if lo == 0:
@@ -440,6 +437,13 @@ class SnapshotResolver:
                     yield a, b, kind, fit
         if hi is None or hi >= MIN_CHAIN_HOPS:
             yield from self._chains(pattern, first_only=settle)
+
+    def _node_hops(self, node: _Node):
+        """The kinds of nodes that a pattern of one node matches."""
+        for state in self._states:
+            fit = self._fits(state, node)
+            if fit:
+                yield state, state, None, fit
 
     def _ends_fit(self, pattern: _Pattern, a: State, b: State, quality: Fit) -> Fit:
         """How well the kinds ``a`` and ``b`` fit the two nodes of the pattern, at best ``quality``."""

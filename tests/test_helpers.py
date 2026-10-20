@@ -143,12 +143,7 @@ class TestVariableLength:
 # Characterisation tests for the regex-based Cypher helpers.
 #
 # They pin the current behaviour (no database needed unless noted) so the helpers can be
-# refactored safely. Private helpers are reached through their name-mangled attributes.
-
-
-def private(cls, name):
-    """A double-underscore helper of ``cls`` (name mangling makes it ``_Cls__name``)."""
-    return getattr(cls, f"_{cls.__name__}__{name}")
+# refactored safely. Private helpers are reached through their names.
 
 
 remove_prefix = schema_validator._without_prefix_before_colon
@@ -175,7 +170,7 @@ inline_mapping = properties_validator._inline_mapping
 outside_mapping = properties_validator._outside_mapping
 
 
-diagnose_missing_path = private(SchemaValidator, "diagnose_missing_path")
+diagnose_missing_path = SchemaValidator._diagnose_missing_path
 
 
 class TestIdentifyVariables:
