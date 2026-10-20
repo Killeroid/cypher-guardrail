@@ -13,7 +13,7 @@ from cypher_guardrail import PropertiesValidator, SchemaValidator, Snapshot
 GRAPH = "movies"
 
 
-def main():
+def main() -> None:
     with tempfile.TemporaryDirectory() as folder:
         folder = Path(folder)
         driver = FalkorDB(str(folder / "movies.db"))

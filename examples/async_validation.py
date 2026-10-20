@@ -23,7 +23,7 @@ QUERIES = [
 ]
 
 
-async def main(socket_file):
+async def main(socket_file: str) -> None:
     client = AsyncFalkorDB(unix_socket_path=socket_file)
     try:
         validator = AsyncSchemaValidator(client, max_concurrency=8)

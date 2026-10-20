@@ -432,7 +432,7 @@ def test_when_a_literal_fits_the_types_of_a_property(literal_type, observed, exp
 
 
 def test_the_numbers_are_the_integers_and_the_floats():
-    assert NUMERIC == {"Integer", "Float"}
+    assert {"Integer", "Float"} == NUMERIC
 
 
 # ----------------------------------------------------------------------------------------------------

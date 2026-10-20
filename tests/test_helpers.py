@@ -85,7 +85,7 @@ def test_possessive_whitespace_matches_exactly_what_the_original_pattern_matched
 
 class TestStripLiteralsAndComments:
     @pytest.mark.parametrize(
-        "query, expected",
+        ("query", "expected"),
         [
             ("RETURN 'a / 0'", "RETURN ''"),
             ('RETURN "x (n:Y)"', "RETURN ''"),
@@ -116,7 +116,7 @@ class TestMaskProperties:
 
 class TestVariableLength:
     @pytest.mark.parametrize(
-        "text, expected",
+        ("text", "expected"),
         [
             ("[:R*]", "[:R]"),
             ("[:R*3]", "[:R]"),
@@ -206,7 +206,7 @@ class TestIdentifyVariables:
 
 class TestReplaceWithLabels:
     @pytest.mark.parametrize(
-        "path, replacements, expected",
+        ("path", "replacements", "expected"),
         [
             (
                 "(a)-[r]->(b)",
@@ -229,7 +229,7 @@ class TestSmallStringHelpers:
         assert remove_prefix("(a)") == "(a)"
 
     @pytest.mark.parametrize(
-        "query, expected",
+        ("query", "expected"),
         [
             ("(a)-()-(b)", "(a)-(var_1)-(b)"),
             ("(a)-[]->(b)", "(a)-[var_1]->(b)"),

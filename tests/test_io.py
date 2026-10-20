@@ -90,7 +90,7 @@ def asks(*requests):
     """A logic generator that asks each request in turn and returns the answers."""
     answers = []
     for request in requests:
-        answers.append((yield request))
+        answers.append((yield request))  # noqa: PERF401 - a yield cannot be in a comprehension
     return answers
 
 
@@ -361,7 +361,7 @@ def test_a_transport_can_be_used_from_another_event_loop():
 
 
 def test_max_concurrency_must_be_positive():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="at least 1"):
         AsyncTransport(Tracker().select_graph, max_concurrency=0)
 
 
@@ -461,7 +461,7 @@ def steps(name, count):
     """A logic generator that asks ``count`` requests one after another, each after the previous one's answer."""
     answers = []
     for i in range(count):
-        answers.append((yield RoQuery("g", f"{name}{i}")))
+        answers.append((yield RoQuery("g", f"{name}{i}")))  # noqa: PERF401 - a yield cannot be in a comprehension
     return answers
 
 

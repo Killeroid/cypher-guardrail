@@ -579,9 +579,9 @@ def lab(falkordb_client):
         "CREATE VECTOR INDEX FOR (b:B) ON (b.p) OPTIONS {dimension: 2, similarityFunction: 'euclidean'}"
     )
     graph.query("CREATE FULLTEXT INDEX FOR ()-[r:R]-() ON (r.w)")
-    yield falkordb_client
     # (no graph.delete(): nothing else uses this graph, the database goes with the session, and dropping a graph
     # that has full-text and vector indexes takes four seconds)
+    return falkordb_client
 
 
 @pytest.fixture(scope="module")
@@ -615,12 +615,9 @@ def compare(patterns, backend, resolver):
             continue
         offline = offline_path(resolver, pattern)
         if (
-            offline.reliable
-            and offline.value != online
-            or not offline.reliable
-            and not offline.value
-            or online
-            and not offline.value
+            (offline.reliable and offline.value != online)
+            or (not offline.reliable and not offline.value)
+            or (online and not offline.value)
         ):
             broken[pattern] = (online, offline)
         elif not offline.reliable and not online:
@@ -793,11 +790,8 @@ def test_the_label_combinations(lab, backend, resolver):
             broken[pattern] = (online, offline)
             continue
         rows_checked += 1
-        if (
-            answer.reliable
-            and offline[1] != online[1]
-            or not answer.reliable
-            and not online[1] <= offline[1]
+        if (answer.reliable and offline[1] != online[1]) or (
+            not answer.reliable and not online[1] <= offline[1]
         ):
             broken[pattern] = (online, offline)
         elif answer.reliable is False and online[1] == offline[1]:

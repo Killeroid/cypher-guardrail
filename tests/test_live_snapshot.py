@@ -10,9 +10,8 @@ import dataclasses
 import json
 import os
 import threading
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -25,6 +24,9 @@ from cypher_guardrail import (
     SnapshotSource,
     StaleSnapshotError,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 EVERY = timedelta(minutes=10)
 START = datetime(2026, 10, 19, 12, 0, tzinfo=UTC)
@@ -666,7 +668,7 @@ def test_it_is_a_context_manager_that_closes(clock, database):
 def test_options_that_make_no_sense_are_refused(options, error):
     options = {"refresh_every": EVERY, **options}
     build = cast(
-        Callable[..., object], LiveSnapshot
+        "Callable[..., object]", LiveSnapshot
     )  # the arguments are wrong on purpose
 
     with pytest.raises(error):
@@ -1351,7 +1353,7 @@ def test_a_thread_that_cannot_start_does_not_reach_the_validation(
     ],
 )
 def test_options_that_contradict_each_other_are_refused(options, error):
-    build = cast(Callable[..., object], LiveSnapshot)
+    build = cast("Callable[..., object]", LiveSnapshot)
     with pytest.raises(error):
         build(None, "g", **{"refresh_every": EVERY, **options})
 

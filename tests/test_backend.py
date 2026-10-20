@@ -224,7 +224,7 @@ class TestQueryToDf:
 
 class TestPathExists:
     @pytest.mark.parametrize(
-        "pattern, expected",
+        ("pattern", "expected"),
         [
             ("(:Goal)", True),
             ("()-[:HAS_TARGET]-()", True),
@@ -278,7 +278,7 @@ class TestPathExists:
 
 class TestNameExists:
     @pytest.mark.parametrize(
-        "kind, name, expected",
+        ("kind", "name", "expected"),
         [
             ("node", "Goal", True),
             ("node", "Area", True),
@@ -313,7 +313,7 @@ class TestNameExists:
 
 class TestPropertyExists:
     @pytest.mark.parametrize(
-        "label, kind, prop, expected",
+        ("label", "kind", "prop", "expected"),
         [
             ("Goal", "node", "code", True),
             ("Goal", "node", "text", False),  # exists in the graph, but on Target

@@ -79,28 +79,30 @@ def load_graphs() -> dict[str, dict[str, list[str]]]:
     return json.loads((DIRECTORY / "graphs.json").read_text())
 
 
+def _case_of(raw: dict[str, Any]) -> Case:
+    return Case(
+        id=raw["id"],
+        graph=raw.get("graph", "movies"),
+        query=raw["query"],
+        validators=raw["validators"],
+        options=raw.get("options", {}),
+        issues=raw.get("issues", []),
+        valid=raw.get("valid"),
+        score=raw.get("score"),
+        has_score="score" in raw,
+        kg_valid=raw.get("kg_valid"),
+        near_miss=raw.get("near_miss", []),
+        known_gap=raw.get("known_gap"),
+        mode_gaps=raw.get("mode_gaps", {}),
+    )
+
+
 def load_cases() -> list[Case]:
-    cases = []
-    for name in CASE_FILES:
-        for raw in json.loads((DIRECTORY / f"{name}.json").read_text()):
-            cases.append(
-                Case(
-                    id=raw["id"],
-                    graph=raw.get("graph", "movies"),
-                    query=raw["query"],
-                    validators=raw["validators"],
-                    options=raw.get("options", {}),
-                    issues=raw.get("issues", []),
-                    valid=raw.get("valid"),
-                    score=raw.get("score"),
-                    has_score="score" in raw,
-                    kg_valid=raw.get("kg_valid"),
-                    near_miss=raw.get("near_miss", []),
-                    known_gap=raw.get("known_gap"),
-                    mode_gaps=raw.get("mode_gaps", {}),
-                )
-            )
-    return cases
+    return [
+        _case_of(raw)
+        for name in CASE_FILES
+        for raw in json.loads((DIRECTORY / f"{name}.json").read_text())
+    ]
 
 
 def seed(client, graphs=None) -> None:
@@ -252,13 +254,13 @@ def _same_score(expected: float | None, actual: float | None) -> bool:
 
 def disagreements(case: Case, outcome: Outcome) -> list[str]:
     """What the library gets wrong about ``case``, in words. Empty when it agrees with the labels."""
-    found = []
     _, missing, unexpected = pair_issues(case.issues, outcome.issues)
-    for issue in missing:
-        found.append(f"missing {issue}")
-    for issue in unexpected:
-        shown = {key: value for key, value in issue.items() if key != "description"}
-        found.append(f"unexpected {shown}")
+    found = [f"missing {issue}" for issue in missing]
+    found += [
+        "unexpected "
+        + str({key: value for key, value in issue.items() if key != "description"})
+        for issue in unexpected
+    ]
     if case.valid is not None and outcome.valid != case.valid:
         found.append(f"valid: expected {case.valid}, got {outcome.valid}")
     if case.has_score:

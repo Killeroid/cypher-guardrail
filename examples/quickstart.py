@@ -19,7 +19,7 @@ QUERIES = {
 }
 
 
-def main():
+def main() -> None:
     with tempfile.TemporaryDirectory() as folder:
         driver = FalkorDB(str(Path(folder) / "movies.db"))
         driver.select_graph(GRAPH).query(

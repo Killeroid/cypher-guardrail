@@ -20,6 +20,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
+from http import HTTPStatus
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests" / "accuracy"))
@@ -41,7 +42,7 @@ def download(url: str, attempts: int = 8) -> bytes:
             with urllib.request.urlopen(url, timeout=60) as response:
                 return response.read()
         except urllib.error.HTTPError as error:
-            if error.code != 429 or attempt == attempts - 1:
+            if error.code != HTTPStatus.TOO_MANY_REQUESTS or attempt == attempts - 1:
                 raise
             wait = float(error.headers.get("Retry-After") or 2 ** (attempt + 1))
             print(f"  rate limited: waiting {wait:.0f}s", file=sys.stderr)

@@ -222,7 +222,7 @@ class TestWrongDirectionSuggestion:
     """The suggested fix must be the original path with the arrow flipped, whatever its properties contain."""
 
     @pytest.mark.parametrize(
-        "original, suggested",
+        ("original", "suggested"),
         [
             (
                 "(g:Goal {code:'12'})<-[:HAS_TARGET]-(t:Target)",

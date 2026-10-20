@@ -395,8 +395,8 @@ def test_a_sample_limits_the_scans(falkordb_client, run_async):
 
         assert everything.node_properties_of("Mixed") == ("a", "b")
         assert everything.relationship_properties_of("R") == ("x", "y")
-        assert (("Extra", "P"),) == tuple(
-            s for s in everything.node_label_sets if "Extra" in s
+        assert tuple(s for s in everything.node_label_sets if "Extra" in s) == (
+            ("Extra", "P"),
         )
         assert len(everything.edges) == 2
         # Each scan looks at 1 node (or relationship), the first, per label (or type)
@@ -802,9 +802,9 @@ def test_a_snapshot_with_a_field_of_the_wrong_kind_is_a_value_error(field, value
     data = sample().to_dict()
     data[field] = value
 
-    with pytest.raises(ValueError, match="not a (valid )?snapshot"):
+    with pytest.raises(ValueError, match=r"not a (valid )?snapshot"):
         Snapshot.from_dict(data)
-    with pytest.raises(ValueError, match="not a (valid )?snapshot"):
+    with pytest.raises(ValueError, match=r"not a (valid )?snapshot"):
         Snapshot.from_json(json.dumps(data))
 
 

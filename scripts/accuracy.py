@@ -22,7 +22,9 @@ def ratio(numerator: int, denominator: int) -> str:
     return f"{numerator / denominator:6.1%}" if denominator else "     -"
 
 
-def totals_of(results) -> tuple[int, int, int]:
+def totals_of(
+    results: list[tuple[harness.Case, harness.Outcome]],
+) -> tuple[int, int, int]:
     counts = harness.tally(results).values()
     return (
         sum(c["tp"] for c in counts),
