@@ -96,6 +96,11 @@ def _keys_of(nodes, relationship_properties):
     }
 
 
+_Names = Mapping[
+    str, Iterable[str]
+]  # a label (or a type, or an attribute) and the names that go with it
+
+
 def _need(names, known, what, where):
     """Raise if a name that ``where`` mentions is not one of the ``known`` names."""
     for name in names:
@@ -497,15 +502,14 @@ class Snapshot(SnapshotSource):
     @classmethod
     def from_schema(
         cls,
-        nodes: Mapping[str, Iterable[str]],
+        nodes: _Names,
         relationships: Iterable[tuple[str | Sequence[str], str, str | Sequence[str]]],
-        relationship_properties: Mapping[str, Iterable[str]] | None = None,
-        indexes: Iterable[tuple[str, str, Mapping[str, Iterable[str]]]] = (),
+        relationship_properties: _Names | None = None,
+        indexes: Iterable[tuple[str, str, _Names]] = (),
         node_label_sets: Iterable[Iterable[str]] = (),
         graph: str = "",
-        node_property_types: Mapping[str, Mapping[str, Iterable[str]]] | None = None,
-        relationship_property_types: Mapping[str, Mapping[str, Iterable[str]]]
-        | None = None,
+        node_property_types: Mapping[str, _Names] | None = None,
+        relationship_property_types: Mapping[str, _Names] | None = None,
     ) -> "Snapshot":
         """A snapshot written by hand, for when there is no database to capture it from.
 
