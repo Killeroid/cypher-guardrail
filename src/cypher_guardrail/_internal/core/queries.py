@@ -291,6 +291,32 @@ def _explain(
     return False
 
 
+def plan(graph: str, query: str) -> Generator[Request, Any, list[str]]:
+    """The plan that FalkorDB makes of a query (``GRAPH.EXPLAIN``), one operation to a line, as it was asked in this
+    validation if it was (the answer is kept). A parameter that FalkorDB needs the value of is given a placeholder,
+    as in :func:`explain`.
+
+    Raises:
+        CypherError: If the database rejects the query.
+    """
+    try:
+        reply = yield Explain(graph, query)
+    except CypherError as e:
+        placeholders = (
+            with_placeholder_parameters(query)
+            if any(text in e.message for text in _NEEDS_A_VALUE)
+            else None
+        )
+        if placeholders is None:
+            raise
+        reply = yield Explain(graph, placeholders)
+    return (
+        [line for line in reply if isinstance(line, str)]
+        if isinstance(reply, list)
+        else []
+    )
+
+
 def query_to_df(graph: str, query: str) -> Generator[Request, Any, pd.DataFrame]:
     """Run a read query and return the rows as a DataFrame (columns = returned names)."""
     result = yield RoQuery(graph, query)

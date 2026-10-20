@@ -28,6 +28,7 @@ print(missing_labels)  # ['Ghost']
 | `cypher_guardrail.Error.ConflictingVariables` | Syntax | `variables` (`{variable: [labels]}`) |
 | `cypher_guardrail.Warning.ParameterNotProvided` | Syntax | `parameters` (list) |
 | `cypher_guardrail.Error.WriteQuery`, `cypher_guardrail.Warning.WriteQuery` | Syntax | none: the query can modify the graph (see [Read-only queries](usage.md#read-only-queries)) |
+| `cypher_guardrail.Warning.CartesianProduct`, `cypher_guardrail.Warning.UnlabeledNodeScan`, `cypher_guardrail.Warning.UnboundedPath` | Syntax (`check_performance=True`) | `variables` (list of lists), `variable`, `path`: valid queries that may be expensive, see [Queries that are valid and may be expensive](usage.md#queries-that-are-valid-and-may-be-expensive-opt-in) |
 | `cypher_guardrail.Error.UnboundVariable` | Syntax | `variable`: the query uses a variable that no clause before it defines (FalkorDB: `'x' not defined`) |
 | `cypher_guardrail.Error.UnknownFunction` | Syntax | `name`: the database does not know a function the query calls (`Unknown function 'f'`). `cypher_guardrail.Warning.UnknownFunction` says it of a function with a dotted name, without a database |
 | `cypher_guardrail.Error.InvalidLimit` | Syntax | `clause` (`LIMIT` or `SKIP`): the value is not a positive integer |

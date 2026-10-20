@@ -26,6 +26,10 @@ UNKNOWN_PROPERTY: Final = "cypher_guardrail.Warning.UnknownPropertyKey"
 PARAMETER_NOT_PROVIDED: Final = "cypher_guardrail.Warning.ParameterNotProvided"
 UNKNOWN_INDEX: Final = "cypher_guardrail.Warning.UnknownIndex"
 UNKNOWN_FUNCTION: Final = "cypher_guardrail.Warning.UnknownFunction"
+# Valid queries that may be expensive (``SyntaxValidator(check_performance=True)``)
+CARTESIAN_PRODUCT: Final = "cypher_guardrail.Warning.CartesianProduct"
+UNLABELED_NODE_SCAN: Final = "cypher_guardrail.Warning.UnlabeledNodeScan"
+UNBOUNDED_PATH: Final = "cypher_guardrail.Warning.UnboundedPath"
 # Errors raised by FalkorDB itself
 SYNTAX_ERROR: Final = "FalkorDB.ClientError.Statement.SyntaxError"
 EXECUTION_FAILED: Final = "FalkorDB.DatabaseError.Statement.ExecutionFailed"
@@ -227,6 +231,34 @@ class DatabaseErrorIssue(TypedDict):
     description: str
 
 
+class CartesianProductIssue(TypedDict):
+    """The query matches patterns that have nothing in common, so FalkorDB pairs every row of one with every row of
+    the others: the work grows as the product of their sizes. ``variables`` holds the named variables of each pattern
+    (anonymous elements have none). Not reported for a product of index lookups."""
+
+    code: Literal["cypher_guardrail.Warning.CartesianProduct"]
+    description: str
+    variables: list[list[str]]
+
+
+class UnlabeledNodeScanIssue(TypedDict):
+    """A node with no label is looked for among all the nodes of the graph and filtered on a property, so no index
+    can be used. ``variable`` is the node."""
+
+    code: Literal["cypher_guardrail.Warning.UnlabeledNodeScan"]
+    description: str
+    variable: str
+
+
+class UnboundedPathIssue(TypedDict):
+    """A variable-length path has no upper limit (``*``, ``*2..``): it follows relationships as far as they go.
+    ``path`` is the path as the query writes it."""
+
+    code: Literal["cypher_guardrail.Warning.UnboundedPath"]
+    description: str
+    path: str
+
+
 class UnboundVariableIssue(TypedDict):
     """The query uses a variable that no clause before it defines (FalkorDB: ``'x' not defined``)."""
 
@@ -275,4 +307,7 @@ Issue = (
     | UnboundVariableIssue
     | UnknownFunctionErrorIssue
     | InvalidLimitIssue
+    | CartesianProductIssue
+    | UnlabeledNodeScanIssue
+    | UnboundedPathIssue
 )

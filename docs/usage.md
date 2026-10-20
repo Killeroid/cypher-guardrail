@@ -101,6 +101,20 @@ syntax_validator.validate(
 
 **Parameters that FalkorDB needs the value of.** `EXPLAIN` plans the query without the values, and FalkorDB needs one in two places: a filter on a node of a label that has an index (`WHERE m.title = $title` when `Movie` has any index, even a full-text or a vector one), and `LIMIT $n` / `SKIP $n`. It then answers "Missing parameters". The validator does not pass this on: it plans the query again with a placeholder for each parameter (`0`, or `{}` for one whose property is read, as in `$p.title`), added to the `CYPHER` header if the query has one. The placeholders only let FalkorDB make the plan: a parameter that nobody provided is still reported as `cypher_guardrail.Warning.ParameterNotProvided`, and a real error in the query is still reported.
 
+### Queries that are valid and may be expensive (opt-in)
+
+Four patterns pass every check and are the usual cause of a slow generated query. `SyntaxValidator(..., check_performance=True)` (and `AsyncSyntaxValidator`) reports three of them as warnings, read from the plan that FalkorDB makes of the query (`GRAPH.EXPLAIN`: one more, cheap request), so it says what the database will do, not what the text looks like. The warnings leave `is_valid` `True`.
+
+| Code | Fields | When |
+|---|---|---|
+| `cypher_guardrail.Warning.CartesianProduct` | `variables`: the named variables of each pattern, `[["a"], ["b"]]` | The query matches patterns that have nothing in common (`MATCH (a:Person), (b:Movie)`, or two `MATCH` clauses): every row of one is paired with every row of the other. A product of index lookups only (`MATCH (a:P {id: 1}), (b:P {id: 2})`) is left alone. |
+| `cypher_guardrail.Warning.UnlabeledNodeScan` | `variable` | A node with no label is filtered on a property (`MATCH (n) WHERE n.name = 'x'`, `MATCH (n {name: 'x'})`): FalkorDB looks at every node, and no index can be used. A node that is reached through a relationship and not scanned is not reported. |
+| `cypher_guardrail.Warning.UnboundedPath` | `path`, as the query writes it | A variable-length path has no upper limit (`-[:KNOWS*]->`, `*2..`). `shortestPath(...)` is not one. |
+
+They are heuristics, so each can be chosen: `check_performance=True` is all of them, and a collection of names is those (`{"cartesian_product", "unlabeled_scan", "unbounded_path"}`, or some of them). The default, `False`, asks and reports nothing more. They need the database, as `SyntaxValidator` does, so there is no offline mode. What FalkorDB's plan does not name is not seen: `MATCH (a) WITH a MATCH (b)` is a product too, and is not reported.
+
+The fourth pattern, an aggregate over a property that has strings (`sum(n.name)`), is not slow but fails when it runs (`Type mismatch`): it is `PropertiesValidator(check_types=True)`, see [Type mismatches](#type-mismatches-opt-in).
+
 ## Schema Validator
 
 ```python

@@ -23,6 +23,7 @@ from cypher_guardrail import (
 )
 from cypher_guardrail.issues import (
     ARITHMETIC_ERROR,
+    CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
     EXECUTION_FAILED,
     INVALID_LIMIT_ERROR,
@@ -31,6 +32,7 @@ from cypher_guardrail.issues import (
     PROPERTY_TYPE_MISMATCH,
     SYNTAX_ERROR,
     UNBOUND_VARIABLE_ERROR,
+    UNBOUNDED_PATH,
     UNKNOWN_FUNCTION,
     UNKNOWN_FUNCTION_ERROR,
     UNKNOWN_INDEX,
@@ -38,6 +40,7 @@ from cypher_guardrail.issues import (
     UNKNOWN_PATH,
     UNKNOWN_PROPERTY,
     UNKNOWN_REL_TYPE,
+    UNLABELED_NODE_SCAN,
     VARIABLE_LENGTH_PATH,
     WRITE_QUERY_ERROR,
     WRITE_QUERY_WARNING,
@@ -284,6 +287,7 @@ def test_the_fields_are_the_ones_the_type_of_the_code_declares(graphs, case):
 def test_every_code_has_a_type_and_the_types_name_their_codes():
     constants = {
         ARITHMETIC_ERROR,
+        CARTESIAN_PRODUCT,
         CONFLICTING_VARIABLES,
         EXECUTION_FAILED,
         INVALID_LIMIT_ERROR,
@@ -291,6 +295,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         PARAMETER_NOT_PROVIDED,
         PROPERTY_TYPE_MISMATCH,
         SYNTAX_ERROR,
+        UNBOUNDED_PATH,
         UNBOUND_VARIABLE_ERROR,
         UNKNOWN_FUNCTION,
         UNKNOWN_FUNCTION_ERROR,
@@ -299,6 +304,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         UNKNOWN_PATH,
         UNKNOWN_PROPERTY,
         UNKNOWN_REL_TYPE,
+        UNLABELED_NODE_SCAN,
         VARIABLE_LENGTH_PATH,
         WRITE_QUERY_ERROR,
         WRITE_QUERY_WARNING,
@@ -309,7 +315,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         typing.get_args(typing.get_type_hints(issues.DatabaseErrorIssue)["code"])
     )
     assert declared == constants
-    assert len(constants) == 21
+    assert len(constants) == 24
 
 
 def test_different_issues_of_one_code_are_all_reported(graphs):

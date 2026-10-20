@@ -1,10 +1,11 @@
 from collections import defaultdict
-from collections.abc import Generator, Iterable
+from collections.abc import Collection, Generator, Iterable
 from typing import Any, Generic, TypeVar
 
 import regex as re
 
 from cypher_guardrail._internal.core import builders as _issues
+from cypher_guardrail._internal.core import performance as _performance
 from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail._internal.core.errors import CypherError, GraphNotFoundError
 from cypher_guardrail._internal.core.io import Lookup, Request
@@ -14,7 +15,10 @@ from cypher_guardrail.backend import get_async_backend, get_backend
 from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
 from cypher_guardrail.issues import (
     ARITHMETIC_ERROR,
+    CARTESIAN_PRODUCT,
     SYNTAX_ERROR,
+    UNBOUNDED_PATH,
+    UNLABELED_NODE_SCAN,
     WRITE_QUERY_WARNING,
     Issue,
 )
@@ -48,13 +52,21 @@ def _together_on_a_node(labels, combinations):
     )
 
 
+# the codes of the issues that leave a query valid
+_WARNINGS = {
+    WRITE_QUERY_WARNING,
+    CARTESIAN_PRODUCT,
+    UNLABELED_NODE_SCAN,
+    UNBOUNDED_PATH,
+}
+
 _D = TypeVar("_D")  # the kind of driver: a client or graph, sync or async
 
 
 class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
     """The logic of SyntaxValidator, as generators (see ``cypher_guardrail._internal.core.io``): one copy for the sync and the async validator."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the options of the sync validator
         self,
         driver: _D,
         check_multilabeled_nodes: bool = True,
@@ -62,6 +74,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
         *,
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
+        check_performance: bool | Collection[str] = False,
     ) -> None:
         """
         Initialize the validator with a FalkorDB client.
@@ -81,9 +94,15 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
                 (the database is still asked to check the syntax). This is the hybrid mode.
             verify (str | None): Hybrid mode: ``"misses"`` (the default) asks the database before reporting a thing
                 the snapshot says is not there, ``"never"`` trusts the snapshot.
+            check_performance (bool | Collection[str]): Also warn about a query that is valid and may be expensive, from
+                the plan that FalkorDB makes of it (one more, cheap, request): ``cypher_guardrail.Warning.CartesianProduct``,
+                ``cypher_guardrail.Warning.UnlabeledNodeScan`` and ``cypher_guardrail.Warning.UnboundedPath``. They are
+                heuristics, so each can be chosen: ``True`` is all of them, ``{"cartesian_product", "unlabeled_scan",
+                "unbounded_path"}`` (or some of them) is those. Off by default. A warning does not make the query invalid.
 
         Raises:
-            TypeError: If the driver is not a FalkorDB client or graph.
+            TypeError: If the driver is not a FalkorDB client or graph, or ``check_performance`` is a string.
+            ValueError: If ``check_performance`` names a check that does not exist.
         """
         if isinstance(driver, SnapshotSource):
             raise TypeError(
@@ -95,6 +114,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
 
         self.check_multilabeled_nodes = check_multilabeled_nodes
         self.read_only = read_only
+        self.performance = _performance.selected(check_performance)
 
     def _open_backend(self, driver, snapshot, verify):
         """The backend the validator runs on. The async validators override this."""
@@ -129,9 +149,11 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
             conflict = yield from self._conflicting_variables(code, graph)
             if conflict:
                 metadata.append(conflict)
+            if self.performance:
+                metadata += yield from self._performance_warnings(graph, query)
 
-            # A warning about a write does not make the query invalid, as an error about it does
-            return all(i["code"] == WRITE_QUERY_WARNING for i in metadata), metadata
+            # A warning does not make the query invalid, as an error does
+            return all(i["code"] in _WARNINGS for i in metadata), metadata
         except GraphNotFoundError:
             raise  # a mistake of the caller, not an answer about the query
         except CypherError as e:
@@ -139,6 +161,18 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
             # FalkorDB.DatabaseError.Statement.ExecutionFailed or cypher_guardrail.Error.ArithmeticError
             metadata.append(_issues.database_error(e.code, e.message))
             return False, metadata
+
+    def _performance_warnings(
+        self, graph, query
+    ) -> Generator[Request, Any, list[Issue]]:
+        """The warnings of the performance checks that are on. A plan that cannot be had is no reason to say more."""
+        try:
+            plan = yield from _queries.plan(graph, query)
+        except GraphNotFoundError:
+            raise
+        except CypherError:
+            return []
+        return _performance.warnings(query, plan, self.performance)
 
     def _conflicting_variables(
         self, code, graph
@@ -233,6 +267,7 @@ class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
         max_concurrency: int = 8,
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
+        check_performance: bool | Collection[str] = False,
     ) -> None:
         """
         Initialize the validator with an async FalkorDB client.
@@ -248,9 +283,10 @@ class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
             max_concurrency (int): The most requests in flight at once on this validator's connection.
             snapshot (Snapshot | None): As for :class:`SyntaxValidator`: the hybrid mode.
             verify (str | None): As for :class:`SyntaxValidator`.
+            check_performance (bool | Collection[str]): As for :class:`SyntaxValidator`.
 
         Raises:
-            TypeError: If the driver is not an async FalkorDB client or graph.
+            TypeError: If the driver is not an async FalkorDB client or graph, or ``check_performance`` is a string.
             ValueError: If ``max_concurrency`` is less than 1.
         """
         self._max_concurrency = max_concurrency
@@ -260,6 +296,7 @@ class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
             read_only,
             snapshot=snapshot,
             verify=verify,
+            check_performance=check_performance,
         )
 
     def _open_backend(self, driver, snapshot, verify):

@@ -12,7 +12,8 @@ into the generator at the ``yield``, so ``try/except`` in the logic works as it 
 Requests are:
 
 * :class:`RoQuery`: ``GRAPH.RO_QUERY``. The answer is falkordb's ``QueryResult``.
-* :class:`Explain`: ``GRAPH.EXPLAIN``. The answer is ``None``: it only matters that the database accepts the query.
+* :class:`Explain`: ``GRAPH.EXPLAIN``. The answer is the plan, the lines of the reply (what matters to most is that the
+  database accepts the query).
   With ``read_only`` it is ``GRAPH.RO_QUERY "EXPLAIN ..." TIMEOUT 1`` instead: the database refuses a query that can
   write (a ``CypherError`` with the code ``NOT_READ_ONLY``) before running anything, and FalkorDB would *run* a read
   query in it, so that is stopped after a millisecond (a timeout is not an answer about writes: the plain
@@ -194,7 +195,10 @@ class SyncTransport:
                 return graph.ro_query(request.query)
             if isinstance(request, ListUdfs):
                 return graph.execute_command("GRAPH.UDF", "LIST")
-            graph.execute_command(*_explain_command(graph, request))
+            reply = graph.execute_command(*_explain_command(graph, request))
+            return (
+                None if request.read_only else reply
+            )  # the rows of a read-only request are not wanted
         except ResponseError as e:
             raise to_cypher_error(e) from e
 
@@ -241,7 +245,8 @@ class AsyncTransport:
                     return await graph.ro_query(request.query)
                 if isinstance(request, ListUdfs):
                     return await graph.execute_command("GRAPH.UDF", "LIST")
-                await graph.execute_command(*_explain_command(graph, request))
+                reply = await graph.execute_command(*_explain_command(graph, request))
+                return None if request.read_only else reply
             except ResponseError as e:
                 raise to_cypher_error(e) from e
 

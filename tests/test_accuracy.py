@@ -107,6 +107,7 @@ def test_every_case_is_well_formed():
             "read_only",
             "check_multilabeled_nodes",
             "parameters",
+            "check_performance",
             "check_types",
             "strict",
         }, where

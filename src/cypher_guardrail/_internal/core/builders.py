@@ -8,12 +8,14 @@ from typing import Literal, cast
 
 from cypher_guardrail._internal.core.errors import failure_field
 from cypher_guardrail.issues import (
+    CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
     INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
     UNBOUND_VARIABLE_ERROR,
+    UNBOUNDED_PATH,
     UNKNOWN_FUNCTION,
     UNKNOWN_FUNCTION_ERROR,
     UNKNOWN_INDEX,
@@ -21,23 +23,27 @@ from cypher_guardrail.issues import (
     UNKNOWN_PATH,
     UNKNOWN_PROPERTY,
     UNKNOWN_REL_TYPE,
+    UNLABELED_NODE_SCAN,
     VARIABLE_LENGTH_PATH,
     WRITE_QUERY_ERROR,
     WRITE_QUERY_WARNING,
     WRONG_DIRECTION_PATH,
     WRONG_DIRECTION_VARIABLE_LENGTH_PATH,
+    CartesianProductIssue,
     ConflictingVariablesIssue,
     DatabaseErrorIssue,
     InvalidPropertyAccessIssue,
     Issue,
     ParameterNotProvidedIssue,
     PropertyTypeMismatchIssue,
+    UnboundedPathIssue,
     UnknownFunctionIssue,
     UnknownIndexIssue,
     UnknownLabelIssue,
     UnknownPathIssue,
     UnknownPropertyKeyIssue,
     UnknownRelationshipTypeIssue,
+    UnlabeledNodeScanIssue,
     VariableLengthPathIssue,
     WriteQueryErrorIssue,
     WriteQueryWarningIssue,
@@ -180,6 +186,36 @@ def unknown_function(name: str) -> UnknownFunctionIssue:
         "user-defined function (user-defined functions belong to the instance, not to the graph). FalkorDB refuses "
         "the query when it runs: Unknown function.",
         "name": name,
+    }
+
+
+def cartesian_product(variables: list[list[str]]) -> CartesianProductIssue:
+    """``variables`` are the named variables of each of the patterns that have nothing in common."""
+    shown = " and ".join("(" + ", ".join(group) + ")" for group in variables)
+    return {
+        "code": CARTESIAN_PRODUCT,
+        "description": f"The query matches patterns that have nothing in common: {shown}. FalkorDB pairs every row "
+        "of one with every row of the others (a Cartesian product), so the work grows as the product of their sizes. "
+        "Connect them with a relationship or a condition, or ask for them in separate queries.",
+        "variables": [list(group) for group in variables],
+    }
+
+
+def unlabeled_node_scan(variable: str) -> UnlabeledNodeScanIssue:
+    return {
+        "code": UNLABELED_NODE_SCAN,
+        "description": f"The node {variable} has no label and the query filters it on a property, so FalkorDB looks "
+        "at every node of the graph (no index can be used). Give it a label.",
+        "variable": variable,
+    }
+
+
+def unbounded_path(path: str) -> UnboundedPathIssue:
+    return {
+        "code": UNBOUNDED_PATH,
+        "description": f"The path {path} has no upper limit on its length, so it follows relationships as far as they "
+        "go, which can take very long on a large or a cyclic graph. Give it one (for example *1..5).",
+        "path": path,
     }
 
 
