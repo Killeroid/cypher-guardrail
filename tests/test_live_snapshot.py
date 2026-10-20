@@ -83,7 +83,7 @@ class FakeLive(LiveSnapshot):
 
     def __init__(self, database, clock, hold="held", **options):
         options.setdefault("refresh_every", EVERY)
-        super().__init__(None, "g", clock=clock, **options)
+        super().__init__(None, "g", clock=clock, **options)  # ty: ignore[invalid-argument-type]
         self.database = database
         self.hold = hold
         self.pending = []
@@ -678,7 +678,7 @@ def test_options_that_make_no_sense_are_refused(options, error):
 @pytest.mark.parametrize("graph", ["", None, 5])
 def test_the_graph_must_be_a_name(graph):
     with pytest.raises(ValueError, match="name of a graph"):
-        LiveSnapshot(None, graph, refresh_every=EVERY)
+        LiveSnapshot(None, graph, refresh_every=EVERY)  # ty: ignore[invalid-argument-type]
 
 
 def test_the_options_of_the_capture_are_the_ones_it_is_given(monkeypatch):
@@ -689,7 +689,7 @@ def test_the_options_of_the_capture_are_the_ones_it_is_given(monkeypatch):
         return snapshot_of(1, Clock())
 
     monkeypatch.setattr(Snapshot, "capture", staticmethod(fake_capture))
-    live = LiveSnapshot(None, "g", refresh_every=EVERY, sample=None, types=True)
+    live = LiveSnapshot(None, "g", refresh_every=EVERY, sample=None, types=True)  # ty: ignore[invalid-argument-type]
 
     live._capture()
 
@@ -881,7 +881,7 @@ class FakeAsyncLive(AsyncLiveSnapshot):
 
     def __init__(self, database, clock, **options):
         options.setdefault("refresh_every", EVERY)
-        super().__init__(None, "g", clock=clock, **options)
+        super().__init__(None, "g", clock=clock, **options)  # ty: ignore[invalid-argument-type]
         self.database = database
 
     async def _fingerprint(self):
@@ -1359,8 +1359,8 @@ def test_options_that_contradict_each_other_are_refused(options, error):
 
 
 def test_a_max_age_longer_than_refresh_every_is_accepted_and_no_retry_wait_is_too():
-    LiveSnapshot(None, "g", refresh_every=EVERY, max_age=EVERY + timedelta(seconds=1))
-    LiveSnapshot(None, "g", refresh_every=EVERY, retry_after=timedelta(0))
+    LiveSnapshot(None, "g", refresh_every=EVERY, max_age=EVERY + timedelta(seconds=1))  # ty: ignore[invalid-argument-type]
+    LiveSnapshot(None, "g", refresh_every=EVERY, retry_after=timedelta(0))  # ty: ignore[invalid-argument-type]
 
 
 # ------------------------------------------------------------- the first snapshot, when the database is down

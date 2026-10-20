@@ -11,10 +11,15 @@ from cypher_guardrail._internal.sources.online import (
     identify_variables_and_construct_query,  # noqa: F401
 )
 from cypher_guardrail.backend import get_async_backend, get_backend
+from cypher_guardrail.drivers import AsyncDriver, Driver
 from cypher_guardrail.issues import WRITE_QUERY_ERROR
 
 
-def get_paths_after_inference(driver, all_paths_with_vars, database_name=None):
+def get_paths_after_inference(
+    driver: Driver,
+    all_paths_with_vars: list[str],
+    database_name: str | None = None,
+) -> list[pd.DataFrame]:
     """Infer the labels and types of the variables in each path, one DataFrame per group of paths.
 
     Each path gets a DataFrame whose columns are its variables and whose rows are the label (or type)
@@ -37,8 +42,10 @@ def get_paths_after_inference(driver, all_paths_with_vars, database_name=None):
 
 
 async def get_paths_after_inference_async(
-    driver, all_paths_with_vars, database_name=None
-):
+    driver: AsyncDriver,
+    all_paths_with_vars: list[str],
+    database_name: str | None = None,
+) -> list[pd.DataFrame]:
     """The async version of :func:`get_paths_after_inference`: ``driver`` is a ``falkordb.asyncio`` client or graph
     (or an ``AsyncFalkorDBBackend``), and the DataFrames are awaited."""
     backend = get_async_backend(driver)
@@ -46,7 +53,7 @@ async def get_paths_after_inference_async(
     return await backend.run(paths_after_inference(graph, all_paths_with_vars))
 
 
-def is_write(driver, query, database_name=None):
+def is_write(driver: Driver, query: str, database_name: str | None = None) -> bool:
     """Whether ``query`` can modify the graph: it creates, changes or deletes data, or an index, or calls a procedure
     that writes. The database decides (it refuses such a query in a read-only request), and the query is not run:
     it is only explained. This is the check that ``SyntaxValidator`` makes (``read_only``), on its own. (No data is
@@ -71,7 +78,9 @@ def is_write(driver, query, database_name=None):
     return backend.run(_is_write(graph, query))
 
 
-async def is_write_async(driver, query, database_name=None):
+async def is_write_async(
+    driver: AsyncDriver, query: str, database_name: str | None = None
+) -> bool:
     """The async version of :func:`is_write`: ``driver`` is a ``falkordb.asyncio`` client or graph (or an
     ``AsyncFalkorDBBackend``)."""
     backend = get_async_backend(driver)

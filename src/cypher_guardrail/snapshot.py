@@ -14,10 +14,13 @@ import json
 import os
 import secrets
 import stat
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Any
+
+from cypher_guardrail.drivers import AsyncDriver, Driver
 
 FORMAT_VERSION = 1
 _ENTITIES = ("NODE", "RELATIONSHIP")
@@ -494,14 +497,15 @@ class Snapshot(SnapshotSource):
     @classmethod
     def from_schema(
         cls,
-        nodes,
-        relationships,
-        relationship_properties=None,
-        indexes=(),
-        node_label_sets=(),
+        nodes: Mapping[str, Iterable[str]],
+        relationships: Iterable[tuple[str | Sequence[str], str, str | Sequence[str]]],
+        relationship_properties: Mapping[str, Iterable[str]] | None = None,
+        indexes: Iterable[tuple[str, str, Mapping[str, Iterable[str]]]] = (),
+        node_label_sets: Iterable[Iterable[str]] = (),
         graph: str = "",
-        node_property_types=None,
-        relationship_property_types=None,
+        node_property_types: Mapping[str, Mapping[str, Iterable[str]]] | None = None,
+        relationship_property_types: Mapping[str, Mapping[str, Iterable[str]]]
+        | None = None,
     ) -> "Snapshot":
         """A snapshot written by hand, for when there is no database to capture it from.
 
@@ -557,7 +561,7 @@ class Snapshot(SnapshotSource):
     @classmethod
     def capture(
         cls,
-        driver,
+        driver: Driver,
         graph: str | None = None,
         *,
         sample: int | None = None,
@@ -589,7 +593,7 @@ class Snapshot(SnapshotSource):
     @classmethod
     async def capture_async(
         cls,
-        driver,
+        driver: AsyncDriver,
         graph: str | None = None,
         *,
         sample: int | None = None,

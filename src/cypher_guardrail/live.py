@@ -34,9 +34,11 @@ import weakref
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from datetime import UTC, datetime, timedelta
+from typing import Generic, Self, TypeVar
 
 from cypher_guardrail._internal import capture_driver as _capture
 from cypher_guardrail._internal.sources import capture as _logic
+from cypher_guardrail.drivers import AsyncDriver, Driver
 from cypher_guardrail.snapshot import Snapshot, SnapshotSource
 
 _NEVER = datetime.min.replace(tzinfo=UTC)
@@ -195,7 +197,10 @@ def _read(path, graph, tracker, now):
         tracker.loaded(snapshot, now)
 
 
-class _LiveBase(SnapshotSource):
+_C = TypeVar("_C")  # the kind of client: sync or async
+
+
+class _LiveBase(SnapshotSource, Generic[_C]):
     """What the sync and the async live snapshot share: the options, the state, and what can be read of it.
 
     A subclass says how the state of the tracker is protected (``_state``), and does the refreshing.
@@ -208,7 +213,7 @@ class _LiveBase(SnapshotSource):
 
     def __init__(
         self,
-        client,
+        client: _C,
         graph: str,
         *,
         refresh_every: timedelta,
@@ -219,7 +224,7 @@ class _LiveBase(SnapshotSource):
         types: bool,
         path: str | os.PathLike | None,
         clock: Callable[[], datetime],
-    ):
+    ) -> None:
         _check_names(graph, sample, types)
         self._client = client
         self._graph = graph
@@ -277,7 +282,7 @@ class _LiveBase(SnapshotSource):
         return f"{type(self).__name__}(graph={self._graph!r}, captured_at={self.captured_at!r})"
 
 
-class LiveSnapshot(_LiveBase):
+class LiveSnapshot(_LiveBase[Driver]):
     """A :class:`~cypher_guardrail.snapshot.SnapshotSource` that refreshes its snapshot from a database (see the module).
 
     Args:
@@ -300,7 +305,7 @@ class LiveSnapshot(_LiveBase):
 
     def __init__(
         self,
-        client,
+        client: Driver,
         graph: str,
         *,
         refresh_every: timedelta,
@@ -311,7 +316,7 @@ class LiveSnapshot(_LiveBase):
         types: bool = False,
         path: str | os.PathLike | None = None,
         clock: Callable[[], datetime] = _utc_now,
-    ):
+    ) -> None:
         super().__init__(
             client,
             graph,
@@ -384,10 +389,10 @@ class LiveSnapshot(_LiveBase):
         with self._refreshing:
             pass
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, *_exc_info):
+    def __exit__(self, *_exc_info: object) -> None:
         self.close()
 
     def _fingerprint(self) -> tuple:
@@ -453,7 +458,7 @@ class LiveSnapshot(_LiveBase):
         return snapshot
 
 
-class AsyncLiveSnapshot(_LiveBase):
+class AsyncLiveSnapshot(_LiveBase[AsyncDriver]):
     """The async twin of :class:`LiveSnapshot`, for a ``falkordb.asyncio`` client: ``refresh()`` is a coroutine and the
     refresh a validation starts is an asyncio task.
 
@@ -469,7 +474,7 @@ class AsyncLiveSnapshot(_LiveBase):
 
     def __init__(
         self,
-        client,
+        client: AsyncDriver,
         graph: str,
         *,
         refresh_every: timedelta,
@@ -481,7 +486,7 @@ class AsyncLiveSnapshot(_LiveBase):
         path: str | os.PathLike | None = None,
         max_concurrency: int = 8,
         clock: Callable[[], datetime] = _utc_now,
-    ):
+    ) -> None:
         super().__init__(
             client,
             graph,
@@ -536,12 +541,12 @@ class AsyncLiveSnapshot(_LiveBase):
         if self._task is not None and not self._task.done():
             self._task.cancel()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         if self._t.snapshot is None:
             await self.refresh()
         return self
 
-    async def __aexit__(self, *_exc_info):
+    async def __aexit__(self, *_exc_info: object) -> None:
         self.close()
 
     def _guard(self) -> asyncio.Lock:

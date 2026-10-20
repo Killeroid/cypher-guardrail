@@ -20,7 +20,7 @@ class CypherError(Exception):
         message (str): Human readable description from the database.
     """
 
-    def __init__(self, code, message):
+    def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
@@ -36,7 +36,7 @@ class GraphNotFoundError(CypherError, ValueError):
         graph (str): The name of the graph.
     """
 
-    def __init__(self, graph):
+    def __init__(self, graph: str) -> None:
         super().__init__(
             EXECUTION_FAILED,
             f"The graph {graph!r} does not exist (FalkorDB creates a graph with its first write): check its name.",
