@@ -277,9 +277,8 @@ class SnapshotResolver:
         return self._resolved(lookup)
 
     def _resolved(self, lookup: Lookup):
-        if False:
-            yield
         return self.answer(lookup).value
+        yield  # the unreachable yield makes this a generator that asks for nothing
 
     # ------------------------------------------------------------------------ names
     def _names(self, kind: str) -> frozenset[str]:

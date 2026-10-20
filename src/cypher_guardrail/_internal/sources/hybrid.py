@@ -197,9 +197,8 @@ def chain_resolver(snapshot: Snapshot, verify: str, stats: LookupStats):
 
 
 def _answer(value) -> Generator[Request, Any, Any]:
-    if False:
-        yield
     return value
+    yield  # the unreachable yield makes this a generator that asks for nothing
 
 
 def _ask_the_database(

@@ -385,7 +385,7 @@ class LiveSnapshot(_LiveBase):
     def __enter__(self):
         return self
 
-    def __exit__(self, *exc_info):
+    def __exit__(self, *_exc_info):
         self.close()
 
     def _fingerprint(self) -> tuple:
@@ -539,7 +539,7 @@ class AsyncLiveSnapshot(_LiveBase):
             await self.refresh()
         return self
 
-    async def __aexit__(self, *exc_info):
+    async def __aexit__(self, *_exc_info):
         self.close()
 
     def _guard(self) -> asyncio.Lock:
