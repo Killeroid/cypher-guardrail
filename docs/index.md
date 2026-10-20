@@ -18,5 +18,6 @@ async
 :caption: Reference
 
 reference
+architecture
 changelog
 ```

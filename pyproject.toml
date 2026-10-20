@@ -115,7 +115,7 @@ skip_empty = true
 show_missing = true
 
 # The layers of the package, from the one that uses the others to the one that uses none. A module imports from the
-# layers below it, never from one above. (The refactoring plan removes the exceptions listed under ignore_imports.)
+# layers below it, never from one above (docs/architecture.md says what each is for).
 [tool.importlinter]
 root_package = "cypher_guardrail"
 
