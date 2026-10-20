@@ -48,6 +48,11 @@ def _first(rows, column):
     return [row[column] for row in rows]
 
 
+def _keys_of(rows):
+    """The properties that a scan found (its rows ``k``)."""
+    return _first(rows, "k")
+
+
 def _types_of(rows):
     """``{property: [its types]}`` of the rows ``(k, t)`` of a scan that asked for the types."""
     found: dict[str, list[str]] = {}
@@ -56,41 +61,37 @@ def _types_of(rows):
     return found
 
 
-def scan_graph(
-    graph: str, sample: int | None, with_types: bool = False
-) -> Generator[Request, Any, dict]:
-    """The pieces of a snapshot of ``graph``: names and indexes first, then the scans that need the names."""
-    limit = "" if sample is None else f" LIMIT {sample}"
+def _whole_graph_scans(graph: str, sample: int | None) -> tuple:
+    """The scans of the label sets and the edges of the graph, by one scan each.
+
+    A sample takes them per label and per type instead (a limit on all the nodes would see only the common labels),
+    and those need the names first, so for a sample only the first N nodes of the graph are scanned here, which is
+    what finds a node that has no label (see ``_sample_scans``).
+    """
+    if sample:
+        return (
+            _scan(
+                graph,
+                f"MATCH (n) WITH n LIMIT {sample} RETURN DISTINCT labels(n) AS labels",
+            ),
+        )
+    return (
+        _scan(graph, "MATCH (n) RETURN DISTINCT labels(n) AS labels"),
+        _scan(
+            graph,
+            "MATCH (a)-[r]->(b) RETURN DISTINCT labels(a) AS start, type(r) AS type, labels(b) AS end",
+        ),
+    )
+
+
+def _property_scans(
+    graph: str, labels, types, sample: int | None, with_types: bool
+) -> tuple[tuple, tuple]:
+    """The scans of the properties each label, and each relationship type, has: one scan per name, all independent."""
+    limit = f" LIMIT {sample}" if sample else ""
     # With the types, the scan that finds the properties asks for the type of each value as well
     node_return = "k, typeof(n[k]) AS t" if with_types else "k"
     rel_return = "k, typeof(r[k]) AS t" if with_types else "k"
-
-    # The whole graph is read by one scan for the label sets and one for the edges. A sample is taken per label and
-    # per type instead (a limit on all the nodes would see only the common labels), and those need the names first;
-    # the first N nodes of the graph are added to them, which is what finds a node that has no label.
-    first_scans = (
-        _names(graph),
-        _online.indexes(graph),
-        _scan(
-            graph,
-            f"MATCH (n) WITH n{limit} RETURN DISTINCT labels(n) AS labels"
-            if sample
-            else "MATCH (n) RETURN DISTINCT labels(n) AS labels",
-        ),
-    ) + (
-        ()
-        if sample
-        else (
-            _scan(
-                graph,
-                "MATCH (a)-[r]->(b) RETURN DISTINCT labels(a) AS start, type(r) AS type, labels(b) AS end",
-            ),
-        )
-    )
-    names, index_rows, label_sets, *whole_edges = yield Concurrently(first_scans)
-    labels, types, keys = names
-
-    # The properties each label (type) has: one scan per name, all independent
     node_scans = tuple(
         _scan(
             graph,
@@ -109,23 +110,43 @@ def scan_graph(
         )
         for kind in sorted(types)
     )
-    sampled_label_sets = tuple(
+    return node_scans, rel_scans
+
+
+def _sample_scans(graph: str, labels, types, sample: int | None) -> tuple[tuple, tuple]:
+    """The scans of the label sets (one per label) and of the edges (one per type) of a sample: none for the whole graph."""
+    if not sample:
+        return (), ()
+    limit = f" LIMIT {sample}"
+    label_sets = tuple(
         _scan(
             graph,
             f"MATCH (n:{_quote(label)}) WITH n{limit} RETURN DISTINCT labels(n) AS labels",
         )
         for label in sorted(labels)
-        if sample
     )
-    sampled_edges = tuple(
+    edges = tuple(
         _scan(
             graph,
             f"MATCH (a)-[r:{_quote(kind)}]->(b) WITH a, r, b{limit} "
             "RETURN DISTINCT labels(a) AS start, type(r) AS type, labels(b) AS end",
         )
         for kind in sorted(types)
-        if sample
     )
+    return label_sets, edges
+
+
+def scan_graph(
+    graph: str, sample: int | None, with_types: bool = False
+) -> Generator[Request, Any, dict]:
+    """The pieces of a snapshot of ``graph``: names and indexes first, then the scans that need the names."""
+    names, index_rows, label_sets, *whole_edges = yield Concurrently(
+        (_names(graph), _online.indexes(graph), *_whole_graph_scans(graph, sample))
+    )
+    labels, types, keys = names
+
+    node_scans, rel_scans = _property_scans(graph, labels, types, sample, with_types)
+    sampled_label_sets, sampled_edges = _sample_scans(graph, labels, types, sample)
     scans = yield Concurrently(
         node_scans + rel_scans + sampled_label_sets + sampled_edges
     )
@@ -149,25 +170,20 @@ def scan_graph(
             dict.fromkeys(tuple(row) for row in _first(label_sets, "labels"))
         ),
         "edges": [(r["start"], r["type"], r["end"]) for r in edges],
-        "node_properties": {
-            label: _first(rows, "k")
-            for label, rows in zip(sorted(labels), node_rows, strict=True)
-        },
-        "relationship_properties": {
-            kind: _first(rows, "k")
-            for kind, rows in zip(sorted(types), rel_rows, strict=True)
-        },
+        "node_properties": _by_name(labels, node_rows, _keys_of),
+        "relationship_properties": _by_name(types, rel_rows, _keys_of),
     }
     if with_types:
-        found["node_value_types"] = {
-            label: _types_of(rows)
-            for label, rows in zip(sorted(labels), node_rows, strict=True)
-        }
-        found["relationship_value_types"] = {
-            kind: _types_of(rows)
-            for kind, rows in zip(sorted(types), rel_rows, strict=True)
-        }
+        found["node_value_types"] = _by_name(labels, node_rows, _types_of)
+        found["relationship_value_types"] = _by_name(types, rel_rows, _types_of)
     return found
+
+
+def _by_name(names, rows_of_each, read) -> dict:
+    """``{name: read(its rows)}``: ``rows_of_each`` are the rows of the scans, in the order of the sorted names."""
+    return {
+        name: read(rows) for name, rows in zip(sorted(names), rows_of_each, strict=True)
+    }
 
 
 def _names(
