@@ -20,6 +20,32 @@ from cypher_guardrail.issues import SYNTAX_ERROR, WRITE_QUERY_WARNING, Issue
 from cypher_guardrail.patterns import split_union, strip_literals_and_comments
 from cypher_guardrail.snapshot import SnapshotSource
 
+# `/ 0`, `/ 0.0` and `/ (0)` always fail when the query runs (ArithmeticError). A divisor that
+# only becomes zero while the query runs cannot be found without running it. (Not `/ 0.5`: the
+# number must not go on with a digit, a letter, a dot or a call.)
+_DIVISION_BY_ZERO = r"/\s*(?:\(\s*0(?:\.0*)?\s*\)|0(?:\.0*)?)\s*(?![\w.(])"
+
+
+def _with_several_labels(branch):
+    """The variables of one query (or branch of a UNION) that have more than one label, with their labels in query order."""
+    # Find the variable and label of every node or relationship that has a label (also when followed by {properties})
+    matches = re.findall(
+        r"[\(\[](\s*\w+\s*):(\s*\w+\s*)(?:\s*\{[^\}]*\})?[\)\]]", branch
+    )
+    # variable -> its labels, in query order (a dict is an ordered set)
+    variable_labels = defaultdict(dict)
+    for var, label in matches:
+        variable_labels[var.strip()][label.strip()] = None
+    # A variable conflicts if it has more than one label
+    return {var: labels for var, labels in variable_labels.items() if len(labels) > 1}
+
+
+def _together_on_a_node(labels, combinations):
+    """Whether one of the label ``combinations`` that occur together on a node has all of ``labels``."""
+    return any(
+        all(label in combination for label in labels) for combination in combinations
+    )
+
 
 class _SyntaxValidator(_modes.ModeInfo):
     """The logic of SyntaxValidator, as generators (see ``cypher_guardrail._internal.core.io``): one copy for the sync and the async validator."""
@@ -86,82 +112,19 @@ class _SyntaxValidator(_modes.ModeInfo):
             notifications = yield from _queries.explain(
                 graph, query, self.read_only, parameters
             )
-
             # EXPLAIN does not execute the query, so what it gives are a missing $parameter and a query that writes
             metadata.extend(notification.copy() for notification in notifications)
 
             # The checks below look for Cypher syntax, so they must not see text inside strings or
             # comments (e.g. WHERE n.name = 'a / 0' or // (n:A) (n:B))
             code = strip_literals_and_comments(query)
-
-            # ----------Detect an explicit division by zero----------------
-            # `/ 0`, `/ 0.0` and `/ (0)` always fail when the query runs (ArithmeticError). A divisor that
-            # only becomes zero while the query runs cannot be found without running it. (Not `/ 0.5`: the
-            # number must not go on with a digit, a letter, a dot or a call.)
-            divisor_zero_pattern = (
-                r"/\s*(?:\(\s*0(?:\.0*)?\s*\)|0(?:\.0*)?)\s*(?![\w.(])"
-            )
-            if re.search(divisor_zero_pattern, code):
+            if re.search(_DIVISION_BY_ZERO, code):
                 metadata.append(
                     _issues.database_error(ARITHMETIC_ERROR, "Division by zero.")
                 )
-
-            # ----------Detect conflicting labels----------------
-
-            # The branches of a UNION are separate queries: a variable of one is not the variable of another. Nor is a
-            # name that a WITH dropped, or that a CALL { } does not import, when it is declared again
-            scoped, renames = separate_variables(code)
-            several: list[
-                dict[str, dict[str, None]]
-            ] = []  # in each branch, the variables with more than one label
-            for branch in split_union(scoped):
-                # Find the variable and label of every node or relationship that has a label (also when followed by {properties})
-                matches = re.findall(
-                    r"[\(\[](\s*\w+\s*):(\s*\w+\s*)(?:\s*\{[^\}]*\})?[\)\]]", branch
-                )
-
-                # variable -> its labels, in query order (a dict is an ordered set)
-                variable_labels = defaultdict(dict)
-                for var, label in matches:
-                    variable_labels[var.strip()][label.strip()] = None
-
-                # A variable conflicts if it has more than one label
-                several.append(
-                    {
-                        var: labels
-                        for var, labels in variable_labels.items()
-                        if len(labels) > 1
-                    }
-                )
-
-            # A node can legitimately carry several labels at once (e.g. GeoArea and Area), so with
-            # check_multilabeled_nodes the labels that occur together on a node in the graph are not a conflict. They
-            # are asked of the database only when a variable has several labels (it is a scan of the graph), and not
-            # kept: the next validation sees the graph as it is then.
-            multilabels = None
-            if self.check_multilabeled_nodes and any(several):
-                multilabels = yield Lookup("multilabels", graph, ())
-
-            conflicting_vars: dict[str, dict[str, None]] = {}
-            for branch_variables in several:
-                for var, labels in branch_variables.items():
-                    if multilabels is None or not self.__subset_in_multilabels(
-                        labels, multilabels
-                    ):
-                        conflicting_vars.setdefault(var, {}).update(labels)
-
-            # Report the conflicting variables
-            if conflicting_vars:
-                metadata.append(
-                    _issues.conflicting_variables(
-                        {
-                            var: list(labels)
-                            for var, labels in restore_variables(
-                                conflicting_vars, renames
-                            ).items()
-                        }
-                    )
-                )
+            conflict = yield from self.__conflicting_variables(code, graph)
+            if conflict:
+                metadata.append(conflict)
 
             # A warning about a write does not make the query invalid, as an error about it does
             return all(i["code"] == WRITE_QUERY_WARNING for i in metadata), metadata
@@ -173,21 +136,36 @@ class _SyntaxValidator(_modes.ModeInfo):
             metadata.append(_issues.database_error(e.code, e.message))
             return False, metadata
 
-    @staticmethod
-    def __subset_in_multilabels(subset, list_of_lists):
-        """Check whether every item of ``subset`` is in one of the lists of ``list_of_lists``.
+    def __conflicting_variables(
+        self, code, graph
+    ) -> Generator[Request, Any, Issue | None]:
+        """The issue about the variables that the query gives different labels (None when there is no such variable)."""
+        # The branches of a UNION are separate queries: a variable of one is not the variable of another. Nor is a
+        # name that a WITH dropped, or that a CALL { } does not import, when it is declared again
+        scoped, renames = separate_variables(code)
+        several = [_with_several_labels(branch) for branch in split_union(scoped)]
 
-        Args:
-            subset (list): The labels of a variable.
-            list_of_lists (list): The label combinations that occur together on a node.
+        # A node can legitimately carry several labels at once (e.g. GeoArea and Area), so with
+        # check_multilabeled_nodes the labels that occur together on a node in the graph are not a conflict. They
+        # are asked of the database only when a variable has several labels (it is a scan of the graph), and not
+        # kept: the next validation sees the graph as it is then.
+        multilabels = None
+        if self.check_multilabeled_nodes and any(several):
+            multilabels = yield Lookup("multilabels", graph, ())
 
-        Returns:
-            bool: True if one combination contains all of ``subset``, False otherwise.
-        """
-        for inner_list in list_of_lists:
-            if all(item in inner_list for item in subset):
-                return True
-        return False
+        conflicting: dict[str, dict[str, None]] = {}
+        for branch_variables in several:
+            for var, labels in branch_variables.items():
+                if multilabels is None or not _together_on_a_node(labels, multilabels):
+                    conflicting.setdefault(var, {}).update(labels)
+        if not conflicting:
+            return None
+        return _issues.conflicting_variables(
+            {
+                var: list(labels)
+                for var, labels in restore_variables(conflicting, renames).items()
+            }
+        )
 
 
 class SyntaxValidator(_SyntaxValidator):
