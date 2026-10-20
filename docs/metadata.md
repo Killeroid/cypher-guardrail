@@ -22,6 +22,7 @@ print(missing_labels)  # ['Ghost']
 | `cypher_guardrail.Warning.InvalidPropertyAccess` | Properties | `kind` (`node` or `relationship`), `name`, `properties` (list) |
 | `cypher_guardrail.Warning.PropertyTypeMismatch` | Properties (`check_types=True`) | `kind` (`node` or `relationship`), `name`, `property`, `expected_types` (list), `value`, `value_type` |
 | `cypher_guardrail.Warning.UnknownIndex` | Schema | `index` (`fulltext` or `vector`), `on` (`nodes` or `relationships`), `label` (the label or relationship type), `attribute` (vector queries, else `None`) |
+| `cypher_guardrail.Warning.UnknownFunction` | Schema | `name` (`library.function`, as the query writes it: a function with a dotted name that is not built in and that the instance does not have; it does not change the score, see [User-defined functions](usage.md#user-defined-functions-udfs)) |
 | `cypher_guardrail.Warning.UnknownPath` | Schema | `path` (as extracted, without variables), `original_path` (as written in the query) |
 | `cypher_guardrail.Warning.VariableLengthPath`, `cypher_guardrail.Warning.WrongDirectionPath`, `cypher_guardrail.Warning.WrongDirectionVariableLengthPath` | Schema | `path`, `original_path`, `suggested_path` |
 | `cypher_guardrail.Error.ConflictingVariables` | Syntax | `variables` (`{variable: [labels]}`) |
