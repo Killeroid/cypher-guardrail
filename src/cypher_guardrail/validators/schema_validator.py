@@ -1,3 +1,6 @@
+import functools
+import itertools
+import operator
 from collections.abc import Generator
 from typing import Any
 
@@ -72,6 +75,156 @@ def _zero_or_more_hops(path):
         return None
     return patterns.unmask_properties(
         patterns.VARIABLE_LENGTH.sub("*", masked), properties
+    )
+
+
+def _found_share(results, issues):
+    """The share of the checks of one kind (node, relationship or path) that found the pattern.
+
+    ``results`` are ``(exists, issues found)`` pairs; the issues are added to ``issues``.
+    """
+    for _, found in results:
+        issues.update({(issue["code"], issue["description"]): issue for issue in found})
+    return sum(1 for exists, _ in results if exists) / len(results)
+
+
+def _without_variables(pattern):
+    """Remove the bare variables left after inference: ``(a)-[r:HAS]->(b)`` becomes ``()-[r:HAS]->()``."""
+    return re.sub(
+        r"\(\s*\w+\s*\)|\[\s*\w+\s*\]",
+        lambda m: "()" if m.group(0).startswith("(") else "[]",
+        pattern,
+    )
+
+
+def _without_prefix_before_colon(txt):
+    """Remove the variable before the colon in nodes and relationships: ``(a:Goal)`` becomes ``(:Goal)``."""
+    return re.sub(r"\b\w+:(\w*)", r":\1", txt)
+
+
+_EMPTY_ELEMENT = re.compile(
+    r"""
+    (\<\s*-|-|-\s*>)       # group 1: left arrow or dash
+    \s*
+    ([\(\[])\s*   # group 2: opening bracket ( or [
+    ([\)\]])      # group 3: closing bracket ) or ]
+    \s*
+    (-\s*>|-|<\s*-)        # group 4: right arrow or dash
+    """,
+    re.VERBOSE,
+)
+
+
+def _with_placeholders(query):
+    """Give each empty relationship ``-[]-`` in the query a variable: ``-[var_1]-``, ``-[var_2]-``, ...
+
+    The variable lets the type of the relationship be inferred. An empty node ``()`` between two
+    dashes is treated the same way.
+    """
+    count = itertools.count(1)
+    return _EMPTY_ELEMENT.sub(
+        lambda m: f"{m[1]}{m[2]}var_{next(count)}{m[3]}{m[4]}", query
+    )
+
+
+def _label_by_variable(matches):
+    """``{variable: label}`` of the ``variable:Label`` matches (an element with no variable gets a name of its own)."""
+    labelled = (match[0].split(":", 1) for match in matches)
+    return {
+        key.strip() or f"_empty_{i}": value.strip()
+        for i, (key, value) in enumerate(labelled)
+    }
+
+
+def _quoted_rel_paths(query):
+    """The relationship types between back-quotes (`My Type`), as paths."""
+    _, quoted_types = patterns.quoted_names(query)
+    return {"()-[:" + patterns.quote_name(kind) + "]-()" for kind in quoted_types}
+
+
+def _labelled_elements(query, index_calls):
+    """``(elements, node_paths, rel_paths)`` of the labels and types that the query writes.
+
+    ``elements`` maps each variable to its label or type, which gives a variable without one the label that the
+    query gives it elsewhere. The labels and types of an index query (``CALL db.idx.fulltext.queryNodes('Label',
+    ...)``) are in no pattern: they are added. Those between back-quotes are not in the patterns, which read plain
+    names: they are checked to exist, as nodes and relationships, and a path with one is left unchecked.
+    """
+    nodes_matches = patterns.LABELED_NODE.findall(query)
+    rels_matches = patterns.LABELED_REL.findall(query)
+    nodes_dict = _label_by_variable(nodes_matches)
+    rels_dict = _label_by_variable(rels_matches)
+    for index, call in enumerate(index_calls):
+        (nodes_dict if call.on == "nodes" else rels_dict)[f"_index_{index}"] = (
+            call.label
+        )
+    quoted_labels, _ = patterns.quoted_names(query)
+
+    # all of the labels the query writes, also for a variable that is used twice (`nodes_dict` keeps one label for each variable)
+    node_labels = {match[0].split(":", 1)[1].strip() for match in nodes_matches} | {
+        call.label for call in index_calls if call.on == "nodes"
+    }
+    rel_labels = {match[0].split(":", 1)[1].strip() for match in rels_matches} | {
+        call.label for call in index_calls if call.on != "nodes"
+    }
+    node_paths = sorted(
+        {"(:" + label + ")" for label in node_labels}
+        | {"(:" + patterns.quote_name(label) + ")" for label in quoted_labels}
+    )
+    rel_paths = sorted(
+        # delete everything after * if exists
+        {"()-[:" + re.sub(r"\*.*", "", label) + "]-()" for label in rel_labels}
+        | _quoted_rel_paths(query)
+    )
+    return {**nodes_dict, **rels_dict}, node_paths, rel_paths
+
+
+def _clean_paths(matches, written, elements):
+    """``(paths, to_infer, original_path_map)`` of the paths of the query.
+
+    A path loses its spaces and its ``{properties}``, a variable gets the label that the query gives it elsewhere,
+    and the variable of an element that has a label goes. ``to_infer`` are the paths that still have a variable
+    with no label (to be inferred from the graph). ``original_path_map`` maps each path to the paths as written in the
+    query that give it (several can give the same one); ``written[i]`` is what ``matches[i]`` was written as.
+    """
+    paths, to_infer, original_path_map = set(), set(), {}
+    for index, match in enumerate(matches):
+        path = re.sub(r"\s+", "", match)
+        without_properties = re.sub(r"\{[^}]*\}", "", path)
+        # replace i with i:Indicator
+        labelled = replace_with_labels(without_properties, elements)
+        edited = _without_prefix_before_colon(labelled)
+        # a variable with no label in a node or a relationship
+        if re.search(r"\((\w+)\)|\[(\w+)\]", labelled):
+            to_infer.add(edited)
+        paths.add(edited)
+        original_path_map.setdefault(edited, []).append(written[index])
+    return paths, to_infer, original_path_map
+
+
+def _first_labels(frames):
+    """``{variable: label or type}`` from the tables that the inference gave ("" when none was found)."""
+    inferred = {}
+    for frame in frames:
+        if frame.empty:
+            inferred.update(dict.fromkeys(frame.columns, ""))
+        else:
+            # Every row is a label combination that exists in the graph, so any of them
+            # will do. Take the first alphabetically so the result is reproducible.
+            first = frame.sort_values(list(frame.columns)).iloc[0]
+            inferred.update({column: first[column] for column in frame.columns})
+    return inferred
+
+
+def _infer(paths, to_infer, inferred, original_path_map):
+    """``paths`` and ``original_path_map`` with the paths of ``to_infer`` replaced by themselves with their labels."""
+    after = {
+        path: _without_prefix_before_colon(replace_with_labels(path, inferred))
+        for path in to_infer
+    }
+    return (
+        (paths - to_infer) | set(after.values()),
+        {after.get(path, path): written for path, written in original_path_map.items()},
     )
 
 
@@ -165,12 +318,7 @@ class _SchemaValidator(_modes.ModeInfo):
     ) -> Generator[Request, Any, None]:
         """
         Explain why a path whose labels and relationship types are all valid does not exist, and append the
-        explanations to ``metadata``. In order of preference the cause is:
-
-        1. cypher_guardrail.Warning.VariableLengthPath: it exists once the `*X..Y` of the original path is replaced by `*`
-        2. cypher_guardrail.Warning.WrongDirectionPath: it exists with the opposite direction
-        3. cypher_guardrail.Warning.WrongDirectionVariableLengthPath: it exists with the opposite direction and `*`
-        4. cypher_guardrail.Warning.UnknownPath: none of the above
+        explanations to ``metadata``: one for each original path (see ``__explain_missing_path``).
 
         Args:
             pattern (str): The extracted path (labels and types only) that does not exist.
@@ -178,58 +326,56 @@ class _SchemaValidator(_modes.ModeInfo):
             database_name (str | None): Database to check against.
             metadata (list[dict]): Receives one warning per original path.
         """
-        shown = self.__replace_variables_with_empty_string(pattern)
-        directed = (
-            "->" in pattern or "<-" in pattern
-        )  # a path with no arrow has no other way round
-
+        shown = _without_variables(pattern)
         for original in original_paths:
-            unknown = _issues.unknown_path(shown, original)
-            any_hops = _zero_or_more_hops(original)
+            metadata.append(
+                (
+                    yield from self.__explain_missing_path(
+                        pattern, shown, original, database_name
+                    )
+                )
+            )
 
-            if (
-                any_hops is not None
-                and (yield from self.__get_path_exists(any_hops, database_name))[0]
-            ):
-                metadata.append(_issues.variable_length_path(shown, original, any_hops))
-            elif not directed:
-                metadata.append(unknown)
-            else:
-                flipped = _reverse_direction(original)
-                # The path with its arrow flipped (labels and types only, as the check above was made). The path
-                # without arrows is not enough: over several hops it can mix directions and exist without the
-                # path existing either way
-                flipped_pattern = _reverse_direction(pattern)
-                if (
-                    flipped is not None
-                    and flipped_pattern is not None
-                    and (
-                        yield from self.__get_path_exists(
-                            flipped_pattern, database_name
-                        )
-                    )[0]
-                ):
-                    # It only exists the other way round
-                    metadata.append(
-                        _issues.wrong_direction_path(shown, original, flipped)
-                    )
-                    continue
-                flipped_any_hops = _zero_or_more_hops(flipped) if flipped else None
-                if (
-                    flipped_any_hops is not None
-                    and (
-                        yield from self.__get_path_exists(
-                            flipped_any_hops, database_name
-                        )
-                    )[0]
-                ):
-                    metadata.append(
-                        _issues.wrong_direction_variable_length_path(
-                            shown, original, flipped_any_hops
-                        )
-                    )
-                else:
-                    metadata.append(unknown)
+    def __explain_missing_path(
+        self, pattern, shown, original, database_name
+    ) -> Generator[Request, Any, Issue]:
+        """Why the path ``original`` (read as ``pattern``) does not exist. In order of preference the cause is:
+
+        1. cypher_guardrail.Warning.VariableLengthPath: it exists once the `*X..Y` of the original path is replaced by `*`
+        2. cypher_guardrail.Warning.WrongDirectionPath: it exists with the opposite direction
+        3. cypher_guardrail.Warning.WrongDirectionVariableLengthPath: it exists with the opposite direction and `*`
+        4. cypher_guardrail.Warning.UnknownPath: none of the above
+        """
+        any_hops = _zero_or_more_hops(original)
+        if (
+            any_hops is not None
+            and (yield from self.__get_path_exists(any_hops, database_name))[0]
+        ):
+            return _issues.variable_length_path(shown, original, any_hops)
+        # a path with no arrow has no other way round
+        if "->" not in pattern and "<-" not in pattern:
+            return _issues.unknown_path(shown, original)
+        flipped = _reverse_direction(original)
+        # The path with its arrow flipped (labels and types only, as the check above was made). The path
+        # without arrows is not enough: over several hops it can mix directions and exist without the
+        # path existing either way
+        flipped_pattern = _reverse_direction(pattern)
+        if (
+            flipped is not None
+            and flipped_pattern is not None
+            and (yield from self.__get_path_exists(flipped_pattern, database_name))[0]
+        ):
+            # It only exists the other way round
+            return _issues.wrong_direction_path(shown, original, flipped)
+        flipped_any_hops = _zero_or_more_hops(flipped) if flipped else None
+        if (
+            flipped_any_hops is not None
+            and (yield from self.__get_path_exists(flipped_any_hops, database_name))[0]
+        ):
+            return _issues.wrong_direction_variable_length_path(
+                shown, original, flipped_any_hops
+            )
+        return _issues.unknown_path(shown, original)
 
     def __extract_internal(
         self, query, database_name=None
@@ -295,183 +441,30 @@ class _SchemaValidator(_modes.ModeInfo):
     ) -> Generator[Request, Any, tuple[list, list, list, dict]]:
         """The work of :meth:`__extract_internal`, on the query with its strings hidden. ``original`` is the query as
         written: an index procedure has its label in a string."""
-        # The extracted path -> the paths as written in the query that give it
-        original_path_map = {}
-        # A path that needs inference -> the same path after inference
-        inference_path_map = {}
-
-        ################### Original paths ##################################
-        # Extract the paths as it is in the query (original paths)
-        matches_original = patterns.PATH_ORIGINAL.findall(query, overlapped=True)
-
-        ################## Edited paths #####################################
-        # Replace -- with empty relationship to infer the hidden relationship
-        query = query.replace("--", "-[]-")
-
-        # Replace () with (unknown variables)
-        query = self.__replace_bracket_placeholders(query)
-
-        # Extract paths
-        matches = patterns.PATH_EDITED.findall(query, overlapped=True)
-
-        # Extract the nodes and relationships that have a label or type (even when they also have properties)
-        nodes_matches = patterns.LABELED_NODE.findall(query)
-        rels_matches = patterns.LABELED_REL.findall(query)
-
-        # Dict of key the variables in query and value the label of the rel or node
-        nodes_dict = {
-            key.strip() or f"_empty_{i}": value.strip()
-            for i, (key, value) in enumerate(
-                match[0].split(":", 1) for match in nodes_matches
-            )
-        }
-        rels_dict = {
-            key.strip() or f"_empty_{i}": value.strip()
-            for i, (key, value) in enumerate(
-                match[0].split(":", 1) for match in rels_matches
-            )
-        }
-        # The label or type of an index query (CALL db.idx.fulltext.queryNodes('Label', ...)) is in no pattern
         index_calls = patterns.index_procedure_calls(original)
-        for index, call in enumerate(index_calls):
-            (nodes_dict if call.on == "nodes" else rels_dict)[f"_index_{index}"] = (
-                call.label
-            )
-        elements_dict = {**nodes_dict, **rels_dict}
+        # The paths as written in the query (original paths)
+        written = patterns.PATH_ORIGINAL.findall(query, overlapped=True)
+        # Replace -- with empty relationship to infer the hidden relationship, and () with (unknown variables)
+        query = _with_placeholders(query.replace("--", "-[]-"))
+        matches = patterns.PATH_EDITED.findall(query, overlapped=True)
+        elements, node_paths, rel_paths = _labelled_elements(query, index_calls)
 
-        # The labels and types between back-quotes (`My Label`) are not in the patterns above, which read plain names:
-        # they are checked to exist, as nodes and relationships, and a path with one is left unchecked
-        quoted_labels, quoted_types = patterns.quoted_names(query)
-
-        # The nodes labels: all of those the query writes, also for a variable that is used twice (`nodes_dict` keeps one
-        # label for each variable, which is what gives a variable without a label its label)
-        node_label_values = [
-            match[0].split(":", 1)[1].strip() for match in nodes_matches
-        ] + [call.label for call in index_calls if call.on == "nodes"]
-        node_labels = sorted(set(node_label_values))
-        node_paths = sorted(
-            {"(:" + node_label + ")" for node_label in node_labels}
-            | {"(:" + patterns.quote_name(label) + ")" for label in quoted_labels}
-        )
-
-        # The rels labels
-        rel_label_values = [
-            match[0].split(":", 1)[1].strip() for match in rels_matches
-        ] + [call.label for call in index_calls if call.on != "nodes"]
-        rel_labels = sorted(set(rel_label_values))
-        # Delete everything after * if exists
-        rel_paths = sorted(
-            {
-                "()-[:" + re.sub(r"\*.*", "", rel_label) + "]-()"
-                for rel_label in rel_labels
-            }
-            | {"()-[:" + patterns.quote_name(kind) + "]-()" for kind in quoted_types}
-        )
-
-        # If we have at least one path in the cypher query
-        if matches:
-            # A set containing the paths for inference
-            inference_paths, paths = set(), set()
-
-            # Stage 1: Give variables the labels the query gives them elsewhere, remove {properties} and find the paths to infer
-            for index, match in enumerate(matches):
-                # Step 1: Delete extra spaces
-                path = re.sub(r"\s+", "", match)
-
-                # Step 2: Delete {} properties inside nodes and rels
-                match_wt_prop = re.sub(r"\{[^}]*\}", "", path)
-
-                # Step 3: Add labels to variables if specified in another match clause
-                path_with_node_rels_labels = replace_with_labels(
-                    match_wt_prop, elements_dict
-                )  # replace i to i:Indicator
-
-                # Step 4: Remove prefix before colon to the edited path
-                edited_path = self.__remove_prefix_before_colon(
-                    path_with_node_rels_labels
-                )
-
-                # Step 5: Inference - Find variables in relationships or nodes
-                if any(
-                    filter(
-                        None,
-                        re.findall(r"\((\w+)\)|\[(\w+)\]", path_with_node_rels_labels),
-                    )
-                ):
-                    # add to inference paths
-                    inference_paths.add(edited_path)
-                    # keep a mapping before and after inference
-                    inference_path_map[edited_path] = ""
-
-                # Step 6: Add the edited path to paths
-                paths.add(edited_path)
-
-                # Step 7: Map the edited path to the original paths it comes from (several can give the same one)
-                original_path_map.setdefault(edited_path, []).append(
-                    matches_original[index]
-                )
-
-                # Step 8: The paths that need no inference
-                not_inference_paths = paths - inference_paths
-
-            # Stage 2: Inference time!
-            if inference_paths:
-                # Copy not inference paths to combine them
-                paths_after_inference = not_inference_paths.copy()
-                # variable -> its inferred label or type ("" if none was found)
-                inference_dict = {}
-                graph = self.backend.graph_name(database_name)
-                for df in (yield from infer_paths(graph, sorted(inference_paths))):
-                    if df.empty:
-                        for col in df.columns:
-                            inference_dict[col] = ""
-                    else:
-                        # Every row is a label combination that exists in the graph, so any of them
-                        # will do. Take the first alphabetically so the result is reproducible.
-                        first_combination = df.sort_values(list(df.columns)).iloc[0]
-                        for col in df.columns:
-                            inference_dict[col] = first_combination[col]
-                # Loop over the inference paths to replace with labels
-                for inference_match in inference_paths:
-                    inferenced_path = self.__remove_prefix_before_colon(
-                        replace_with_labels(inference_match, inference_dict)
-                    )
-                    paths_after_inference.add(inferenced_path)
-                    # update the mapping dict before and after inference of the path
-                    inference_path_map[inference_match] = inferenced_path
-
-                # Update original_path_map to map the original path to the inferenced path
-                updated_original_path_map = {}
-                for modified_path, original_paths in original_path_map.items():
-                    # If the edited/modified path is a path that needs to be inferenced then:
-                    if modified_path in inference_path_map:
-                        # get the modified inferenced path as key and value the original paths
-                        updated_original_path_map[inference_path_map[modified_path]] = (
-                            original_paths
-                        )
-                    else:
-                        # otherwise, add as key the modified path and value the original paths
-                        updated_original_path_map[modified_path] = original_paths
-
-                # Replace the old mapping with the updated one
-                original_path_map = updated_original_path_map
-                return (
-                    node_paths,
-                    rel_paths,
-                    sorted(paths_after_inference),
-                    original_path_map,
-                )
-            return node_paths, rel_paths, sorted(paths), original_path_map
-        else:
+        if not matches:
             # Without a path a relationship type can only come from an index query procedure
             index_rel_paths = sorted(
                 {f"()-[:{call.label}]-()" for call in index_calls if call.on != "nodes"}
-                | {
-                    "()-[:" + patterns.quote_name(kind) + "]-()"
-                    for kind in quoted_types
-                }
+                | _quoted_rel_paths(query)
             )
-            return node_paths, index_rel_paths, [], original_path_map
+            return node_paths, index_rel_paths, [], {}
+
+        paths, to_infer, original_path_map = _clean_paths(matches, written, elements)
+        if to_infer:
+            graph = self.backend.graph_name(database_name)
+            inferred = _first_labels((yield from infer_paths(graph, sorted(to_infer))))
+            paths, original_path_map = _infer(
+                paths, to_infer, inferred, original_path_map
+            )
+        return node_paths, rel_paths, sorted(paths), original_path_map
 
     @_queries.graph_checked
     def _extract(
@@ -480,8 +473,7 @@ class _SchemaValidator(_modes.ModeInfo):
         """The logic of ``extract``, as a generator."""
         self.backend.check_database(database_name)
         nodes, rels, paths, _ = yield from self.__extract_internal(query, database_name)
-        paths = [self.__replace_variables_with_empty_string(path) for path in paths]
-        return nodes, rels, paths
+        return nodes, rels, [_without_variables(path) for path in paths]
 
     @_queries.graph_checked
     def _validate(
@@ -494,10 +486,6 @@ class _SchemaValidator(_modes.ModeInfo):
         nodes, rels, paths, original_path_map = yield from self.__extract_internal(
             query, database_name
         )
-
-        # The distinct issues, in the order they were found (a dict is an ordered set). A description holds everything
-        # an issue is about, so two issues with the same code and description are the same issue.
-        metadata = {}
 
         # The nodes, relationships and paths are checked independently of each other, so the checks are asked
         # together. Their results are used below in the order of the query, so nothing else changes.
@@ -515,51 +503,60 @@ class _SchemaValidator(_modes.ModeInfo):
                 ]
             )
         )
+        # The distinct issues, in the order they were found (a dict is an ordered set). A description holds everything
+        # an issue is about, so two issues with the same code and description are the same issue.
+        issues: dict[tuple, Issue] = {}
         node_results = results[: len(nodes)]
         rel_results = results[len(nodes) : len(nodes) + len(rels)]
         path_results = results[len(nodes) + len(rels) :]
-
-        if nodes:
-            common_nodes = 0
-            for node_exists, node_notifications in node_results:
-                common_nodes += int(
-                    node_exists
-                )  # Convert boolean to integer and sum it
-                if node_notifications:
-                    # cypher_guardrail.Warning.UnknownLabel
-                    metadata.update(
-                        {(n["code"], n["description"]): n for n in node_notifications}
-                    )
-        if rels:
-            common_rels = 0
-            for rel_exists, rel_notifications in rel_results:
-                common_rels += int(rel_exists)
-                if rel_notifications:
-                    # cypher_guardrail.Warning.UnknownRelationshipType
-                    metadata.update(
-                        {(n["code"], n["description"]): n for n in rel_notifications}
-                    )
-        if paths:
-            common_paths = 0
-            for path_exists, path_notifications in path_results:
-                common_paths += int(path_exists)
-                if path_notifications:
-                    # cypher_guardrail.Warning.UnknownLabel
-                    # cypher_guardrail.Warning.UnknownRelationshipType
-                    metadata.update(
-                        {(n["code"], n["description"]): n for n in path_notifications}
-                    )
-
+        # the issues are added in the order of the query: the nodes, the relationships, the paths
+        shares = {
+            kind: _found_share(found, issues) if found else None
+            for kind, found in (
+                ("nodes", node_results),
+                ("relationships", rel_results),
+                ("paths", path_results),
+            )
+        }
         # The label of an index query procedure exists, but does an index back the call?
-        index_calls = list(
+        indexed = yield from self.__index_share(query, database_name, issues)
+
+        # The score: the average of the shares of the nodes, relationships and paths that exist (1 when the query has
+        # none of them: a query such as MATCH (n))
+        # (the order of the terms, and adding them one by one rather than with ``sum``, which compensates the rounding, are part of the
+        # value of the score: the relationships come first)
+        terms = [
+            share
+            for share in (shares["relationships"], shares["nodes"], shares["paths"])
+            if share is not None
+        ]
+        weight = 1 / len(terms) if terms else 0
+        score = (
+            functools.reduce(operator.add, (term * weight for term in terms), 0.0)
+            if terms
+            else 1
+        )
+        if indexed is not None:
+            # The index calls weigh as much as everything else in the query together
+            score = (score + indexed) / 2
+        return score, list(issues.values())
+
+    def __index_share(
+        self, query, database_name, issues
+    ) -> Generator[Request, Any, float | None]:
+        """The share of the index query procedures of the query that have an index (None when it calls none).
+
+        The ones that have not are added to ``issues``.
+        """
+        calls = list(
             dict.fromkeys(
                 call._replace(variable=None)
                 for call in patterns.index_procedure_calls(query)
             )
         )
-        indexed = 0
         graph = self.backend.graph_name(database_name)
-        for call in index_calls:
+        indexed = 0
+        for call in calls:
             if (
                 yield from _queries.index_exists(
                     graph, call.index, call.on, call.label, call.attribute
@@ -570,99 +567,8 @@ class _SchemaValidator(_modes.ModeInfo):
                 issue = _issues.unknown_index(
                     call.index, call.on, call.label, call.attribute
                 )
-                metadata[(issue["code"], issue["description"])] = issue
-
-        # Convert to list
-        metadata = list(metadata.values())
-        # The score: the average of the shares of the nodes, relationships and paths that exist
-        if paths:
-            if nodes:
-                if rels:
-                    score = (
-                        1 / 3 * ((common_rels) / len(rels))
-                        + 1 / 3 * ((common_nodes) / len(nodes))
-                        + 1 / 3 * ((common_paths) / len(paths))
-                    )
-
-                else:
-                    score = 0.5 * ((common_nodes) / len(nodes)) + 0.5 * (
-                        (common_paths) / len(paths)
-                    )
-
-            elif rels:
-                score = 0.5 * ((common_rels) / len(rels)) + 0.5 * (
-                    (common_paths) / len(paths)
-                )
-            else:
-                score = (common_paths) / len(paths)
-        else:
-            # No paths: the labels, and the relationship types of index query procedures
-            parts = []
-            if nodes:
-                parts.append(common_nodes / len(nodes))
-            if rels:
-                parts.append(common_rels / len(rels))
-            # nothing to check: a query such as MATCH (n)
-            score = sum(parts) / len(parts) if parts else 1
-
-        if index_calls:
-            # The index calls weigh as much as everything else in the query together
-            score = (score + indexed / len(index_calls)) / 2
-
-        return score, metadata
-
-    @staticmethod
-    def __remove_prefix_before_colon(txt):
-        """Remove the variable before the colon in nodes and relationships: ``(a:Goal)`` becomes ``(:Goal)``.
-
-        Args:
-            txt (str): A path or pattern.
-
-        Returns:
-            str: ``txt`` without the variables that precede a label or type.
-        """
-        return re.sub(r"\b\w+:(\w*)", r":\1", txt)
-
-    @staticmethod
-    def __replace_bracket_placeholders(query):
-        """Give each empty relationship ``-[]-`` in the query a variable: ``-[var_1]-``, ``-[var_2]-``, ...
-
-        The variable lets the type of the relationship be inferred. An empty node ``()`` between two
-        dashes is treated the same way.
-        """
-        counter = [0]  # a list, so that the inner function can change it
-
-        pattern = re.compile(
-            r"""
-            (\<\s*-|-|-\s*>)       # group 1: left arrow or dash
-            \s*           # optional spaces
-            ([\(\[])\s*   # group 2: opening bracket ( or [
-            \s*           # optional spaces
-            ([\)\]])      # group 3: closing bracket ) or ]
-            \s*           # optional spaces
-            (-\s*>|-|<\s*-)        # group 4: right arrow or dash
-        """,
-            re.VERBOSE,
-        )
-
-        def replacer(match):
-            counter[0] += 1
-            left = match.group(1)
-            open_bracket = match.group(2)
-            close_bracket = match.group(3)
-            right = match.group(4)
-            return f"{left}{open_bracket}var_{counter[0]}{close_bracket}{right}"
-
-        return pattern.sub(replacer, query)
-
-    @staticmethod
-    def __replace_variables_with_empty_string(pattern):
-        """Remove the bare variables left after inference: ``(a)-[r:HAS]->(b)`` becomes ``()-[r:HAS]->()``."""
-        return re.sub(
-            r"\(\s*\w+\s*\)|\[\s*\w+\s*\]",
-            lambda m: "()" if m.group(0).startswith("(") else "[]",
-            pattern,
-        )
+                issues[(issue["code"], issue["description"])] = issue
+        return indexed / len(calls) if calls else None
 
 
 class SchemaValidator(_SchemaValidator):

@@ -23,6 +23,7 @@ from cypher_guardrail.utils import (
     identify_variables_and_construct_query,
     replace_with_labels,
 )
+from cypher_guardrail.validators import schema_validator
 
 # ----------------------------------------------------------------------------------------------------
 # The Cypher patterns and text helpers: they match what the original patterns matched, and survive pathological input.
@@ -150,13 +151,13 @@ def private(cls, name):
     return getattr(cls, f"_{cls.__name__}__{name}")
 
 
-remove_prefix = private(SchemaValidator, "remove_prefix_before_colon")
+remove_prefix = schema_validator._without_prefix_before_colon
 
 
-replace_placeholders = private(SchemaValidator, "replace_bracket_placeholders")
+replace_placeholders = schema_validator._with_placeholders
 
 
-blank_variables = private(SchemaValidator, "replace_variables_with_empty_string")
+blank_variables = schema_validator._without_variables
 
 
 extend_dict = private(PropertiesValidator, "extend_dict_with_list_elements")
