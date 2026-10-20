@@ -131,6 +131,7 @@ class _Tracker:
             )
 
     def needs_capture(self, now, fingerprint, force) -> bool:
+        """Whether to capture: there is nothing yet, the graph looks changed, it is forced, or ``full_every`` is up."""
         return (
             force
             or self.snapshot is None
