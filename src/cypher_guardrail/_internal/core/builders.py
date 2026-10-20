@@ -98,7 +98,7 @@ def invalid_property_access(
     }
 
 
-def property_type_mismatch(
+def property_type_mismatch(  # noqa: PLR0913, PLR0917 - one argument for each field of the issue
     kind: Literal["node", "relationship"],
     name: str,
     property: str,

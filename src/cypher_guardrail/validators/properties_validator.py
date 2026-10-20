@@ -350,10 +350,9 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
     def _get_inferred_labels_properties(
         self,
         strict,
-        var_label_map,
         label_props_map,
         var_props_map,
-        query,
+        inference_paths,
         database_name=None,
     ) -> Generator[Request, Any, dict]:
         """
@@ -367,16 +366,14 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
         - strict (bool): What to do when no label combination has all the properties:
             - If True, the properties are ignored: they are not attributed to any label, so they cannot lower the score.
             - If False, they are attributed to the combination that has the most of them, so the invalid ones lower the score.
-        - var_label_map (dict): Variable -> its (kind, label), for the variables that have one.
         - label_props_map (dict): (kind, label) -> the properties accessed on it so far.
         - var_props_map (dict): Variable without a label -> the properties accessed on it.
-        - query (str): The query, whose paths are used to infer the labels.
+        - inference_paths (list[str]): The paths of the query that have a variable without a label (``_paths_to_infer``).
         - database_name (str | None): The graph to validate the query against. None (default) uses the graph the validator was given.
 
         Returns:
         - dict: label_props_map, with the inferred labels and their properties added.
         """
-        inference_paths = _paths_to_infer(var_label_map, query)
         # A bare variable in square brackets, [r], is a relationship; in parentheses, (a), a node
         relationship_variables = set(
             re.findall(r"\[\s*(\w+)\s*\]", " ".join(inference_paths))
@@ -589,10 +586,9 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
         if var_props_map:
             label_props_map = yield from self._get_inferred_labels_properties(
                 strict,
-                var_label_map,
                 label_props_map,
                 var_props_map,
-                patterns.hide_literals(query)[0],
+                _paths_to_infer(var_label_map, patterns.hide_literals(query)[0]),
                 database_name,
             )
 

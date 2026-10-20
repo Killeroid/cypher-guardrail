@@ -500,7 +500,7 @@ class Snapshot(SnapshotSource):
 
     # ------------------------------------------------------------------------------ by hand
     @classmethod
-    def from_schema(
+    def from_schema(  # noqa: PLR0913, PLR0917 - the public signature: every part of a snapshot, all optional but the first two
         cls,
         nodes: _Names,
         relationships: Iterable[tuple[str | Sequence[str], str, str | Sequence[str]]],

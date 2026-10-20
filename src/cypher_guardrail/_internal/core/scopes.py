@@ -184,20 +184,13 @@ class _Scopes:
     # ------------------------------------------------------------------------------ what is a variable
     def _is_variable(self, k: int) -> bool:
         token = self.tokens[k]
-        if token.text.upper() in KEYWORDS:
+        if (
+            token.text.upper() in KEYWORDS
+            or self._is(k - 1, "punct", ".")  # a property
+            or self._is(k + 1, "punct", "(")  # a function
+            or self._is_namespaced_call(k)
+        ):
             return False
-        if self._is(k - 1, "punct", "."):  # a property
-            return False
-        if self._is(k + 1, "punct", "("):  # a function
-            return False
-        if self._is(
-            k + 1, "punct", "."
-        ):  # a procedure or function with a namespace: a.b.c(
-            end = k
-            while self._is(end + 1, "punct", ".") and self._is(end + 2, "word"):
-                end += 2
-            if self._is(end + 1, "punct", "("):
-                return False
         opener = self._opener(k)
         if (
             self._is(k - 1, "punct", ":") and opener != "{"
@@ -211,6 +204,15 @@ class _Scopes:
             and self._is(k + 1, "punct", ":")
             and self._is(k - 1, "punct", "{", ",")
         )
+
+    def _is_namespaced_call(self, k: int) -> bool:
+        """Whether token k starts a procedure or function with a namespace: ``a.b.c(``."""
+        if not self._is(k + 1, "punct", "."):
+            return False
+        end = k
+        while self._is(end + 1, "punct", ".") and self._is(end + 2, "word"):
+            end += 2
+        return self._is(end + 1, "punct", "(")
 
     def _has_no_colon_before(self, k: int) -> bool:
         """Whether no ':' comes before token k in its bracket (if one does, a '|' there separates labels or types)."""

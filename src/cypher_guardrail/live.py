@@ -211,7 +211,7 @@ class _LiveBase(SnapshotSource, Generic[_C]):
         """Held while the state of the tracker is read or written in more than one step."""
         raise NotImplementedError
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the options of a live snapshot, all keyword-only
         self,
         client: _C,
         graph: str,
@@ -303,7 +303,7 @@ class LiveSnapshot(_LiveBase[Driver]):
     first capture.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the options of a live snapshot, all keyword-only
         self,
         client: Driver,
         graph: str,
@@ -472,7 +472,7 @@ class AsyncLiveSnapshot(_LiveBase[AsyncDriver]):
     an event loop, ``current()`` serves the snapshot it has and starts no refresh: there is nothing to run it on.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the options of a live snapshot, all keyword-only
         self,
         client: AsyncDriver,
         graph: str,

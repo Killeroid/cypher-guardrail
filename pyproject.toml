@@ -55,16 +55,16 @@ src = ["src"]
 extend-select = ["ANN", "ARG", "B", "C4", "C90", "I", "PERF", "PIE", "PLR", "PT", "RET", "RUF", "SIM", "TC", "UP"]
 ignore = ["PT018"]  # an assertion with `and` is one claim; splitting it only repeats the message
 
-# Ratchets of the refactoring plan: they stand at the worst function today and only go down (target in the comment, if not met yet).
+# The budget of the refactoring plan: a function is at most this complex, this long, and has this many arguments.
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
 [tool.ruff.lint.pylint]
 max-branches = 12
 max-statements = 50
-max-args = 11  # target 5
-max-positional-args = 8  # target 5
-max-returns = 7  # target 6
+max-args = 5
+max-positional-args = 5
+max-returns = 6
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN", "ARG", "PLR0913", "PLR0917", "PLR2004"]

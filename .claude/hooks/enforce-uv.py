@@ -27,7 +27,7 @@ def segments(command: str) -> list[list[str]]:
     return [s for s in result if s]
 
 
-def violation(tokens: list[str]) -> str | None:
+def violation(tokens: list[str]) -> str | None:  # noqa: PLR0911 - one return for each kind of command to refuse
     # Skip leading VAR=value assignments.
     while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
         tokens = tokens[1:]

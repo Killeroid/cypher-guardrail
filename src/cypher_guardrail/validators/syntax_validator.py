@@ -224,7 +224,7 @@ class SyntaxValidator(_SyntaxValidator[Driver]):
 class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
     """The async version of :class:`SyntaxValidator`, for a ``falkordb.asyncio`` client or graph: ``validate`` is a coroutine."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the options of the sync validator, and max_concurrency
         self,
         driver: AsyncDriver,
         check_multilabeled_nodes: bool = True,
