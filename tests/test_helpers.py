@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import regex as re
 
-from cypher_guardrail import PropertiesValidator, SchemaValidator, patterns
+from cypher_guardrail import SchemaValidator, patterns
 from cypher_guardrail._internal.core.io import run_sync
 from cypher_guardrail._internal.sources import online as _online
 from cypher_guardrail.patterns import (
@@ -23,7 +23,7 @@ from cypher_guardrail.utils import (
     identify_variables_and_construct_query,
     replace_with_labels,
 )
-from cypher_guardrail.validators import schema_validator
+from cypher_guardrail.validators import properties_validator, schema_validator
 
 # ----------------------------------------------------------------------------------------------------
 # The Cypher patterns and text helpers: they match what the original patterns matched, and survive pathological input.
@@ -160,19 +160,19 @@ replace_placeholders = schema_validator._with_placeholders
 blank_variables = schema_validator._without_variables
 
 
-extend_dict = private(PropertiesValidator, "extend_dict_with_list_elements")
+extend_dict = properties_validator._extend
 
 
-extract_1hop = private(PropertiesValidator, "extract_1hop_paths")
+extract_1hop = properties_validator._one_hop_paths
 
 
-prepare_for_infer = private(PropertiesValidator, "prepare_query_for_infer")
+prepare_for_infer = properties_validator._paths_to_infer
 
 
-inline_mapping = private(PropertiesValidator, "inline_var_label_properties_mapping")
+inline_mapping = properties_validator._inline_mapping
 
 
-outside_mapping = private(PropertiesValidator, "outside_var_properties_mapping")
+outside_mapping = properties_validator._outside_mapping
 
 
 diagnose_missing_path = private(SchemaValidator, "diagnose_missing_path")
