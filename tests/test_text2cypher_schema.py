@@ -78,6 +78,7 @@ def test_a_schema_is_read_as_what_it_says(schema):
 
 def test_a_relationship_property_belongs_to_the_relationship():
     snapshot = text2cypher.snapshot_of(SECTIONS)
+    assert snapshot is not None
 
     assert (
         PropertiesValidator(snapshot).validate(

@@ -8,6 +8,7 @@ import copy
 import os
 import subprocess
 import sys
+from typing import cast
 
 import pytest
 from support import code_set, codes, missing_parameters
@@ -25,10 +26,16 @@ from cypher_guardrail.issues import (
     SYNTAX_ERROR,
     WRITE_QUERY_ERROR,
     WRITE_QUERY_WARNING,
+    ConflictingVariablesIssue,
 )
 
 # ----------------------------------------------------------------------------------------------------
 # The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
+
+
+def conflicts(metadata) -> list[ConflictingVariablesIssue]:
+    """The issues about conflicting variables, typed as such (they are the only ones that have ``variables``)."""
+    return [cast("ConflictingVariablesIssue", issue) for issue in metadata]
 
 
 # Cypher that FalkorDB cannot parse: label negation, '&' in a relationship type expression, node label alternatives
@@ -782,7 +789,7 @@ def test_a_conflict_inside_one_branch_of_a_union_is_still_one(falkordb_client):
     valid, metadata = SyntaxValidator(falkordb_client).validate(query, "kg")
 
     assert valid is False
-    (issue,) = metadata
+    (issue,) = conflicts(metadata)
     assert issue["variables"] == {"n": ["Target", "Indicator"]}
 
 
@@ -797,7 +804,7 @@ def test_the_conflicts_of_several_branches_are_one_issue_with_all_of_them(
     valid, metadata = SyntaxValidator(falkordb_client).validate(query, "kg")
 
     assert valid is False
-    (issue,) = metadata
+    (issue,) = conflicts(metadata)
     assert issue["variables"] == {"a": ["Goal", "Target"], "b": ["Indicator", "Goal"]}
 
 
@@ -825,7 +832,7 @@ def test_a_variable_that_conflicts_in_two_branches_has_the_labels_of_both(
     valid, metadata = SyntaxValidator(falkordb_client).validate(query, "kg")
 
     assert valid is False
-    (issue,) = metadata
+    (issue,) = conflicts(metadata)
     assert issue["variables"] == {"n": ["Goal", "Target", "Indicator"]}
 
 
@@ -866,7 +873,7 @@ def test_a_name_that_is_carried_on_still_conflicts(falkordb_client, query):
     ).validate(query, "kg")
 
     assert valid is False
-    assert [i["variables"] for i in metadata] == [{"n": ["Goal", "Target"]}]
+    assert [i["variables"] for i in conflicts(metadata)] == [{"n": ["Goal", "Target"]}]
 
 
 def test_the_conflict_is_reported_under_the_name_the_query_gives(falkordb_client):
@@ -879,6 +886,6 @@ def test_the_conflict_is_reported_under_the_name_the_query_gives(falkordb_client
         falkordb_client, check_multilabeled_nodes=False
     ).validate(query, "kg")
 
-    assert [i["variables"] for i in metadata] == [
+    assert [i["variables"] for i in conflicts(metadata)] == [
         {"n": ["Goal", "Target", "Indicator"]}
     ]

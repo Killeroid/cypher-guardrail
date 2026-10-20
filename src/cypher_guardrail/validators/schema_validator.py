@@ -2,7 +2,7 @@ import functools
 import itertools
 import operator
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import regex as re
 
@@ -21,7 +21,9 @@ from cypher_guardrail.backend import (
     get_backend,
     snapshotted,
 )
+from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
 from cypher_guardrail.issues import Issue
+from cypher_guardrail.snapshot import SnapshotSource
 from cypher_guardrail.utils import paths_after_inference as infer_paths
 from cypher_guardrail.utils import replace_with_labels
 
@@ -247,10 +249,21 @@ def _infer(paths, to_infer, inferred, original_path_map):
     )
 
 
-class _SchemaValidator(_modes.ModeInfo):
+_D = TypeVar(
+    "_D"
+)  # the kind of driver: a client or graph (or a snapshot), sync or async
+
+
+class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
     """The logic of SchemaValidator, as generators (see ``cypher_guardrail._internal.core.io``): one copy for the sync and the async validator."""
 
-    def __init__(self, driver, *, snapshot=None, verify=None):
+    def __init__(
+        self,
+        driver: _D,
+        *,
+        snapshot: SnapshotSource | None = None,
+        verify: Verify | None = None,
+    ) -> None:
         """
         Initialize the validator with a FalkorDB client.
 
@@ -577,7 +590,7 @@ class _SchemaValidator(_modes.ModeInfo):
         return indexed / len(calls) if calls else None
 
 
-class SchemaValidator(_SchemaValidator):
+class SchemaValidator(_SchemaValidator[Driver | SnapshotSource]):
     """
     A class to validate Cypher queries against the schema of a graph.
 
@@ -587,7 +600,9 @@ class SchemaValidator(_SchemaValidator):
     """
 
     @snapshotted
-    def extract(self, query, database_name=None):
+    def extract(
+        self, query: str, database_name: str | None = None
+    ) -> tuple[list[str], list[str], list[str]]:
         """
         Extract the node labels, relationship types and one-hop paths of the provided query. Any properties mentioned are stripped.
 
@@ -601,7 +616,9 @@ class SchemaValidator(_SchemaValidator):
         return self.backend.run(self._extract(query, database_name))
 
     @snapshotted
-    def validate(self, query, database_name=None):
+    def validate(
+        self, query: str, database_name: str | None = None
+    ) -> tuple[float, list[Issue]]:
         """
         Validate the correctness of the nodes, relationships and paths of the provided query
 
@@ -631,10 +648,17 @@ class SchemaValidator(_SchemaValidator):
         return self.backend.run(self._validate(query, database_name))
 
 
-class AsyncSchemaValidator(_SchemaValidator):
+class AsyncSchemaValidator(_SchemaValidator[AsyncDriver | SnapshotSource]):
     """The async version of :class:`SchemaValidator`, for a ``falkordb.asyncio`` client or graph: ``extract`` and ``validate`` are coroutines."""
 
-    def __init__(self, driver, *, max_concurrency=8, snapshot=None, verify=None):
+    def __init__(
+        self,
+        driver: AsyncDriver | SnapshotSource,
+        *,
+        max_concurrency: int = 8,
+        snapshot: SnapshotSource | None = None,
+        verify: Verify | None = None,
+    ) -> None:
         """
         Initialize the validator with an async FalkorDB client.
 
@@ -662,11 +686,15 @@ class AsyncSchemaValidator(_SchemaValidator):
         )
 
     @async_snapshotted
-    async def extract(self, query, database_name=None):
+    async def extract(
+        self, query: str, database_name: str | None = None
+    ) -> tuple[list[str], list[str], list[str]]:
         """The async version of :meth:`SchemaValidator.extract`: the same arguments and result."""
         return await self.backend.run(self._extract(query, database_name))
 
     @async_snapshotted
-    async def validate(self, query, database_name=None):
+    async def validate(
+        self, query: str, database_name: str | None = None
+    ) -> tuple[float, list[Issue]]:
         """The async version of :meth:`SchemaValidator.validate`: the same arguments and result."""
         return await self.backend.run(self._validate(query, database_name))

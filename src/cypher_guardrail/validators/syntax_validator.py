@@ -1,6 +1,6 @@
 from collections import defaultdict
-from collections.abc import Generator
-from typing import Any
+from collections.abc import Generator, Iterable
+from typing import Any, Generic, TypeVar
 
 import regex as re
 
@@ -16,6 +16,7 @@ from cypher_guardrail.backend import (
     get_async_backend,
     get_backend,
 )
+from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
 from cypher_guardrail.issues import SYNTAX_ERROR, WRITE_QUERY_WARNING, Issue
 from cypher_guardrail.patterns import split_union, strip_literals_and_comments
 from cypher_guardrail.snapshot import SnapshotSource
@@ -47,18 +48,21 @@ def _together_on_a_node(labels, combinations):
     )
 
 
-class _SyntaxValidator(_modes.ModeInfo):
+_D = TypeVar("_D")  # the kind of driver: a client or graph, sync or async
+
+
+class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
     """The logic of SyntaxValidator, as generators (see ``cypher_guardrail._internal.core.io``): one copy for the sync and the async validator."""
 
     def __init__(
         self,
-        driver,
-        check_multilabeled_nodes=True,
-        read_only=True,
+        driver: _D,
+        check_multilabeled_nodes: bool = True,
+        read_only: bool = True,
         *,
-        snapshot=None,
-        verify=None,
-    ):
+        snapshot: SnapshotSource | None = None,
+        verify: Verify | None = None,
+    ) -> None:
         """
         Initialize the validator with a FalkorDB client.
 
@@ -168,12 +172,17 @@ class _SyntaxValidator(_modes.ModeInfo):
         )
 
 
-class SyntaxValidator(_SyntaxValidator):
+class SyntaxValidator(_SyntaxValidator[Driver]):
     """
     A class to validate Cypher queries for correct syntax and label consistency.
     """
 
-    def validate(self, query, database_name=None, parameters=None):
+    def validate(
+        self,
+        query: str,
+        database_name: str | None = None,
+        parameters: Iterable[str] | None = None,
+    ) -> tuple[bool, list[Issue]]:
         """
         Checks if the query has correct Cypher syntax.
         It detects these errors and warnings:
@@ -212,19 +221,19 @@ class SyntaxValidator(_SyntaxValidator):
         return self.backend.run(self._validate(query, database_name, parameters))
 
 
-class AsyncSyntaxValidator(_SyntaxValidator):
+class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
     """The async version of :class:`SyntaxValidator`, for a ``falkordb.asyncio`` client or graph: ``validate`` is a coroutine."""
 
     def __init__(
         self,
-        driver,
-        check_multilabeled_nodes=True,
-        read_only=True,
+        driver: AsyncDriver,
+        check_multilabeled_nodes: bool = True,
+        read_only: bool = True,
         *,
-        max_concurrency=8,
-        snapshot=None,
-        verify=None,
-    ):
+        max_concurrency: int = 8,
+        snapshot: SnapshotSource | None = None,
+        verify: Verify | None = None,
+    ) -> None:
         """
         Initialize the validator with an async FalkorDB client.
 
@@ -258,6 +267,11 @@ class AsyncSyntaxValidator(_SyntaxValidator):
             driver, self._max_concurrency, snapshot=snapshot, verify=verify
         )
 
-    async def validate(self, query, database_name=None, parameters=None):
+    async def validate(
+        self,
+        query: str,
+        database_name: str | None = None,
+        parameters: Iterable[str] | None = None,
+    ) -> tuple[bool, list[Issue]]:
         """The async version of :meth:`SyntaxValidator.validate`: the same arguments and result."""
         return await self.backend.run(self._validate(query, database_name, parameters))

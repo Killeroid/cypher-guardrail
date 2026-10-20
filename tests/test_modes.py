@@ -514,17 +514,17 @@ def test_verify_and_snapshot_must_be_what_they_say(falkordb_client, kg, name):
     sync, _ = VALIDATORS[name]
 
     with pytest.raises(ValueError, match="verify"):
-        sync(falkordb_client, snapshot=kg, verify="always")
+        sync(falkordb_client, snapshot=kg, verify="always")  # ty: ignore[invalid-argument-type]
     with pytest.raises(TypeError, match="verify"):
         sync(falkordb_client, verify="never")  # no snapshot to verify
     with pytest.raises(TypeError, match="Snapshot"):
-        sync(falkordb_client, snapshot={"labels": []})
+        sync(falkordb_client, snapshot={"labels": []})  # ty: ignore[invalid-argument-type]
 
 
 def test_the_async_validators_take_the_same_arguments(run_async, kg):
     async def ask(client):
         with pytest.raises(ValueError, match="verify"):
-            AsyncSchemaValidator(client, snapshot=kg, verify="always")
+            AsyncSchemaValidator(client, snapshot=kg, verify="always")  # ty: ignore[invalid-argument-type]
         with pytest.raises(TypeError, match="verify"):
             AsyncPropertiesValidator(client, verify="never")
         validator = AsyncSchemaValidator(client, max_concurrency=4, snapshot=kg)
@@ -795,7 +795,7 @@ def test_what_has_a_current_method_is_not_a_source_unless_it_says_so(falkordb_cl
     with pytest.raises(TypeError, match="valid FalkorDB client"):
         get_backend(Duck())
     with pytest.raises(TypeError, match="LiveSnapshot"):
-        SchemaValidator(falkordb_client, snapshot=Duck())
+        SchemaValidator(falkordb_client, snapshot=Duck())  # ty: ignore[invalid-argument-type]
 
 
 # --------------------------------------------------------------------- one snapshot for one validation
@@ -923,7 +923,7 @@ def test_the_graph_of_the_source_is_the_graph_of_the_validator():
 
 def test_the_syntax_validator_still_needs_a_database_whatever_the_source():
     with pytest.raises(TypeError, match="needs a database"):
-        SyntaxValidator(Source(WITH_GOAL))
+        SyntaxValidator(Source(WITH_GOAL))  # ty: ignore[invalid-argument-type]
 
 
 # ---------------------------------------------------------------------- never a mix of two snapshots

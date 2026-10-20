@@ -32,7 +32,7 @@ import json
 from collections import Counter
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from cypher_guardrail import (
     PropertiesValidator,
@@ -176,16 +176,18 @@ def run_case(
     """
     options = case.options
     outcome = Outcome(issues=[])
+    driver: Any
+    held: Snapshot | None  # the snapshot that a hybrid validator is given
     if mode == "online":
-        driver, extra, where = client, {}, (case.graph,)
+        driver, held, where = client, None, (case.graph,)
     else:
         if snapshots is None:
             raise ValueError(f"the {mode} mode needs the snapshots of the graphs")
         snapshot = snapshots[case.graph]
         if mode == "offline":
-            driver, extra, where = snapshot, {}, ()
+            driver, held, where = snapshot, None, ()
         else:
-            driver, extra, where = client, {"snapshot": snapshot}, (case.graph,)
+            driver, held, where = client, snapshot, (case.graph,)
     for name in case.validators:
         if name == "syntax":
             if mode != "online":
@@ -199,19 +201,19 @@ def run_case(
                 case.query, case.graph, parameters=options.get("parameters")
             )
         elif name == "schema":
-            outcome.scores[name], found = SchemaValidator(driver, **extra).validate(
-                case.query, *where
-            )
+            outcome.scores[name], found = SchemaValidator(
+                driver, snapshot=held
+            ).validate(case.query, *where)
         elif name == "properties":
             validator = PropertiesValidator(
-                driver, check_types=options.get("check_types", False), **extra
+                driver, check_types=options.get("check_types", False), snapshot=held
             )
             outcome.scores[name], found = validator.validate(
                 case.query, *where, strict=options.get("strict", False)
             )
         else:
             raise ValueError(f"{case.id}: unknown validator {name!r}")
-        outcome.issues.extend(found)
+        outcome.issues.extend(cast("list[dict[str, Any]]", found))
     return outcome
 
 

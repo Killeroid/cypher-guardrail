@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests" / "accur
 
 import text2cypher
 
-from cypher_guardrail import PropertiesValidator, SchemaValidator
+from cypher_guardrail import PropertiesValidator, SchemaValidator, Snapshot
 
 API = (
     "https://datasets-server.huggingface.co/rows?dataset=neo4j%2Ftext2cypher-2025v1"
@@ -95,7 +95,7 @@ def main() -> int:
     args = parser.parse_args()
 
     rows = fetch(args.limit, args.cache)
-    snapshots: dict[str, object] = {}
+    snapshots: dict[str, Snapshot | None] = {}
     validated = skipped = clean = 0
     groups: dict[str, Counter] = defaultdict(Counter)
     crashed = []

@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import regex as re
 
@@ -18,7 +18,9 @@ from cypher_guardrail.backend import (
     get_backend,
     snapshotted,
 )
+from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
 from cypher_guardrail.issues import Issue
+from cypher_guardrail.snapshot import SnapshotSource
 from cypher_guardrail.utils import paths_after_inference, replace_with_labels
 
 
@@ -248,10 +250,22 @@ def _candidate_rows(frame, var_props_map):
     return [row for _, row in distinct.iterrows()]
 
 
-class _PropertiesValidator(_modes.ModeInfo):
+_D = TypeVar(
+    "_D"
+)  # the kind of driver: a client or graph (or a snapshot), sync or async
+
+
+class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
     """The logic of PropertiesValidator, as generators (see ``cypher_guardrail._internal.core.io``): one copy for the sync and the async validator."""
 
-    def __init__(self, driver, *, snapshot=None, verify=None, check_types=False):
+    def __init__(
+        self,
+        driver: _D,
+        *,
+        snapshot: SnapshotSource | None = None,
+        verify: Verify | None = None,
+        check_types: bool = False,
+    ) -> None:
         """
         Initialize the validator with a FalkorDB client.
 
@@ -705,7 +719,7 @@ class _PropertiesValidator(_modes.ModeInfo):
         return questions
 
 
-class PropertiesValidator(_PropertiesValidator):
+class PropertiesValidator(_PropertiesValidator[Driver | SnapshotSource]):
     """
     A class to validate the correctness of property access in Cypher queries against the schema of a graph.
 
@@ -714,7 +728,9 @@ class PropertiesValidator(_PropertiesValidator):
     """
 
     @snapshotted
-    def extract(self, query, database_name=None, strict=False):
+    def extract(
+        self, query: str, database_name: str | None = None, strict: bool = False
+    ) -> tuple[dict[str, list[str]], dict[str, dict[str, list[str]]]]:
         """
         Extract the properties accessed by each label of the provided query
 
@@ -738,7 +754,9 @@ class PropertiesValidator(_PropertiesValidator):
         )
 
     @snapshotted
-    def validate(self, query, database_name=None, strict=False):
+    def validate(
+        self, query: str, database_name: str | None = None, strict: bool = False
+    ) -> tuple[float | None, list[Issue]]:
         """
         Validate the correctness of the properties accessed by labels in the given query against the schema of the graph.
 
@@ -770,18 +788,18 @@ class PropertiesValidator(_PropertiesValidator):
         return self.backend.run(self._validate(query, database_name, strict))
 
 
-class AsyncPropertiesValidator(_PropertiesValidator):
+class AsyncPropertiesValidator(_PropertiesValidator[AsyncDriver | SnapshotSource]):
     """The async version of :class:`PropertiesValidator`, for a ``falkordb.asyncio`` client or graph: ``extract`` and ``validate`` are coroutines."""
 
     def __init__(
         self,
-        driver,
+        driver: AsyncDriver | SnapshotSource,
         *,
-        max_concurrency=8,
-        snapshot=None,
-        verify=None,
-        check_types=False,
-    ):
+        max_concurrency: int = 8,
+        snapshot: SnapshotSource | None = None,
+        verify: Verify | None = None,
+        check_types: bool = False,
+    ) -> None:
         """
         Initialize the validator with an async FalkorDB client.
 
@@ -813,13 +831,17 @@ class AsyncPropertiesValidator(_PropertiesValidator):
         )
 
     @async_snapshotted
-    async def extract(self, query, database_name=None, strict=False):
+    async def extract(
+        self, query: str, database_name: str | None = None, strict: bool = False
+    ) -> tuple[dict[str, list[str]], dict[str, dict[str, list[str]]]]:
         """The async version of :meth:`PropertiesValidator.extract`: the same arguments and result."""
         return _plain_names(
             await self.backend.run(self._extract(query, database_name, strict))
         )
 
     @async_snapshotted
-    async def validate(self, query, database_name=None, strict=False):
+    async def validate(
+        self, query: str, database_name: str | None = None, strict: bool = False
+    ) -> tuple[float | None, list[Issue]]:
         """The async version of :meth:`PropertiesValidator.validate`: the same arguments and result."""
         return await self.backend.run(self._validate(query, database_name, strict))
