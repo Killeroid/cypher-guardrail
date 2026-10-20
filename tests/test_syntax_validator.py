@@ -28,7 +28,7 @@ from cypher_guardrail.issues import (
 )
 
 # ----------------------------------------------------------------------------------------------------
-# From test_validators_falkordb.py: The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
+# The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
 
 
 # Cypher that FalkorDB cannot parse: label negation, '&' in a relationship type expression, node label alternatives
@@ -173,7 +173,7 @@ class TestSyntaxValidator:
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_read_only.py: SyntaxValidator and its ``read_only`` option: a query that can modify the graph is an error, or a warning.
+# SyntaxValidator and its ``read_only`` option: a query that can modify the graph is an error, or a warning.
 #
 # FalkorDB itself decides what is a write (``GRAPH.RO_QUERY`` refuses it), so nothing is parsed with a regex and
 # a word inside a string (``'DELETE me'``) is not a write. The query is never executed.
@@ -353,7 +353,7 @@ def test_the_backend_explain_does_not_look_for_writes(falkordb_client):
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_parameters_argument.py: ``validate(query, database_name, parameters)``: the parameters the caller will send with the query.
+# ``validate(query, database_name, parameters)``: the parameters the caller will send with the query.
 #
 # A client sends parameters apart from the query (``graph.query(q, params={...})``). cypher-guardrail never sees
 # them, so without ``parameters`` every ``$name`` is reported as not provided.
@@ -474,7 +474,7 @@ def test_the_async_backend_explain_takes_them_too(run_async):
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_cypher_parameters.py: A ``CYPHER a=1 ...`` prefix gives the query its parameters, so they are not reported as missing.
+# A ``CYPHER a=1 ...`` prefix gives the query its parameters, so they are not reported as missing.
 #
 # FalkorDB only says a parameter is missing when the query runs, so cypher-guardrail looks for ``$name`` in the text of
 # the query, and has to know which names the prefix provides.
@@ -639,7 +639,7 @@ def test_the_backend_explain_agrees(falkordb_client):
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_regressions.py: Regression tests for bugs found in the code review.
+# Regression tests for bugs found in the code review.
 
 
 class TestHashSeedIndependence:

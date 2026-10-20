@@ -17,7 +17,7 @@ from cypher_guardrail._internal.core.valuetypes import NUMERIC, fits
 from cypher_guardrail.issues import PROPERTY_TYPE_MISMATCH
 
 # ----------------------------------------------------------------------------------------------------
-# From test_literals.py: Finding the comparisons of a property with a literal (``cypher_guardrail._internal.core.literals``).
+# Finding the comparisons of a property with a literal (``cypher_guardrail._internal.core.literals``).
 #
 # The check that uses them reports a type mismatch, which has to be a real one, so the second half of this file is
 # about what must *not* be found: assignments, expressions, parameters, other clauses' maps. No database is needed.
@@ -395,7 +395,7 @@ def test_whatever_it_is_given_it_does_not_raise():
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_valuetypes.py: When a literal in a query can match the values a property has: ``fits`` (``cypher_guardrail._internal.core.valuetypes``).
+# When a literal in a query can match the values a property has: ``fits`` (``cypher_guardrail._internal.core.valuetypes``).
 
 
 @pytest.mark.parametrize(
@@ -436,7 +436,7 @@ def test_the_numbers_are_the_integers_and_the_floats():
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_property_types.py: ``PropertiesValidator(check_types=True)``: a property compared with a literal of a type that none of its values has.
+# ``PropertiesValidator(check_types=True)``: a property compared with a literal of a type that none of its values has.
 #
 # FalkorDB does not report ``WHERE g.code = 1`` when ``code`` holds strings: it finds nothing. With ``check_types=True``
 # the validator warns (``cypher_guardrail.Warning.PropertyTypeMismatch``), in every mode: online (the database says what types

@@ -9,7 +9,7 @@ from cypher_guardrail.backend import (
 )
 
 # ----------------------------------------------------------------------------------------------------
-# From test_validators_falkordb.py: The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
+# The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
 
 
 class TestPropertiesValidator:
@@ -84,7 +84,7 @@ class TestPropertiesValidator:
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_index_procedures.py: FalkorDB's full-text and vector index procedures take a label (or type) and an attribute as strings.
+# FalkorDB's full-text and vector index procedures take a label (or type) and an attribute as strings.
 
 
 class TestPropertiesValidatorIndexProcedures:
@@ -159,7 +159,7 @@ class TestNamespacedFunctionsAreNotPropertyAccesses:
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_regressions.py: Regression tests for bugs found in the code review.
+# Regression tests for bugs found in the code review.
 
 
 class TestDeterminism:

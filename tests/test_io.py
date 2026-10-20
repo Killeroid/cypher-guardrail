@@ -36,7 +36,7 @@ from cypher_guardrail._internal.core.io import (
 from cypher_guardrail._internal.sources import online as _online
 
 # ----------------------------------------------------------------------------------------------------
-# From test_io.py: The I/O layer: drivers, snapshots and transports, with fakes instead of a database.
+# The I/O layer: drivers, snapshots and transports, with fakes instead of a database.
 
 
 A = RoQuery("g", "A")
@@ -656,7 +656,7 @@ def test_a_query_answers_with_the_rows_and_an_explain_with_nothing(transport_kit
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_lookups.py: ``Lookup``: a question the logic asks, answered by a resolver that the driver is given.
+# ``Lookup``: a question the logic asks, answered by a resolver that the driver is given.
 #
 # The logic asks "does this path exist?", not "run this query". How the question is answered (by the database,
 # and later from a snapshot of the graph) is the resolver's business. These tests use a fake transport and fake

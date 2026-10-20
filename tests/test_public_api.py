@@ -315,7 +315,7 @@ def test_an_issue_is_a_copy_the_caller_may_change(graphs):
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_package_metadata.py: The names of the project agree: the distribution, the import name, the version and the metadata codes.
+# The names of the project agree: the distribution, the import name, the version and the metadata codes.
 
 
 tomllib = pytest.importorskip("tomllib")  # Python >= 3.11
@@ -368,7 +368,7 @@ def test_the_old_name_is_gone():
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_validators_falkordb.py: The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
+# The three validators against a real FalkorDB (FalkorDBLite), with a client and with a bound graph.
 
 
 def test_kg_valid_query_metric(driver, db_name):

@@ -30,7 +30,7 @@ from cypher_guardrail.backend import get_async_backend, get_backend
 from cypher_guardrail.snapshot import SnapshotSource
 
 # ----------------------------------------------------------------------------------------------------
-# From test_modes.py: The three ways to validate: online (a database), offline (a snapshot) and hybrid (both).
+# The three ways to validate: online (a database), offline (a snapshot) and hybrid (both).
 #
 # ``SchemaValidator(client)`` is online, ``SchemaValidator(snapshot)`` offline and
 # ``SchemaValidator(client, snapshot=snapshot)`` hybrid. The first part checks the rules of the hybrid resolver without
@@ -732,7 +732,7 @@ def test_the_types_of_another_graph_are_asked_of_the_database(monkeypatch):
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_snapshot_source.py: A snapshot source (``SnapshotSource``): a validation asks it for its snapshot once and keeps it.
+# A snapshot source (``SnapshotSource``): a validation asks it for its snapshot once and keeps it.
 #
 # A ``Snapshot`` is its own source. A ``LiveSnapshot`` is one that is replaced from time to time, so a validation must not
 # see the replacement halfway: these tests use a source that gives a different snapshot every time it is asked, which

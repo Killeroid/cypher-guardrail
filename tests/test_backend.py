@@ -18,7 +18,7 @@ from cypher_guardrail.backend import (
 from cypher_guardrail.utils import is_write, is_write_async
 
 # ----------------------------------------------------------------------------------------------------
-# From test_falkordb_backend.py: FalkorDBBackend: running queries, EXPLAIN, schema lookups, index lookups and error mapping.
+# FalkorDBBackend: running queries, EXPLAIN, schema lookups, index lookups and error mapping.
 
 
 @pytest.fixture

@@ -25,7 +25,7 @@ from cypher_guardrail._internal.sources.offline import (
 from cypher_guardrail.backend import get_backend
 
 # ----------------------------------------------------------------------------------------------------
-# From test_offline_resolver.py: ``SnapshotResolver``: the lookups of the validators, answered from a ``Snapshot`` and not from the database.
+# ``SnapshotResolver``: the lookups of the validators, answered from a ``Snapshot`` and not from the database.
 #
 # These tests build the snapshot by hand, so they need no database and run on every Python version
 # (``test_offline_differential.py`` holds the same answers against a real FalkorDB).
@@ -548,7 +548,7 @@ def test_the_snapshot_resolver_answers_the_types_with_the_plain_value():
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_offline_differential.py: The snapshot gives the answers the database gives (``SnapshotResolver`` against FalkorDB, on the same graph).
+# The snapshot gives the answers the database gives (``SnapshotResolver`` against FalkorDB, on the same graph).
 #
 # A graph is built with the shapes that matter: nodes that carry several labels, a node with none, a node that
 # loops to itself, paths of kinds that exist between the *kinds* of nodes but not between real ones. A ``Snapshot`` of it

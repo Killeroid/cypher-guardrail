@@ -155,7 +155,7 @@ def test_the_async_validators_answer_what_was_recorded(run_async, graph_name):
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_request_trace.py: The validators ask the database what they asked before the lookups were introduced.
+# The validators ask the database what they asked before the lookups were introduced.
 #
 # ``request_trace.json`` holds, for every validator call of ``golden_results.json``, the requests that reached the
 # database (``GRAPH.RO_QUERY`` and ``GRAPH.EXPLAIN``, with their text) in the order the sync validators sent them.

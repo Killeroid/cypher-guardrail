@@ -25,7 +25,7 @@ from cypher_guardrail.utils import (
 )
 
 # ----------------------------------------------------------------------------------------------------
-# From test_patterns.py: The Cypher patterns and text helpers: they match what the original patterns matched, and survive pathological input.
+# The Cypher patterns and text helpers: they match what the original patterns matched, and survive pathological input.
 
 
 # (compiled pattern, source it was compiled from, findall flags)
@@ -139,7 +139,7 @@ class TestVariableLength:
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_cypher_helpers.py: Characterisation tests for the regex-based Cypher helpers.
+# Characterisation tests for the regex-based Cypher helpers.
 #
 # They pin the current behaviour (no database needed unless noted) so the helpers can be
 # refactored safely. Private helpers are reached through their name-mangled attributes.
@@ -373,7 +373,7 @@ class TestDiagnoseMissingPath:
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_index_procedures.py: FalkorDB's full-text and vector index procedures take a label (or type) and an attribute as strings.
+# FalkorDB's full-text and vector index procedures take a label (or type) and an attribute as strings.
 
 
 class TestParsing:
@@ -449,7 +449,7 @@ class TestParsing:
 
 
 # ----------------------------------------------------------------------------------------------------
-# From test_regressions.py: Regression tests for bugs found in the code review.
+# Regression tests for bugs found in the code review.
 
 
 class TestPathologicalInput:
