@@ -84,6 +84,31 @@ def _by_name(mapping, what) -> tuple[tuple[str, tuple[str, ...]], ...]:
     )
 
 
+def _need(names, known, what, where):
+    """Raise if a name that ``where`` mentions is not one of the ``known`` names."""
+    for name in names:
+        if name not in known:
+            raise ValueError(
+                f"{where} mentions the {what} {name!r}, which is not in the snapshot's {what}s"
+            )
+
+
+def _typed_properties(node_property_types, relationship_property_types):
+    """The ``property_types`` of a snapshot written by hand: None when no type was given."""
+    if node_property_types is None and relationship_property_types is None:
+        return None
+    return (
+        *(
+            (label, "NODE", _tuple(attributes))
+            for label, attributes in (node_property_types or {}).items()
+        ),
+        *(
+            (kind, "RELATIONSHIP", _tuple(attributes))
+            for kind, attributes in (relationship_property_types or {}).items()
+        ),
+    )
+
+
 class SnapshotSource:
     """Where a validator gets its snapshot: a :class:`Snapshot` itself, or a ``LiveSnapshot`` that keeps one fresh.
 
@@ -246,36 +271,32 @@ class Snapshot(SnapshotSource):
             set(self.relationship_types),
             set(self.property_keys),
         )
-
-        def need(names, known, what, where):
-            for name in names:
-                if name not in known:
-                    raise ValueError(
-                        f"{where} mentions the {what} {name!r}, which is not in the snapshot's {what}s"
-                    )
-
         for label_set in self.node_label_sets:
-            need(label_set, labels, "label", "node_label_sets")
+            _need(label_set, labels, "label", "node_label_sets")
         for start, kind, end in self.edges:
-            need([*start, *end], labels, "label", "edges")
-            need([kind], types, "relationship type", "edges")
+            _need([*start, *end], labels, "label", "edges")
+            _need([kind], types, "relationship type", "edges")
         for label, properties in self.node_properties:
-            need([label], labels, "label", "node_properties")
-            need(properties, keys, "property key", "node_properties")
+            _need([label], labels, "label", "node_properties")
+            _need(properties, keys, "property key", "node_properties")
         for kind, properties in self.relationship_properties:
-            need([kind], types, "relationship type", "relationship_properties")
-            need(properties, keys, "property key", "relationship_properties")
+            _need([kind], types, "relationship type", "relationship_properties")
+            _need(properties, keys, "property key", "relationship_properties")
+        self._check_property_types(labels, types, keys)
+
+    def _check_property_types(self, labels, types, keys):
+        """The types are of properties that their label (or type) has."""
         node_properties = dict(self.node_properties)
         relationship_properties = dict(self.relationship_properties)
         for name, entity, attributes in self.property_types or ():
             if entity == "NODE":
-                need([name], labels, "label", "property_types")
+                _need([name], labels, "label", "property_types")
                 own = node_properties.get(name, ())
             else:
-                need([name], types, "relationship type", "property_types")
+                _need([name], types, "relationship type", "property_types")
                 own = relationship_properties.get(name, ())
             properties = [a for a, _ in attributes]
-            need(properties, keys, "property key", "property_types")
+            _need(properties, keys, "property key", "property_types")
             for prop in properties:
                 if prop not in own:
                     raise ValueError(
@@ -503,18 +524,9 @@ class Snapshot(SnapshotSource):
         together = {label for labels in given_sets for label in labels}
         relationship_properties = dict(relationship_properties or {})
         types = {kind for _, kind, _ in relationships} | set(relationship_properties)
-        property_types = None
-        if node_property_types is not None or relationship_property_types is not None:
-            property_types = (
-                *(
-                    (label, "NODE", _tuple(attributes))
-                    for label, attributes in (node_property_types or {}).items()
-                ),
-                *(
-                    (kind, "RELATIONSHIP", _tuple(attributes))
-                    for kind, attributes in (relationship_property_types or {}).items()
-                ),
-            )
+        property_types = _typed_properties(
+            node_property_types, relationship_property_types
+        )
         return cls(
             graph=graph,
             labels=tuple(nodes),

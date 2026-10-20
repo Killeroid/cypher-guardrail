@@ -174,61 +174,24 @@ def identify_variables_and_construct_query(pattern):
         tuple[str, list[str], list[str]]: The query ("" if the path has no variable to infer),
         the node variables and the relationship variables, each in order of first appearance.
     """
-    node_var_pattern = r"\((\w+)\)"
-    rel_var_pattern = r"\[(\w+)\]"
-
-    # Identify node and relationship variables
     # A variable can appear more than once in a pattern, but it must be projected only once
-    node_vars = list(dict.fromkeys(re.findall(node_var_pattern, pattern)))
-    rel_vars = list(dict.fromkeys(re.findall(rel_var_pattern, pattern)))
+    node_vars = list(dict.fromkeys(re.findall(r"\((\w+)\)", pattern)))
+    rel_vars = list(dict.fromkeys(re.findall(r"\[(\w+)\]", pattern)))
+    if not node_vars and not rel_vars:  # no variable to infer
+        return "", node_vars, rel_vars
 
-    # Only if the path has variables to infer
-    if node_vars or rel_vars:
-        # Match the pattern for extracting possible labels for nodes and relationships
-        match_clause = f"MATCH {pattern}"
-
-        # Prepare the WITH clause for nodes (extracting labels) and relationships (extracting types)
-        with_clause = "WITH DISTINCT "
-
-        # Collect node labels
-        for node in node_vars:
-            with_clause += f"labels({node}) AS {node}_labels, "
-
-        # Collect relationship types
-        for rel in rel_vars:
-            with_clause += f"type({rel}) AS {rel}_type, "
-
-        # Remove the trailing comma from the WITH clause
-        with_clause = with_clause.rstrip(", ")
-
-        # Create the UNWIND clause to unwind node labels and relationship types
-        unwind_clause = ""
-        for node in node_vars:
-            unwind_clause += f"UNWIND {node}_labels AS {node}\n"
-
-        for rel in rel_vars:
-            unwind_clause += f"UNWIND [{rel}_type] AS {rel}\n"
-
-        # Combine node_vars and rel_vars into a single list
-        variables = [*node_vars, *rel_vars]
-
-        # Construct the RETURN clause
-        return_clause = "RETURN DISTINCT " + ", ".join(map(str, variables)).strip(", ")
-
-        # Construct the full query
-        query = (
-            match_clause
-            + "\n"
-            + with_clause
-            + "\n"
-            + unwind_clause
-            + ""
-            + return_clause
-        )
-
-        return query, node_vars, rel_vars
-
-    return "", node_vars, rel_vars
+    # The labels of the nodes and the types of the relationships, then one row for each of their combinations
+    projected = [f"labels({node}) AS {node}_labels" for node in node_vars] + [
+        f"type({rel}) AS {rel}_type" for rel in rel_vars
+    ]
+    unwound = [f"UNWIND {node}_labels AS {node}\n" for node in node_vars] + [
+        f"UNWIND [{rel}_type] AS {rel}\n" for rel in rel_vars
+    ]
+    query = (
+        f"MATCH {pattern}\nWITH DISTINCT {', '.join(projected)}\n"
+        f"{''.join(unwound)}RETURN DISTINCT {', '.join([*node_vars, *rel_vars])}"
+    )
+    return query, node_vars, rel_vars
 
 
 def label_combinations(
