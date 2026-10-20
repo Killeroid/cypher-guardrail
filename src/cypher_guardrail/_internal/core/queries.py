@@ -109,22 +109,30 @@ def with_placeholder_parameters(query: str) -> str | None:
     return f"{query[:end]} {pairs}{query[end:]}"
 
 
+def _end_of_string(text: str, position: int, quote: str) -> int:
+    """Where the string that starts at ``position`` (after its opening ``quote``) ends: the index of the closing quote."""
+    while position < len(text):
+        if text[position] == "\\":
+            position += 2  # an escaped character, which may be the quote
+        elif text[position] == quote:
+            return position
+        else:
+            position += 1
+    return position
+
+
 def _end_of_value(text: str, start: int) -> int:
     """Where the value of a ``CYPHER`` parameter that starts at ``start`` ends: a string, a list or a map, or a word."""
     depth = 0
-    quote = None
     position = start
     while position < len(text):
         char = text[position]
-        if quote:
-            if char == "\\":
-                position += 1  # an escaped character, which may be the quote
-            elif char == quote:
-                quote = None
-                if not depth:
-                    return position + 1
-        elif char in "'\"":
-            quote = char
+        if char in "'\"":
+            position = _end_of_string(text, position + 1, char)
+            if position >= len(text):
+                return position
+            if not depth:
+                return position + 1
         elif char in "[{":
             depth += 1
         elif char in "]}":
@@ -169,6 +177,12 @@ def parameter_names(parameters: Iterable[str] | None) -> frozenset[str]:
             "parameters must be a mapping or a collection of parameter names, not a string"
         )
     return frozenset(parameters or ())
+
+
+def _absent_parameters(query: str, provided: frozenset[str]) -> list[str]:
+    """The parameters that the text of the query uses and that are not ``provided``, once each, in order."""
+    names = dict.fromkeys(_PARAMETER.findall(strip_literals_and_comments(query)))
+    return [name for name in names if name not in provided]
 
 
 def explain(
@@ -219,14 +233,7 @@ def explain(
     ] = []
     # FalkorDB only reports a missing parameter when the query runs, so detect it from the text.
     # (The caller gives some of them, and so does a ``CYPHER`` header.)
-    provided = given | provided_parameters(query)
-    absent = [
-        name
-        for name in dict.fromkeys(
-            _PARAMETER.findall(strip_literals_and_comments(query))
-        )
-        if name not in provided
-    ]
+    absent = _absent_parameters(query, given | provided_parameters(query))
     if absent:
         issues.append(_issues.parameters_not_provided(absent))
     if writes and read_only is not None:

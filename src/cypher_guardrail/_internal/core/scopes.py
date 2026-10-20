@@ -323,16 +323,21 @@ class _Scopes:
                     visible = dict(initial)
                 elif self._word(k, "RETURN"):
                     last_return = k
-            if self._word(k - 1, "AS") and self._is(k, "word"):
-                # an alias is new where it is defined: it is not renamed, and the scope has it from here
-                visible[token.text] = token.text
-                self.seen.add(token.text)
-            elif self._is_variable(k):
-                self._use(k, visible)
+            self._see(k, visible)
             k += 1
         if last_return < 0:
             return {}
         return self._carried(last_return, hi, visible)[1]
+
+    def _see(self, k: int, visible: dict[str, str]) -> None:
+        """What the word at ``k`` does to the names of the scope: an alias is declared, a variable is used."""
+        if self._word(k - 1, "AS") and self._is(k, "word"):
+            # an alias is new where it is defined: it is not renamed, and the scope has it from here
+            text = self.tokens[k].text
+            visible[text] = text
+            self.seen.add(text)
+        elif self._is_variable(k):
+            self._use(k, visible)
 
     def _subquery(self, open_index: int, visible: dict[str, str]) -> int:
         """A ``CALL { ... }``: its body is a scope that sees only what its leading WITH imports. Returns the index after

@@ -1065,7 +1065,7 @@ def test_one_walk_is_enough_to_call_a_path_a_maybe(monkeypatch):
     assert len(steps) == 1  # the first walk settles that it is a maybe
     parsed = _parse("(a)-[:NEXT*2..]->(b)")
     assert parsed is not None
-    assert len(list(original(parsed, lambda *_: 1))) > 12  # and there were many
+    assert len(list(original(parsed))) > 12  # and there were many
 
 
 # ----------------------------------------------------------------------------------------------------

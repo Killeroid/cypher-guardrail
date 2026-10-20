@@ -232,6 +232,26 @@ def _parse(pattern: str) -> _Pattern | None:
 State = frozenset  # a set of labels: one kind of node
 
 
+def _walk(start: State, steps: dict[State, set[State]], lo: int, limit: int):
+    """The kinds that a walk from ``start`` ends at after ``lo`` to ``limit`` hops of ``steps``, each once."""
+    frontier = {start}
+    reached: set[State] = set()  # the ends already given for this start
+    layers: set[frozenset] = set()  # the frontiers of the hops from `lo` on
+    for hops in range(1, limit + 1):
+        frontier = {b for a in frontier for b in steps.get(a, ())}
+        if not frontier:
+            return
+        if hops < lo:
+            continue
+        yield from frontier - reached
+        reached |= frontier
+        # The next frontier follows from this one: if it has been seen, the walk goes round, and
+        # no end it reaches from here on is new
+        if frozenset(frontier) in layers:
+            return
+        layers.add(frozenset(frontier))
+
+
 class SnapshotResolver:
     """Answers lookups from a :class:`~cypher_guardrail.snapshot.Snapshot`."""
 
@@ -399,40 +419,40 @@ class SnapshotResolver:
         are all "maybe"s: with ``settle`` the search ends at the first of them, for a caller that only asks whether
         there is one.
         """
-        left, right = pattern.left, pattern.right
-        if right is None:
+        relationship = pattern.relationship
+        if pattern.right is None or relationship is None:
             for state in self._states:
-                fit = self._fits(state, left)
+                fit = self._fits(state, pattern.left)
                 if fit:
                     yield state, state, None, fit
             return
-        relationship = pattern.relationship
-        assert relationship is not None
-        # the same variable on both ends is the same node
-        same_node = bool(left.variable) and left.variable == right.variable
-        cap = Fit.MAYBE if same_node else Fit.CERTAIN
-
-        def end_fit(a, b, quality):
-            if same_node and a != b:
-                return Fit.NO
-            return min(self._fits(a, left), self._fits(b, right), quality, cap)
-
         lo, hi = relationship.lo, relationship.hi
         if lo == 0:
             for state in self._states:
                 # one node is both ends: it must fit both nodes of the pattern
-                fit = end_fit(state, state, Fit.CERTAIN)
+                fit = self._ends_fit(pattern, state, state, Fit.CERTAIN)
                 if fit:
                     yield state, state, None, fit
         if (hi is None or hi >= 1) and lo <= 1:
             for a, kind, b in self._oriented(pattern):
-                fit = end_fit(a, b, self._edge_fits(kind, relationship))
+                fit = self._ends_fit(pattern, a, b, self._edge_fits(kind, relationship))
                 if fit:
                     yield a, b, kind, fit
         if hi is None or hi >= MIN_CHAIN_HOPS:
-            yield from self._chains(pattern, end_fit, first_only=settle)
+            yield from self._chains(pattern, first_only=settle)
 
-    def _chains(self, pattern: _Pattern, end_fit, first_only: bool = False):
+    def _ends_fit(self, pattern: _Pattern, a: State, b: State, quality: Fit) -> Fit:
+        """How well the kinds ``a`` and ``b`` fit the two nodes of the pattern, at best ``quality``."""
+        left, right = pattern.left, pattern.right
+        assert right is not None
+        # the same variable on both ends is the same node
+        same_node = bool(left.variable) and left.variable == right.variable
+        if same_node and a != b:
+            return Fit.NO
+        cap = Fit.MAYBE if same_node else Fit.CERTAIN
+        return min(self._fits(a, left), self._fits(b, right), quality, cap)
+
+    def _chains(self, pattern: _Pattern, first_only: bool = False):
         """The matches of 2 or more hops between kinds of nodes, each pair of kinds once. They are all "maybe"s."""
         relationship = pattern.relationship
         assert relationship is not None
@@ -446,25 +466,11 @@ class SnapshotResolver:
         for start in self._states:
             if not self._fits(start, pattern.left):
                 continue
-            frontier = {start}
-            reached: set[State] = set()  # the ends already given for this start
-            layers: set[frozenset] = set()  # the frontiers of the hops from `lo` on
-            for hops in range(1, limit + 1):
-                frontier = {b for a in frontier for b in steps.get(a, ())}
-                if not frontier:
-                    break
-                if hops >= lo:
-                    for end in frontier - reached:
-                        if end_fit(start, end, Fit.MAYBE):
-                            yield start, end, None, Fit.MAYBE
-                            if first_only:
-                                return
-                    reached |= frontier
-                    # The next frontier follows from this one: if it has been seen, the walk goes round, and
-                    # no end it reaches from here on is new
-                    if frozenset(frontier) in layers:
-                        break
-                    layers.add(frozenset(frontier))
+            for end in _walk(start, steps, lo, limit):
+                if self._ends_fit(pattern, start, end, Fit.MAYBE):
+                    yield start, end, None, Fit.MAYBE
+                    if first_only:
+                        return
 
     def _path_exists(self, pattern: str) -> Resolution:
         parsed = _parse(pattern)
