@@ -21,6 +21,7 @@ class _Advisor(_modes.ModeInfo, Generic[_D]):
         *,
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
+        suggest_limit: bool = False,
     ) -> None:
         """
         Initialize the advisor with a FalkorDB client.
@@ -32,6 +33,8 @@ class _Advisor(_modes.ModeInfo, Generic[_D]):
                 (the plan still comes from the database). This is the hybrid mode.
             verify (str | None): Hybrid mode: ``"misses"`` (the default) asks the database before saying that a
                 thing the snapshot lacks is not there, ``"never"`` trusts the snapshot.
+            suggest_limit (bool): Also suggest a ``LIMIT`` for a query that reads rows of the graph and returns every
+                one of them (default: False: it is advice about any such query, so it is asked for).
 
         Raises:
             TypeError: If the driver is not a FalkorDB client or graph, or it is a ``Snapshot``: the plan of a
@@ -43,6 +46,7 @@ class _Advisor(_modes.ModeInfo, Generic[_D]):
                 "and the snapshot as snapshot= to save the lookups."
             )
         self.driver = driver
+        self.suggest_limit = suggest_limit
         self.backend = self._open_backend(driver, snapshot, verify)
 
     def _open_backend(
@@ -55,7 +59,7 @@ class _Advisor(_modes.ModeInfo, Generic[_D]):
         self, query: str, database_name: str | None
     ) -> Generator[Request, Any, list[Suggestion]]:
         graph = self.backend.graph_name(database_name)
-        return _advice.advise(graph, query)
+        return _advice.advise(graph, query, suggest_limit=self.suggest_limit)
 
 
 class Advisor(_Advisor[Driver]):
@@ -97,6 +101,7 @@ class AsyncAdvisor(_Advisor[AsyncDriver]):
         max_concurrency: int = 8,
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
+        suggest_limit: bool = False,
     ) -> None:
         """
         Initialize the advisor with an async FalkorDB client.
@@ -106,13 +111,16 @@ class AsyncAdvisor(_Advisor[AsyncDriver]):
             max_concurrency (int): The most requests in flight at once on this advisor's connection.
             snapshot (Snapshot | None): As for :class:`Advisor`.
             verify (str | None): As for :class:`Advisor`.
+            suggest_limit (bool): As for :class:`Advisor`.
 
         Raises:
             TypeError: If the driver is not an async FalkorDB client or graph, or it is a ``Snapshot``.
             ValueError: If ``max_concurrency`` is less than 1.
         """
         self._max_concurrency = max_concurrency
-        super().__init__(driver, snapshot=snapshot, verify=verify)
+        super().__init__(
+            driver, snapshot=snapshot, verify=verify, suggest_limit=suggest_limit
+        )
 
     def _open_backend(
         self,

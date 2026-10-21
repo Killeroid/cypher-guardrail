@@ -11,8 +11,10 @@ from cypher_guardrail import Advisor, AsyncAdvisor, Snapshot, SyntaxValidator
 from cypher_guardrail._internal.core.advice import bound_paths
 from cypher_guardrail.suggestions import (
     ADD_LABEL,
+    ADD_LIMIT,
     BOUND_PATH,
     CONNECT_PATTERNS,
+    MISSING_INDEX,
     USE_INDEX,
 )
 
@@ -144,7 +146,7 @@ def test_an_example_is_a_valid_query_that_needs_no_more_of_the_advice(
         "MATCH (m:Movie) WHERE m.title = 'a' RETURN m",
         "MATCH (m:Movie {title: 'a'}) RETURN m",
         "MATCH (m:Movie) WHERE toLower(m.year) = 'a' RETURN m",  # no index on year
-        "MATCH (n:Person) WHERE n.born = 1 RETURN n",
+        "MATCH (n:Person) RETURN n.born",
     ],
 )
 def test_a_query_that_needs_no_advice_gets_none(advisor, query):
@@ -222,3 +224,177 @@ def test_a_node_that_is_written_twice_is_labelled_without_an_example(advisor):
 
     assert suggestion["labels"] == ["Person"]
     assert "example" not in suggestion
+
+
+# ------------------------------------------------------------------------------------------------- a missing index
+@pytest.mark.parametrize(
+    ("query", "fragment", "statement"),
+    [
+        (
+            "MATCH (m:Movie) WHERE m.year = 2 RETURN m",
+            "m.year",
+            "CREATE INDEX FOR (m:Movie) ON (m.year)",
+        ),
+        (
+            "MATCH (m:Movie) WHERE m.year > 1 RETURN m",
+            "m.year",
+            "CREATE INDEX FOR (m:Movie) ON (m.year)",
+        ),
+        (
+            "MATCH (m:Movie) WHERE m.year IN [1, 2] RETURN m",
+            "m.year",
+            "CREATE INDEX FOR (m:Movie) ON (m.year)",
+        ),
+        (
+            "MATCH (m:Movie {year: 2}) RETURN m",
+            "year",
+            "CREATE INDEX FOR (m:Movie) ON (m.year)",
+        ),
+        (
+            "MATCH (a:Person) WHERE a.born <= 1 RETURN a",
+            "a.born",
+            "CREATE INDEX FOR (a:Person) ON (a.born)",
+        ),
+    ],
+)
+def test_a_property_that_is_filtered_and_has_no_index_gets_the_statement_that_makes_one(
+    advisor, query, fragment, statement
+):
+    (suggestion,) = advise(advisor, query)
+
+    assert suggestion["code"] == MISSING_INDEX
+    assert suggestion["fragment"] == fragment
+    assert suggestion["statement"] == statement
+    assert suggestion["changes_results"] is False
+    assert "example" not in suggestion
+
+
+def test_the_statement_makes_the_index_and_the_advice_goes_away(falkordb_client):
+    graph = falkordb_client.select_graph("advice_index")
+    graph.query("CREATE (:Movie {year: 2}), (:Movie {year: 3})")
+    try:
+        advisor = Advisor(falkordb_client)
+        query = "MATCH (m:Movie) WHERE m.year = 2 RETURN m"
+        (suggestion,) = advisor.advise(query, "advice_index")
+
+        graph.query(suggestion["statement"])
+
+        assert advisor.advise(query, "advice_index") == []
+    finally:
+        graph.delete()
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "MATCH (m:Movie) WHERE m.title = 'a' RETURN m",  # it has an index
+        "MATCH (m:Movie {title: 'a'}) RETURN m",
+        "MATCH (m:Movie) WHERE m.year STARTS WITH 'a' RETURN m",  # no index serves it
+        "MATCH (m:Movie) WHERE m.year CONTAINS 'a' RETURN m",
+        "MATCH (m:Movie) WHERE m.year <> 2 RETURN m",
+        "MATCH (m:Movie) RETURN m.year",  # nothing is filtered
+        "MATCH (m:Movie) WHERE toLower(m.year) = 'a' RETURN m",  # a function: not this advice
+        "MATCH (a:Person), (m:Movie) WHERE a.born = m.year RETURN a",  # a hash join
+    ],
+)
+def test_a_property_that_needs_no_index_is_left_alone(advisor, query):
+    assert MISSING_INDEX not in codes(advise(advisor, query))
+
+
+def test_the_same_property_filtered_twice_is_one_suggestion(advisor):
+    query = "MATCH (m:Movie) WHERE m.year = 2 OR m.year = 3 RETURN m"
+
+    assert codes(advise(advisor, query)) == [MISSING_INDEX]
+
+
+def test_a_name_that_needs_quoting_is_quoted_in_the_statement(falkordb_client):
+    graph = falkordb_client.select_graph("advice_quoted")
+    graph.query("CREATE (:`Two Words` {`a b`: 1})")
+    try:
+        query = "MATCH (n:`Two Words`) WHERE n.`a b` = 1 RETURN n"
+
+        (suggestion,) = Advisor(falkordb_client).advise(query, "advice_quoted")
+
+        assert suggestion["statement"] == (
+            "CREATE INDEX FOR (n:`Two Words`) ON (n.`a b`)"
+        )
+    finally:
+        graph.delete()
+
+
+# ------------------------------------------------------------------------------------------------------ a limit
+@pytest.fixture
+def limiting(falkordb_client, advice_graph):
+    return Advisor(falkordb_client, suggest_limit=True)
+
+
+@pytest.mark.parametrize(
+    ("query", "example"),
+    [
+        (
+            "MATCH (m:Movie) RETURN m",
+            "MATCH (m:Movie) RETURN m\nLIMIT 100",
+        ),
+        (
+            "MATCH (m:Movie) RETURN m ORDER BY m.year;",
+            "MATCH (m:Movie) RETURN m ORDER BY m.year\nLIMIT 100",
+        ),
+        (
+            "MATCH (m:Movie) RETURN m // all of them",
+            "MATCH (m:Movie) RETURN m // all of them\nLIMIT 100",
+        ),
+        (
+            "MATCH (m:Movie) RETURN m SKIP 1",
+            "MATCH (m:Movie) RETURN m SKIP 1\nLIMIT 100",
+        ),
+    ],
+)
+def test_a_query_that_returns_every_row_it_finds_gets_a_limit_when_asked(
+    falkordb_client, limiting, query, example
+):
+    (suggestion,) = advise(limiting, query)
+
+    assert suggestion["code"] == ADD_LIMIT
+    assert suggestion["example"] == example
+    assert suggestion["changes_results"] is True
+    assert suggestion["fragment"].upper().startswith("RETURN")
+    assert SyntaxValidator(falkordb_client).validate(example, GRAPH)[0]
+    assert advise(limiting, example) == []
+
+
+def test_a_limit_is_not_suggested_unless_asked(advisor):
+    assert advise(advisor, "MATCH (m:Movie) RETURN m") == []
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "MATCH (m:Movie) RETURN m LIMIT 5",
+        "MATCH (m:Movie) RETURN m ORDER BY m.year LIMIT 5",
+        "MATCH (m:Movie) WITH m LIMIT 2 RETURN m",
+        "MATCH (m:Movie) RETURN count(m)",
+        "MATCH (m:Movie) RETURN m.year, count(*)",
+        "MATCH (m:Movie) RETURN DISTINCT m.year",
+        "UNWIND [1, 2] AS x RETURN x",  # it reads nothing from the graph
+        "MATCH (m:Movie) SET m.seen = 1 RETURN m",  # a query that writes
+        "MATCH (m:Movie) SET m.seen = 1",
+        "MATCH (m:Movie) CREATE (:Copy {t: m.title}) RETURN m",
+        "MATCH (m:Movie) MERGE (:Copy {t: m.title}) RETURN m",
+        "MATCH (m:Movie) DELETE m RETURN 1",
+        "CALL db.labels()",
+        "MATCH (m:Movie) RETURN m.title AS t UNION MATCH (g:Genre) RETURN g.name AS t",
+        "MATCH (m:Movie) RETURN m.title AS t UNION ALL MATCH (g:Genre) RETURN g.name AS t",
+    ],
+)
+def test_a_query_that_is_bounded_already_or_cannot_take_one_gets_no_limit(
+    limiting, query
+):
+    assert ADD_LIMIT not in codes(advise(limiting, query))
+
+
+def test_the_limit_is_asked_for_with_a_boolean(falkordb_client, run_async):
+    async def ask(client):
+        advisor = AsyncAdvisor(client, suggest_limit=True)
+        return await advisor.advise("MATCH (m:Movie) RETURN m", GRAPH)
+
+    assert codes(run_async(ask)) == [ADD_LIMIT]

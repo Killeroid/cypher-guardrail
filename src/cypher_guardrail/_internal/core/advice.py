@@ -17,15 +17,19 @@ from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail._internal.core.errors import CypherError, GraphNotFoundError
 from cypher_guardrail._internal.core.io import Concurrently, Lookup, Request
 from cypher_guardrail._internal.core.plans import Op, parse
+from cypher_guardrail.patterns import unquote_name
 from cypher_guardrail.suggestions import (
     ADD_LABEL,
+    ADD_LIMIT,
     BOUND_PATH,
     CONNECT_PATTERNS,
+    MISSING_INDEX,
     USE_INDEX,
     Suggestion,
 )
 
 _BOUND = 5  # the upper limit that an example gives to a path
+_LIMIT = 100  # the number of rows that an example gives to a query
 _HOPS = re.compile(r"\*\s*(\d*)\s*(\.\.)?\s*(\d*)")
 _PLAIN_NAME = re.compile(r"\w+")
 # a function of a property that is compared: `toLower(m.title) = 'a'`
@@ -49,13 +53,14 @@ def _suggestion(
     description: str,
     fragment: str,
     example: str | None,
-    **fields: list[str],
+    changes_results: bool = True,
+    **fields: list[str] | str,
 ) -> Suggestion:
     suggestion: dict[str, object] = {
         "code": code,
         "description": description,
         "fragment": fragment,
-        "changes_results": True,
+        "changes_results": changes_results,
         **fields,
     }
     if example is not None:
@@ -276,7 +281,7 @@ def _label_scans(root: Op) -> list[tuple[str, str]]:
     """``(variable, label)`` of each label scan that a filter works on (an index scan is not one)."""
     found = []
     for op in root.walk():
-        match = re.fullmatch(r"\((\w+):(\w+)\)", op.detail)
+        match = re.fullmatch(r"\((\w+):([^()]+)\)", op.detail)
         if (
             op.name == "Node By Label Scan"
             and match
@@ -334,9 +339,122 @@ def index_suggestions(
     ]
 
 
+# ------------------------------------------------------------------------------------------------ missing indexes
+_COMPARED = (
+    r"(?<![\w.]){variable}\s*\.\s*(\w+|`[^`]+`)"
+    r"(?=\s*(?:=(?![=~])|<=|>=|<(?!>)|>|\bIN\b))"
+)
+
+
+def _compared_properties(text: str, variable: str, label: str) -> list[tuple[str, str]]:
+    """``(fragment, property)`` for each property of ``variable`` that the query compares with ``=``, a bound or
+    ``IN``, or filters by a map of the node (``(m:Movie {year: 2})``): what a range index serves."""
+    name = re.escape(variable)
+    found = [
+        (text[match.start() : match.end()], unquote_name(match[1]))
+        for match in re.finditer(_COMPARED.format(variable=name), text)
+    ]
+    maps = rf"\(\s*{name}\s*:\s*{re.escape(label)}[^(){{}}]*\{{([^{{}}]*)\}}"
+    for body in re.findall(maps, text):
+        found += [
+            (key, unquote_name(key)) for key in re.findall(r"(\w+|`[^`]+`)\s*:", body)
+        ]
+    return found
+
+
+def missing_index_suggestions(
+    graph: str, root: Op, query: str
+) -> Generator[Request, Any, list[Suggestion]]:
+    """The index that would serve each property that a label scan filters on, when the graph has none."""
+    text = patterns.strip_literals_and_comments(query)
+    candidates = list(
+        dict.fromkeys(
+            (variable, label, fragment, prop)
+            for variable, label in _label_scans(root)
+            for fragment, prop in _compared_properties(text, variable, label)
+        )
+    )
+    if not candidates:
+        return []
+    indexed = yield Concurrently(
+        tuple(_has_index(graph, label, prop) for _, label, _, prop in candidates)
+    )
+    found: dict[tuple[str, str], Suggestion] = {}
+    for (variable, label, fragment, prop), there in zip(
+        candidates, indexed, strict=True
+    ):
+        if not there:
+            found.setdefault(
+                (label, prop), _missing_index(variable, label, fragment, prop)
+            )
+    return list(found.values())
+
+
+def _missing_index(variable: str, label: str, fragment: str, prop: str) -> Suggestion:
+    statement = (
+        f"CREATE INDEX FOR ({variable}:{_name(label)}) ON ({variable}.{_name(prop)})"
+    )
+    return _suggestion(
+        MISSING_INDEX,
+        f"FalkorDB reads every :{label} node to find the ones with {prop} that the query asks for, because there "
+        f"is no index on :{label}({prop}). If :{label} is large, create one: {statement}. An index costs memory "
+        "and a little time on every write, and never changes what a query returns.",
+        fragment,
+        None,
+        False,
+        statement=statement,
+    )
+
+
+# ------------------------------------------------------------------------------------------------------- a limit
+_RETURNS_ALL_ROWS = {
+    "Limit",
+    "Aggregate",
+    "Distinct",
+    "Create",
+    "Merge",
+    "Update",
+    "Delete",
+}
+
+
+def _last_return(query: str) -> str | None:
+    """The last ``RETURN`` clause of the query as written, to its end."""
+    body = query.rstrip().removesuffix(";").rstrip()
+    match = re.search(r"(?is)\bRETURN\b(?!.*\bRETURN\b).*$", body)
+    return match.group() if match else None
+
+
+def limit_suggestions(root: Op, query: str) -> list[Suggestion]:
+    """A limit for a query that reads rows of the graph and returns every one of them."""
+    reads = any("Scan" in leaf.name for leaf in root.leaves())
+    returns_all = (
+        root.name == "Results"
+        and not {op.name for op in root.walk()} & _RETURNS_ALL_ROWS
+    )
+    text = patterns.strip_literals_and_comments(query)
+    clause = _last_return(query)
+    if not (reads and returns_all and clause) or len(patterns.split_union(text)) > 1:
+        return []
+    body = query.rstrip().removesuffix(";").rstrip()
+    example = f"{body}\nLIMIT {_LIMIT}"
+    return [
+        _suggestion(
+            ADD_LIMIT,
+            "The query returns every row it finds, so on a large graph the result can be very large. Add a limit "
+            f"at the end, as in LIMIT {_LIMIT}: the number is an example, choose the one you need.",
+            clause,
+            example,
+        )
+    ]
+
+
 # ------------------------------------------------------------------------------------------------------ the advice
-def advise(graph: str, query: str) -> Generator[Request, Any, list[Suggestion]]:
-    """The suggestions for ``query``: none when the database rejects it (there is nothing to advise on yet)."""
+def advise(
+    graph: str, query: str, *, suggest_limit: bool = False
+) -> Generator[Request, Any, list[Suggestion]]:
+    """The suggestions for ``query``: none when the database rejects it (there is nothing to advise on yet).
+    A limit is only suggested when ``suggest_limit`` is on: it is advice about any query that returns rows."""
     try:
         reply = yield from _queries.plan(graph, query)
     except GraphNotFoundError:
@@ -353,8 +471,9 @@ def advise(graph: str, query: str) -> Generator[Request, Any, list[Suggestion]]:
                 label_suggestions(graph, root, query),
                 connect_suggestions(graph, root, query),
                 index_suggestions(graph, root, query),
+                missing_index_suggestions(graph, root, query),
             )
         )
     ):
         found += suggestions
-    return found
+    return found + (limit_suggestions(root, query) if suggest_limit else [])
