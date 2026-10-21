@@ -1,6 +1,6 @@
 # Async usage
 
-Each validator has an async twin for the `falkordb.asyncio` client: `AsyncSyntaxValidator`, `AsyncSchemaValidator` and `AsyncPropertiesValidator`. They take the same arguments and return the same results as the sync validators; their `validate()` and `extract()` are coroutines.
+Each validator has an async twin for the `falkordb.asyncio` client: `AsyncSyntaxValidator`, `AsyncSchemaValidator` and `AsyncPropertiesValidator`. They take the same arguments and return the same results as the sync validators; their `validate()` and `extract()` are coroutines. So does the [advisor](usage.md#advisor-making-a-valid-query-cheaper): `AsyncAdvisor(driver, max_concurrency=8).advise(query, database_name)` is a coroutine, and gives the suggestions that `Advisor` gives.
 
 ```python
 import asyncio
