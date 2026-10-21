@@ -15,7 +15,11 @@ import pandas as pd
 import regex as re
 
 from cypher_guardrail._internal.core import udfs
-from cypher_guardrail._internal.core.errors import CypherError, is_missing_graph
+from cypher_guardrail._internal.core.errors import (
+    CypherError,
+    is_missing_graph,
+    is_resource_failure,
+)
 from cypher_guardrail._internal.core.io import (
     ListUdfs,
     Lookup,
@@ -26,6 +30,7 @@ from cypher_guardrail._internal.core.io import (
 )
 from cypher_guardrail._internal.core.queries import execute, query_to_df
 from cypher_guardrail.issues import SYNTAX_ERROR
+from cypher_guardrail.patterns import quote_name, unquote_name
 
 # the lookup kind "missing_names" is asked about one of these
 _NAME_PROCEDURES = {
@@ -151,6 +156,8 @@ def property_exists(
     graph: str, label: str, kind: str, prop: str
 ) -> Generator[Request, Any, bool]:
     """Whether any node (``kind`` 'node') or relationship ('relationship') with ``label`` has property ``prop``."""
+    # The label comes unquoted from the schema (Advisor) or as written (the validators): quote it either way
+    label, prop = quote_name(unquote_name(label)), quote_name(unquote_name(prop))
     pattern = f"(x:{label})" if kind == "node" else f"()-[x:{label}]-()"
     # `(x.prop) IS NOT NULL` is true only for an element that has the property
     rows = yield from execute(
@@ -243,8 +250,11 @@ def label_combinations(
     query_w_labels, node_vars, rel_vars = identify_variables_and_construct_query(path)
     try:
         return (yield from query_to_df(graph, query_w_labels)), node_vars, rel_vars
-    except CypherError:
-        # The inference query was rejected (e.g. FalkorDB.ClientError.Statement.SyntaxError)
+    except CypherError as e:
+        # The inference query was rejected (e.g. FalkorDB.ClientError.Statement.SyntaxError). Another failure (a
+        # timeout, a full memory) is no such answer
+        if is_resource_failure(e):
+            raise
         return None, node_vars, rel_vars
 
 

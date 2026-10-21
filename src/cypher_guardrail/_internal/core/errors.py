@@ -104,6 +104,20 @@ def failure_field(code: str, message: str) -> str | None:
     return None
 
 
+# How FalkorDB words a query that was stopped for lack of time or memory, or refused because the server is busy
+_RESOURCE_FAILURE = re.compile(
+    r"timed out|timeout|mem(?:ory)? consumption|out of memory|max.{0,20}queued|too many",
+    re.IGNORECASE,
+)
+
+
+def is_resource_failure(error: CypherError) -> bool:
+    """Whether the database could not answer for lack of time or memory (or because it is busy), which says nothing
+    about the query or the graph. An existence check that fails so must not be taken for "it does not exist"; one that
+    fails because the pattern is wrong (a syntax error, an alias used twice) does say that."""
+    return bool(_RESOURCE_FAILURE.search(error.message))
+
+
 def is_missing_graph(error: CypherError) -> bool:
     """Whether FalkorDB refused a query because the graph does not exist: it creates a graph with its first write, so
     until then it answers "empty key". Such a graph has no schema, no indexes and no data, which is no failure."""

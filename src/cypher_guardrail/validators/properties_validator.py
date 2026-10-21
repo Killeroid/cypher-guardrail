@@ -8,7 +8,7 @@ from cypher_guardrail import patterns
 from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import literals
 from cypher_guardrail._internal.core import queries as _queries
-from cypher_guardrail._internal.core.errors import CypherError
+from cypher_guardrail._internal.core.errors import CypherError, is_resource_failure
 from cypher_guardrail._internal.core.io import Concurrently, Request
 from cypher_guardrail._internal.core.scopes import restore_variables, separate_variables
 from cypher_guardrail._internal.core.valuetypes import fits
@@ -344,8 +344,11 @@ class _PropertiesValidator(_modes.ModeInfo, Generic[_D]):
                 )
                 # The warning about a property key that exists on no node or relationship at all
                 metadata.extend(n.copy() for n in notifications)
-            except CypherError:
-                # The check cannot be run (a syntax or execution error), so the property does not exist
+            except CypherError as e:
+                # The check cannot be run (a syntax error, no such graph), so the property does not exist. Another
+                # failure (a timeout, a full memory) does not say that: it is raised
+                if is_resource_failure(e):
+                    raise
                 return False, metadata
         return property_exists, metadata
 

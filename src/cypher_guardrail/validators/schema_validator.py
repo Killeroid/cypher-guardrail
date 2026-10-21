@@ -11,7 +11,7 @@ from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import functions
 from cypher_guardrail._internal.core import performance as _performance
 from cypher_guardrail._internal.core import queries as _queries
-from cypher_guardrail._internal.core.errors import CypherError
+from cypher_guardrail._internal.core.errors import CypherError, is_resource_failure
 from cypher_guardrail._internal.core.io import Concurrently, Request
 from cypher_guardrail._internal.core.scopes import restore_variables, separate_variables
 from cypher_guardrail._internal.sources import hybrid as _modes
@@ -347,8 +347,11 @@ class _SchemaValidator(_modes.ModeInfo, Generic[_D]):
                     pattern, original_paths, database_name, metadata
                 )
             return pattern_exists, metadata
-        except CypherError:
-            # The pattern cannot be executed (syntax or execution error), so it does not exist
+        except CypherError as e:
+            # The pattern cannot be run (a syntax error, an alias used twice, no such graph), so it does not exist. Another failure (a
+            # timeout, a full memory) does not say that: it is raised
+            if is_resource_failure(e):
+                raise
             return False, metadata
 
     def _diagnose_missing_path(

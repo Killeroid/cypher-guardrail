@@ -7,11 +7,12 @@ import pytest
 from support import code_set
 
 import cypher_guardrail
-from cypher_guardrail import CypherError, issues
+from cypher_guardrail import CypherError, PropertiesValidator, SchemaValidator, issues
 from cypher_guardrail._internal.core import queries as _queries
 from cypher_guardrail._internal.sources import online as _online
 from cypher_guardrail.backend import FalkorDBBackend, get_backend
 from cypher_guardrail.issues import (
+    EXECUTION_FAILED,
     PARAMETER_NOT_PROVIDED,
     SYNTAX_ERROR,
     UNKNOWN_LABEL,
@@ -473,3 +474,46 @@ def test_a_name_that_moved_still_imports_with_a_deprecation_warning(module, name
 def test_a_name_that_never_existed_is_still_an_attribute_error():
     with pytest.raises(AttributeError, match="no attribute 'nope'"):
         _ = importlib.import_module("cypher_guardrail.backend").nope
+
+
+# ------------------------------------------------------------ a failure of the database is not "it does not exist"
+def _time_out_on(monkeypatch, text):
+    """Make the requests whose query has ``text`` fail as FalkorDB fails a query that runs out of time."""
+    from cypher_guardrail._internal.core import io
+
+    run = io.SyncTransport.run
+
+    def failing(self, request):
+        if text in getattr(request, "query", ""):
+            raise CypherError(EXECUTION_FAILED, "Query timed out")
+        return run(self, request)
+
+    monkeypatch.setattr(io.SyncTransport, "run", failing)
+
+
+def test_a_timeout_is_not_reported_as_a_path_that_does_not_exist(
+    falkordb_client, monkeypatch
+):
+    graph = falkordb_client.select_graph("timeout_path")
+    graph.query("CREATE (:A)-[:R]->(:B)")
+    try:
+        _time_out_on(monkeypatch, "RETURN 1 LIMIT 1")
+
+        with pytest.raises(CypherError, match="timed out"):
+            SchemaValidator(graph).validate("MATCH (:A)-[:R]->(:B) RETURN 1")
+    finally:
+        graph.delete()
+
+
+def test_a_timeout_is_not_reported_as_a_property_that_does_not_exist(
+    falkordb_client, monkeypatch
+):
+    graph = falkordb_client.select_graph("timeout_property")
+    graph.query("CREATE (:A {x: 1})")
+    try:
+        _time_out_on(monkeypatch, "IS NOT NULL")
+
+        with pytest.raises(CypherError, match="timed out"):
+            PropertiesValidator(graph).validate("MATCH (n:A) RETURN n.x")
+    finally:
+        graph.delete()

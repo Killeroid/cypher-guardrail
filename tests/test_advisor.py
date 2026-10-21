@@ -9,6 +9,7 @@ import pytest
 
 from cypher_guardrail import Advisor, AsyncAdvisor, Snapshot, SyntaxValidator
 from cypher_guardrail._internal.core.advice import bound_paths
+from cypher_guardrail.backend import get_backend
 from cypher_guardrail.suggestions import (
     ADD_LABEL,
     ADD_LIMIT,
@@ -398,3 +399,30 @@ def test_the_limit_is_asked_for_with_a_boolean(falkordb_client, run_async):
         return await advisor.advise("MATCH (m:Movie) RETURN m", GRAPH)
 
     assert codes(run_async(ask)) == [ADD_LIMIT]
+
+
+def test_a_label_that_needs_quoting_does_not_stop_the_advice(falkordb_client):
+    graph = falkordb_client.select_graph("advice_label_lookup")
+    graph.query("CREATE (:`Two Words` {name: 'a'}), (:Person {name: 'b'})")
+    try:
+        found = Advisor(falkordb_client).advise(
+            "MATCH (n) WHERE n.name = 'a' RETURN n", "advice_label_lookup"
+        )
+
+        assert ADD_LABEL in [s["code"] for s in found]
+    finally:
+        graph.delete()
+
+
+def test_property_exists_takes_names_that_need_quoting(falkordb_client):
+    graph = falkordb_client.select_graph("exists_quoted")
+    graph.query("CREATE (:`My Label` {`a b`: 1})-[:`REL X` {w: 1}]->(:B)")
+    try:
+        backend = get_backend(graph)
+
+        assert backend.property_exists("My Label", "node", "a b")[0]
+        assert backend.property_exists("My Label", "node", "`a b`")[0]
+        assert backend.property_exists("REL X", "relationship", "w")[0]
+        assert not backend.property_exists("My Label", "node", "zzz")[0]
+    finally:
+        graph.delete()
