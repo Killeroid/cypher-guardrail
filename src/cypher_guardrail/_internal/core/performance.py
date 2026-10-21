@@ -58,9 +58,16 @@ def warnings(query: str, plan: object, checks: frozenset[str]) -> list[Issue]:
 
 
 def _cartesian_products(root: plans.Op, query: str) -> list[Issue]:
-    """A product of patterns that have nothing in common. One that is made of index scans only is left alone: it is
-    the lookup of a few rows each (``MATCH (a:P {id: 1}), (b:P {id: 2})``)."""
-    found: dict[tuple[tuple[str, ...], ...], Issue] = {}
+    return [
+        _issues.cartesian_product(groups) for groups in cartesian_groups(root, query)
+    ]
+
+
+def cartesian_groups(root: plans.Op, query: str) -> list[list[list[str]]]:
+    """The products of patterns that have nothing in common, each as the named variables of its patterns, in the
+    order the query writes them. One that is made of index scans only is left alone: it is the lookup of a few rows
+    each (``MATCH (a:P {id: 1}), (b:P {id: 2})``)."""
+    found: dict[tuple[tuple[str, ...], ...], list[list[str]]] = {}
     for op in root.walk():
         if op.name != "Cartesian Product":
             continue
@@ -80,7 +87,7 @@ def _cartesian_products(root: plans.Op, query: str) -> list[Issue]:
             ),
             key=lambda group: _first_written(query, group[0]) if group else 0,
         )
-        found.setdefault(tuple(map(tuple, groups)), _issues.cartesian_product(groups))
+        found.setdefault(tuple(map(tuple, groups)), groups)
     return list(found.values())
 
 
@@ -100,17 +107,21 @@ def _reads_property(text: str, variable: str) -> bool:
 
 
 def _unlabeled_scans(root: plans.Op, query: str) -> list[Issue]:
-    """A node with no label that is looked for among all the nodes of the graph and filtered on a property."""
+    return [_issues.unlabeled_node_scan(v) for v in unlabeled_variables(root, query)]
+
+
+def unlabeled_variables(root: plans.Op, query: str) -> list[str]:
+    """The nodes with no label that are looked for among all the nodes of the graph and filtered on a property."""
     text = patterns.strip_literals_and_comments(query)
-    found: dict[str, Issue] = {}
+    found: list[str] = []
     for op in root.walk():
         if op.name != "All Node Scan" or not op.variables:
             continue
         variable = op.variables[0]
         filtered = any(a.name == "Filter" for a in op.ancestors())
-        if filtered and _reads_property(text, variable):
-            found.setdefault(variable, _issues.unlabeled_node_scan(variable))
-    return list(found.values())
+        if filtered and _reads_property(text, variable) and variable not in found:
+            found.append(variable)
+    return found
 
 
 _REL = re.compile(r"\[[^\[\]]*\*[^\[\]]*\]")

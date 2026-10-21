@@ -4,6 +4,7 @@
 
 ### Added
 
+* **`Advisor` and `AsyncAdvisor` suggest what to change in a valid query that may be slow**, and show it: `advise(query)` returns suggestions (`cypher_guardrail.suggestions.Suggestion`) with a `description`, the `fragment` of the query they are about, `changes_results` and, when the replacement is one thing, an `example`: the query with the fragment replaced. Four codes: `BoundPath` (a path with no upper limit: the example gives it `*1..5`), `AddLabel` (a node with no label that is filtered on a property: the labels of the graph that have it), `ConnectPatterns` (a product of patterns: the relationship that connects their labels) and `UseIndex` (an indexed property compared through a function). The query is planned, never run; nothing is applied; a query that FalkorDB rejects has no suggestions. The snapshot can answer the lookups (hybrid mode); the plan always comes from the database. A new lookup, `listed_names`, asks for the labels or relationship types of the graph.
 * **`SchemaValidator(..., check_unbounded_paths=True)` reports `cypher_guardrail.Warning.UnboundedPath` from the text of the query**, so it works with no database (offline, from a snapshot) and gives the same answer in the three modes. It is off by default, does not change the score, and leaves out `shortestPath(...)` and `allShortestPaths(...)`. `AsyncSchemaValidator` takes it too. `SyntaxValidator(check_performance=...)` is unchanged, except that a `shortestPath(...)` next to an unbounded path is no longer named as one.
 
 ## 1.4.0 (2026-10-20)

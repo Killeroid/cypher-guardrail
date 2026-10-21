@@ -369,6 +369,11 @@ def path_exists(graph: str, path: str) -> Generator[Request, Any, tuple[bool, li
     return exists, notifications
 
 
+def listed_names(graph: str, kind: str) -> Generator[Request, Any, tuple[str, ...]]:
+    """Every node label (``kind`` 'labels') or relationship type ('relationship_types') of the graph, sorted."""
+    return (yield Lookup("listed_names", graph, (kind,)))
+
+
 def name_exists(graph: str, kind: str, name: str) -> Generator[Request, Any, bool]:
     """Whether the graph has a node label (``kind`` 'node') or a relationship type (``kind`` 'relationship') called ``name``.
 

@@ -271,6 +271,7 @@ class SnapshotResolver:
         }
         self._answers = {
             "missing_names": self._missing_names,
+            "listed_names": self._listed_names,
             "index_exists": self._index_exists,
             "functions_missing": self._functions_missing,
             "path_exists": self._path_exists,
@@ -305,6 +306,10 @@ class SnapshotResolver:
     # ------------------------------------------------------------------------ names
     def _names(self, kind: str) -> frozenset[str]:
         return self._known_names[kind]
+
+    def _listed_names(self, kind: str) -> Resolution:
+        names = tuple(sorted(self._names(kind)))
+        return Resolution(names, miss=not names)
 
     def _missing_names(self, kind: str, names: tuple[str, ...]) -> Resolution:
         known = self._names(kind)

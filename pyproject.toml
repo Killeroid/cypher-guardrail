@@ -130,7 +130,7 @@ layers = [
     "cypher_guardrail._internal.sources",
     "cypher_guardrail.snapshot",
     "cypher_guardrail._internal.core",
-    "cypher_guardrail.issues",
+    "cypher_guardrail.issues | cypher_guardrail.suggestions",
     "cypher_guardrail.patterns | cypher_guardrail.drivers",
 ]
 # The one import that goes against the layers: Snapshot.capture, a method of the data class, runs the capture that is

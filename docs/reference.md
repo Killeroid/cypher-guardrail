@@ -17,6 +17,10 @@ Each validator has an async twin for the `falkordb.asyncio` client, with the sam
    :members:
 .. autoclass:: cypher_guardrail.AsyncPropertiesValidator
    :members:
+.. autoclass:: cypher_guardrail.Advisor
+   :members:
+.. autoclass:: cypher_guardrail.AsyncAdvisor
+   :members:
 ```
 
 ## Snapshots
@@ -53,5 +57,14 @@ The types and codes of the items in the `metadata` that `validate()` returns. Se
 
 ```{eval-rst}
 .. automodule:: cypher_guardrail.issues
+   :members:
+```
+
+## Suggestions
+
+What `Advisor.advise()` returns. See [Advisor](usage.md#advisor-making-a-valid-query-cheaper).
+
+```{eval-rst}
+.. automodule:: cypher_guardrail.suggestions
    :members:
 ```

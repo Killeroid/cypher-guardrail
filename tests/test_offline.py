@@ -242,6 +242,15 @@ def test_the_names_the_graph_does_not_know():
     assert ask("missing_names", "labels", ()).value == ()
 
 
+def test_every_name_the_graph_knows_sorted():
+    labels = ask("listed_names", "labels")
+    assert labels == Resolution(tuple(sorted(labels.value)), reliable=True, miss=False)
+    assert {"A", "B"} <= set(labels.value)
+    assert ask("listed_names", "relationship_types").value == tuple(
+        sorted(ask("listed_names", "relationship_types").value)
+    )
+
+
 # ---------------------------------------------------------------------------- properties
 
 

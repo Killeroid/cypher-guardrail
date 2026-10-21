@@ -9,6 +9,7 @@ except PackageNotFoundError:
 from cypher_guardrail._internal.core.errors import CypherError, GraphNotFoundError
 from cypher_guardrail.live import AsyncLiveSnapshot, LiveSnapshot, StaleSnapshotError
 from cypher_guardrail.snapshot import Snapshot, SnapshotSource
+from cypher_guardrail.validators.advisor import Advisor, AsyncAdvisor
 from cypher_guardrail.validators.properties_validator import (
     AsyncPropertiesValidator,
     PropertiesValidator,
@@ -23,6 +24,8 @@ from cypher_guardrail.validators.syntax_validator import (
 )
 
 __all__ = [
+    "Advisor",
+    "AsyncAdvisor",
     "AsyncLiveSnapshot",
     "AsyncPropertiesValidator",
     "AsyncSchemaValidator",

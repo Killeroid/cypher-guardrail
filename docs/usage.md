@@ -199,3 +199,31 @@ score, metadata = props_validator.validate(
 * **Aggregates that need numbers.** `check_types=True` also reports `sum`, `avg`, `stDev`, `stDevP`, `percentileCont` and `percentileDisc` called on a property by itself (`sum(g.title)`, `avg(DISTINCT g.title)`) when none of its values is a number: `cypher_guardrail.Warning.AggregateTypeMismatch`, with `function`, `kind`, `name`, `property` and `types`. Unlike a comparison, this one does not just find nothing: FalkorDB fails when the query runs (`Type mismatch: expected Integer, Float, or Null but was String`), so it is the warning to heed. A property with some numbers among its values is fine, `min`, `max`, `count` and `collect` take any value and are not looked at, and an argument that is an expression (`sum(g.price * 2)`, `sum(toInteger(g.code))`) is not either. The same rules as above: only a variable that has a label in the query, and offline a snapshot captured with `types=True`.
 * **Offline, without types, it says so.** A validator given only a snapshot has no database to ask, so `check_types=True` with a snapshot that holds no property types (captured without `types=True`, or written by hand without `node_property_types`) can report nothing. It gives a `UserWarning` once for each validator ("check_types=True does nothing: the snapshot has no property types ..."), so the silence is not taken for "every comparison is fine". The hybrid mode asks the database instead, and says nothing.
 * **The cost.** Online, one small query for each property that is compared with a literal. Offline and in the hybrid mode there is none for a literal that fits: capture the snapshot with `Snapshot.capture(client, "kg", types=True)` (see [Three ways to validate](snapshots.md)). A snapshot captured without the types says nothing offline, and in the hybrid mode the database is asked.
+
+## Advisor: making a valid query cheaper
+
+`SyntaxValidator(check_performance=True)` says that a query may be slow. `Advisor` says what to change, and shows the query as it could be written. It works on valid queries: one that FalkorDB rejects gets no suggestions (validate it first).
+
+```python
+from cypher_guardrail import Advisor
+
+advisor = Advisor(driver)
+for suggestion in advisor.advise("MATCH (n) WHERE n.born = 1 RETURN n", database_name):
+    print(suggestion["description"])
+    print(suggestion.get("example"))
+# MATCH (n:Person) WHERE n.born = 1 RETURN n
+```
+
+The query is planned (`GRAPH.EXPLAIN`), never run. A suggestion is a dict (see `cypher_guardrail.suggestions`): `code`, `description`, `fragment` (the exact text of the query it is about), `changes_results`, an `example` when the replacement is one thing, and the field of its code.
+
+| Code | Fields | What it says |
+|---|---|---|
+| `cypher_guardrail.Suggestion.BoundPath` | | A path has no upper limit (`-[:KNOWS*]->`). The example gives it `*1..5`: choose the limit you need. |
+| `cypher_guardrail.Suggestion.AddLabel` | `labels` | A node with no label is looked for among all the nodes. The graph says which labels have its properties: with one, the example labels the node; with several, they are listed and none is chosen. |
+| `cypher_guardrail.Suggestion.ConnectPatterns` | `relationship_types` | Two patterns have nothing in common, so every row of one is paired with every row of the other. The graph says which relationship connects their labels: with one, the example writes it; with none, the suggestion says no relationship connects them. |
+| `cypher_guardrail.Suggestion.UseIndex` | | A property that has an index is compared through a function (`toLower(m.title) = 'a'`), so FalkorDB cannot use the index. The example compares the property itself. |
+
+**Nothing is applied for you.** Each suggestion can change what the query returns (a limit cuts the paths, a label drops the nodes that do not have it, a function that ignored case is gone), so `changes_results` is `True` for all of them and the example is only an example. An `example` is left out when the fragment is written more than once in the query, or when the graph has more than one answer.
+
+`Advisor(driver, snapshot=snapshot)` is the hybrid mode: the snapshot answers what it can (which labels have a property, which relationships connect two labels), and the database the rest. The plan always comes from the database, so there is no offline `Advisor`, and `AsyncAdvisor` is the async twin.
+

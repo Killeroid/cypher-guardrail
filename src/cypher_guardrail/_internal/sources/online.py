@@ -88,6 +88,12 @@ def missing_names(
     return tuple(name for name in names if name not in known)
 
 
+def listed_names(graph: str, kind: str) -> Generator[Request, Any, tuple[str, ...]]:
+    """Every name of ``kind`` ('labels', 'relationship_types' or 'property_keys') that the graph knows, sorted."""
+    known = yield from schema_set(graph, _NAME_PROCEDURES[kind])
+    return tuple(sorted(known))
+
+
 def index_exists(
     graph: str, kind: str, on: str, label: str, attribute: str | None
 ) -> Generator[Request, Any, bool]:
@@ -244,6 +250,7 @@ def label_combinations(
 
 _RESOLVERS = {
     "missing_names": missing_names,
+    "listed_names": listed_names,
     "index_exists": index_exists,
     "functions_missing": functions_missing,
     "path_exists": path_exists,
