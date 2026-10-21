@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.1 (2026-10-21)
+
+### Fixed
+
+* **A label or property that needs quoting no longer makes an existence check fail.** The check that a property exists on a label put both into the query as they came, so a label such as `Two Words` was a syntax error, and `Advisor.advise` failed on any graph that has one. They are quoted now, whether they arrive bare or already quoted.
+* **A timeout or a full memory is no longer taken for "it does not exist".** The checks of paths, properties and label combinations took every database error for that answer, so a valid query scored lower when the database was busy. Such a failure (a timeout, a full memory, too many queued queries) is raised as a `CypherError`; a syntax error, an alias used twice and a missing graph are still taken as "does not exist".
+
+### Changed
+
+* The README names text2cypher, lists the optional checks (types, performance, advice) and gets a page on the async classes.
+
 ## 1.5.0 (2026-10-21)
 
 ### Added
