@@ -2,10 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+* **A division by zero of a property of decimals is no error.** `m.rating / 0` gives `inf`, and fails only for integers (or strings): the validator asks the graph (or the snapshot, if it has the types) what the property holds, and leaves alone the property whose values are all decimals.
+
 ### Fixed
 
 * **On FalkorDB 6, a query that writes is no longer reported as valid.** The check that a query can write (`SyntaxValidator` with `read_only`, and `is_write`) sent `GRAPH.RO_QUERY "EXPLAIN <query>" TIMEOUT 1`, and FalkorDB 6 does not parse `EXPLAIN` as part of a query: it answered a syntax error to every such request, which was taken for "not a write", so no `WriteQuery` issue was reported (execution was never at risk: `GRAPH.RO_QUERY` still refuses a write). The request is now `GRAPH.RO_QUERY "<query>" TIMEOUT 1`, which FalkorDB 4 and 6 answer alike: a refusal for a query that can write, and a read query is stopped after a millisecond.
 * **The advisor and the performance warnings read the plans of FalkorDB 6.** A plan there has no `Results` operation at its top, so `AddLimit` was never suggested, and FalkorDB 6 names an anonymous element `_anon_0` (4 says `@anon_0`), which a `Cartesian Product` warning listed as a variable.
+* **A division or a modulo by a zero that is in the query is found on FalkorDB 6, and `1.0 / 0` is no longer an error.** FalkorDB 4 refused `1 / (1 - 1)`, `5 % 0` and the like when it planned the query; FalkorDB 6 fails only when it runs, so `SyntaxValidator` reported such a query as valid. `cypher_guardrail.Error.ArithmeticError` is now reported for a divisor of `/` or `%` that is made of integers and is zero (`/ 0`, `% 0`, `/ (1 - 1)`, `/ (2 * 0)`, `/ (5 / 10)`). A decimal in the division (`1.0 / 0`, `1 / 0.0`, `5 % (1 - 1.0)`) gives `inf` or `nan` and is no error, as it was not on FalkorDB 4; the validator flagged these, so a valid query was reported as invalid. A divisor that is not made of numbers (`x - x`, `abs(0)`) is still found only when the query runs.
+* **An unterminated string is a syntax error on FalkorDB 6.** FalkorDB 6 answers `Unterminated string starting at pos: N`, and `Encountered unhandled type in inlined properties` for a property in a pattern that cannot be parsed (`{name: 'x}`, `{a: 1 +}`), which were reported as `ExecutionFailed`. Both are now `FalkorDB.ClientError.Statement.SyntaxError`.
 
 ## 1.5.1 (2026-10-21)
 

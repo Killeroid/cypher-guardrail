@@ -771,7 +771,12 @@ class TestStringLiteralsAndComments:
 
 
 @pytest.mark.parametrize(
-    "divisor", ["0.5", "0.25", "0.05", "0.0001", "(0.5)", "( 0.75 )", "0.1 + 1"]
+    "divisor",
+    [
+        *["0.5", "0.25", "0.05", "0.0001", "(0.5)", "( 0.75 )", "0.1 + 1"],
+        # a decimal zero gives inf in FalkorDB: it is no error
+        *["0.0", "0.000", "( 0.0 )"],
+    ],
 )
 def test_a_divisor_that_only_starts_with_zero_is_not_division_by_zero(
     falkordb_client, divisor
@@ -783,7 +788,7 @@ def test_a_divisor_that_only_starts_with_zero_is_not_division_by_zero(
     assert (valid, metadata) == (True, [])
 
 
-@pytest.mark.parametrize("divisor", ["0", "0.0", "0.000", "(0)", "( 0.0 )", "0 + 1"])
+@pytest.mark.parametrize("divisor", ["0", "(0)", "(1 - 1)", "( 2 * 0 )", "0 + 1"])
 def test_a_divisor_that_is_zero_is_division_by_zero(falkordb_client, divisor):
     valid, metadata = SyntaxValidator(falkordb_client).validate(
         f"MATCH (g:Goal) RETURN 10 / {divisor} AS x", "kg"

@@ -57,6 +57,17 @@ def missing_graph_key(graph):
     return ("graph_missing", graph)
 
 
+# How FalkorDB words a query that cannot be parsed. FalkorDB 6 says it with its own words when a string is not closed
+# ("Unterminated string starting at pos: 7"), and when the value of a property in a pattern cannot be parsed (an
+# unterminated string, `{a: 1 +}`, `{a: }`): "Encountered unhandled type in inlined properties".
+_SYNTAX_WORDING = (
+    "Invalid input",
+    "errMsg:",
+    "Unterminated string",
+    "unhandled type in inlined properties",
+)
+
+
 def to_cypher_error(error):
     """Turn a redis ``ResponseError`` into a :class:`CypherError` with one of cypher-guardrail's codes.
 
@@ -71,10 +82,8 @@ def to_cypher_error(error):
         return CypherError(ARITHMETIC_ERROR, "Division by zero.")
     if "only on read-only queries" in message:
         return CypherError(NOT_READ_ONLY, message)
-    if (
-        "Invalid input" in message
-        or "errMsg:" in message
-        or message.startswith("Error: empty query")
+    if any(text in message for text in _SYNTAX_WORDING) or message.startswith(
+        "Error: empty query"
     ):
         return CypherError(SYNTAX_ERROR, message)
     return CypherError(_code_of_execution_failure(message), message)

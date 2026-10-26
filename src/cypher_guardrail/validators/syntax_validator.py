@@ -7,6 +7,7 @@ import regex as re
 from cypher_guardrail._internal.core import builders as _issues
 from cypher_guardrail._internal.core import performance as _performance
 from cypher_guardrail._internal.core import queries as _queries
+from cypher_guardrail._internal.core.arithmetic import zero_divisions
 from cypher_guardrail._internal.core.errors import CypherError, GraphNotFoundError
 from cypher_guardrail._internal.core.io import Lookup, Request
 from cypher_guardrail._internal.core.scopes import restore_variables, separate_variables
@@ -24,11 +25,6 @@ from cypher_guardrail.issues import (
 )
 from cypher_guardrail.patterns import split_union, strip_literals_and_comments
 from cypher_guardrail.snapshot import SnapshotSource
-
-# `/ 0`, `/ 0.0` and `/ (0)` always fail when the query runs (ArithmeticError). A divisor that
-# only becomes zero while the query runs cannot be found without running it. (Not `/ 0.5`: the
-# number must not go on with a digit, a letter, a dot or a call.)
-_DIVISION_BY_ZERO = r"/\s*(?:\(\s*0(?:\.0*)?\s*\)|0(?:\.0*)?)\s*(?![\w.(])"
 
 
 def _with_several_labels(branch):
@@ -142,7 +138,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
             # The checks below look for Cypher syntax, so they must not see text inside strings or
             # comments (e.g. WHERE n.name = 'a / 0' or // (n:A) (n:B))
             code = strip_literals_and_comments(query)
-            if re.search(_DIVISION_BY_ZERO, code):
+            if (yield from self._divides_by_zero(code, graph)):
                 metadata.append(
                     _issues.database_error(ARITHMETIC_ERROR, "Division by zero.")
                 )
@@ -161,6 +157,36 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
             # FalkorDB.DatabaseError.Statement.ExecutionFailed or cypher_guardrail.Error.ArithmeticError
             metadata.append(_issues.database_error(e.code, e.message))
             return False, metadata
+
+    def _divides_by_zero(self, code, graph) -> Generator[Request, Any, bool]:
+        """Whether the query divides by an integer zero. FalkorDB answers ``inf`` when the dividend is a decimal, and
+        what a property holds is asked of the graph (or of the snapshot) when the dividend is one: a property whose
+        values are all decimals is no failure (a string is: the query fails, if not for the zero)."""
+        for dividend in zero_divisions(code):
+            if dividend is None:
+                return True
+            if (yield from self._may_fail_to_divide(code, graph, *dividend)):
+                return True
+        return False
+
+    def _may_fail_to_divide(
+        self, code, graph, variable, prop
+    ) -> Generator[Request, Any, bool]:
+        """Whether dividing property ``prop`` of ``variable`` may fail: the types of its values are not known (the
+        variable has no label, or the property no value), or one is not a decimal."""
+        owner = re.search(rf"([(\[])\s*{re.escape(variable)}\s*:\s*(`[^`]+`|\w+)", code)
+        if owner is None:
+            return True
+        kind = "node" if owner[1] == "(" else "relationship"
+        try:
+            observed = yield from _queries.property_types(
+                graph, owner[2].strip("`"), kind, prop, "Integer"
+            )
+        except GraphNotFoundError:
+            raise
+        except CypherError:
+            return True
+        return not observed or set(observed) != {"Float"}
 
     def _performance_warnings(
         self, graph, query
@@ -227,8 +253,9 @@ class SyntaxValidator(_SyntaxValidator[Driver]):
         - cypher_guardrail.Error.WriteQuery: Raised when the query can modify the graph and ``read_only`` is True (the default).
         - cypher_guardrail.Warning.WriteQuery: The same when ``read_only`` is False. It is the only warning that leaves the
           result True: the query is valid, the warning is there to be read.
-        - cypher_guardrail.Error.ArithmeticError: Raised when an arithmetic error occurs during query execution due to explicit division by zero ("/0", "/0.0" , "/(0)"),
-          but not when arithmetic errors may occur at execution time when a divisor becomes zero as part of dynamic execution.
+        - cypher_guardrail.Error.ArithmeticError: Raised when an arithmetic error occurs during query execution due to division or modulo by an integer zero that is in the text of the query ("/ 0", "% 0", "/ (0)", "/ (1 - 1)", "/ (2 * 0)"),
+          but not when the divisor becomes zero only as the query runs (``x / (y - y)``, ``abs(0)``), and not for a decimal zero, which gives
+          ``inf`` or ``nan`` in FalkorDB and is no error (``1.0 / 0``, ``1 / 0.0``).
         - cypher_guardrail.Error.ConflictingVariables: Raised when a variable is given different labels (unless they are labels that occur together on a node, see ``check_multilabeled_nodes``).
 
         Args:
