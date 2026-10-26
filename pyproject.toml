@@ -36,6 +36,7 @@ dev = [
     "import-linter>=2.15",
     "pytest>=9.1.1",
     "ruff>=0.17.0",
+    "testcontainers>=4.15.0",
     "ty>=0.0.87",
 ]
 docs = [
@@ -92,7 +93,7 @@ max-returns = 6
 [tool.ty.environment]
 python = ".venv"
 # the corpus of tests/accuracy/ is imported by tests/test_accuracy.py and scripts/accuracy.py as `harness`
-extra-paths = ["tests/accuracy"]
+extra-paths = ["tests/accuracy", "tests"]
 
 [tool.ty.analysis]
 # FalkorDBLite is only installed on Python >= 3.12, but a test script imports it

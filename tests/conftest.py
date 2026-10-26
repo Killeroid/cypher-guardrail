@@ -1,8 +1,19 @@
-"""Fixtures: an embedded FalkorDB (FalkorDBLite) with small graphs the tests validate queries against."""
+"""Fixtures: a FalkorDB (a Docker container, a running server or FalkorDBLite) with small graphs the tests validate queries against."""
 
 import asyncio
+import contextlib
+import os
 
 import pytest
+import redis
+from servers import (
+    BACKEND_VAR,
+    IMAGE,
+    Unavailable,
+    graph_version,
+    major_version,
+    running_falkordb,
+)
 
 GRAPH_NAME = "kg"
 # The name of a graph where an unlabeled variable has more than one valid label combination
@@ -26,29 +37,60 @@ CREATE (a)-[:HAS_NUTS1]->(n)
 
 
 @pytest.fixture(scope="session")
-def falkordb_client(tmp_path_factory):
-    """An embedded FalkorDB (FalkorDBLite) holding the seeded `kg` graph."""
-    redislite = pytest.importorskip(
-        "redislite.falkordb_client",
-        reason="falkordblite (Python >= 3.12) is not installed",
-    )
-    client = redislite.FalkorDB(
-        str(tmp_path_factory.mktemp("falkordb") / "cypher_guardrail.db")
-    )
-    client.select_graph(GRAPH_NAME).query(SEED)
-    client.select_graph(AMBIGUOUS_GRAPH_NAME).query(AMBIGUOUS_SEED)
-    yield client
-    client.close()
+def falkordb_server(tmp_path_factory):
+    """The FalkorDB the tests run on: a Docker container, a running server or FalkorDBLite (see ``servers.py``)."""
+    try:
+        with running_falkordb(tmp_path_factory.mktemp("falkordb")) as server:
+            yield server
+    except Unavailable as error:
+        pytest.skip(f"no FalkorDB to test against: {error}")
 
 
 @pytest.fixture(scope="session")
-def plain_falkordb_client(falkordb_client):
-    """The stock `falkordb.FalkorDB` client (not the FalkorDBLite subclass) talking to the same embedded engine."""
+def falkordb_client(falkordb_server):
+    """The client of that FalkorDB, holding the seeded `kg` and `ambiguous` graphs."""
+    client = falkordb_server.client
+    for name in (GRAPH_NAME, AMBIGUOUS_GRAPH_NAME):
+        # a server that was used before may still have them
+        with contextlib.suppress(redis.ResponseError):
+            client.select_graph(name).delete()
+    client.select_graph(GRAPH_NAME).query(SEED)
+    client.select_graph(AMBIGUOUS_GRAPH_NAME).query(AMBIGUOUS_SEED)
+    return client
+
+
+@pytest.fixture(scope="session")
+def falkordb_major(falkordb_server):
+    """The major version of the FalkorDB of the tests ("4" or "6"): some of its answers differ between them."""
+    return major_version(falkordb_server.client)
+
+
+@pytest.fixture(scope="session")
+def falkordb_version(falkordb_server):
+    """The version of the FalkorDB of the tests as a number: 41803 is 4.18.3, 60003 is 6.0.3."""
+    return graph_version(falkordb_server.client)
+
+
+@pytest.fixture(scope="session")
+def connection(falkordb_server, falkordb_client):
+    """What ``falkordb.FalkorDB`` takes to connect to the same server (host and port, or a unix socket)."""
+    return falkordb_server.connection
+
+
+@pytest.fixture(scope="session")
+def plain_falkordb_client(connection):
+    """The stock `falkordb.FalkorDB` client (not the FalkorDBLite subclass) talking to the same server."""
     import falkordb
 
-    client = falkordb.FalkorDB(unix_socket_path=falkordb_client.client.socket_file)
+    client = falkordb.FalkorDB(**connection)
     yield client
     client.close()
+
+
+def pytest_report_header(config):
+    return (
+        f"falkordb: {os.environ.get(BACKEND_VAR, 'auto')} ({IMAGE} when it is Docker)"
+    )
 
 
 @pytest.fixture
@@ -85,14 +127,14 @@ def documents(falkordb_client):
 
 
 @pytest.fixture
-def run_async(falkordb_client):
+def run_async(connection):
     """``run_async(fn)``: await ``fn(client)`` on a ``falkordb.asyncio`` client, in a fresh event loop."""
 
     from falkordb.asyncio import FalkorDB as AsyncFalkorDB
 
     def run(fn):
         async def main():
-            client = AsyncFalkorDB(unix_socket_path=falkordb_client.client.socket_file)
+            client = AsyncFalkorDB(**connection)
             try:
                 return await fn(client)
             finally:

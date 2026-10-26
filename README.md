@@ -128,9 +128,11 @@ KG Valid Query = 1  if SyntaxValidator is_valid is True
 
 ```sh
 uv sync            # create the environment (Python >= 3.12 also installs FalkorDBLite for the tests)
-uv run pytest      # run the tests
+uv run pytest      # run the tests on a FalkorDB in Docker (falkordb/falkordb:6.0.3), or on FalkorDBLite when Docker is not running
 uv run --group docs sphinx-build -W docs docs/_build/html   # build the documentation
 ```
+
+The tests choose their FalkorDB with `CYPHER_GUARDRAIL_TEST_BACKEND`: `docker` (a container that testcontainers starts and removes; `FALKORDB_IMAGE` changes the image), `server` (the one at `FALKORDB_HOST` and `FALKORDB_PORT`, which the tests write graphs to), `lite` (FalkorDBLite) or `auto` (the default: `server` if `FALKORDB_HOST` is set, else `docker` if it answers, else `lite`).
 
 [`.github/workflows/publish.yml`](https://github.com/Killeroid/cypher-guardrail/blob/main/.github/workflows/publish.yml) publishes a release to PyPI when a version tag is pushed: set `version` in `pyproject.toml`, add the release to `CHANGELOG.md`, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
 

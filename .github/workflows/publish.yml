@@ -18,6 +18,8 @@ jobs:
   build:
     name: Build and check
     runs-on: ubuntu-latest
+    env:
+      CYPHER_GUARDRAIL_TEST_BACKEND: lite
     steps:
       - uses: actions/checkout@v7
 

@@ -5,6 +5,7 @@ in the review that were about this validator.
 """
 
 import copy
+import json
 import os
 import subprocess
 import sys
@@ -654,20 +655,21 @@ def test_the_backend_explain_agrees(falkordb_client):
 class TestHashSeedIndependence:
     """Python randomises str hashes per process, so anything ordered by a set differs between runs."""
 
-    # The subprocess only connects to the database of the test session: starting an embedded database for each seed
+    # The subprocess only connects to the database of the test session: starting a database for each seed
     # would take most of the time of the whole suite.
     SCRIPT = """
+import json
 import sys
 import falkordb
 from cypher_guardrail import SyntaxValidator
 
-client = falkordb.FalkorDB(unix_socket_path=sys.argv[1])
+client = falkordb.FalkorDB(**json.loads(sys.argv[1]))
 validator = SyntaxValidator(client, check_multilabeled_nodes=False)
 print(validator.validate("MATCH (g:Zeta) MATCH (g:Alpha) MATCH (g:Mid) RETURN g", "hash_seed")[1][0]["description"])
 """
 
     def test_conflicting_label_message_does_not_depend_on_the_hash_seed(
-        self, falkordb_client
+        self, falkordb_client, connection
     ):
         graph = falkordb_client.select_graph("hash_seed")
         graph.query("CREATE (:Zeta), (:Alpha), (:Mid)")
@@ -678,7 +680,7 @@ print(validator.validate("MATCH (g:Zeta) MATCH (g:Alpha) MATCH (g:Mid) RETURN g"
                         sys.executable,
                         "-c",
                         self.SCRIPT,
-                        falkordb_client.client.socket_file,
+                        json.dumps(connection),
                     ],
                     env={**os.environ, "PYTHONHASHSEED": str(seed)},
                     capture_output=True,

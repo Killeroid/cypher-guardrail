@@ -273,14 +273,14 @@ if __name__ == "__main__":
 
     sys.path.insert(0, str(Path(__file__).parent))
     from conftest import AMBIGUOUS_GRAPH_NAME, AMBIGUOUS_SEED, GRAPH_NAME, SEED
-    from redislite.falkordb_client import FalkorDB
+    from servers import running_falkordb
 
-    client = FalkorDB(str(Path(tempfile.mkdtemp()) / "cypher_guardrail.db"))
-    client.select_graph(GRAPH_NAME).query(SEED)
-    client.select_graph(AMBIGUOUS_GRAPH_NAME).query(AMBIGUOUS_SEED)
-    TRACE_FILE.write_text(
-        json.dumps(trace_sync(client), indent=1, sort_keys=True) + "\n"
-    )
+    with running_falkordb(Path(tempfile.mkdtemp())) as server:
+        server.client.select_graph(GRAPH_NAME).query(SEED)
+        server.client.select_graph(AMBIGUOUS_GRAPH_NAME).query(AMBIGUOUS_SEED)
+        TRACE_FILE.write_text(
+            json.dumps(trace_sync(server.client), indent=1, sort_keys=True) + "\n"
+        )
     print("recorded", TRACE_FILE)
 
 
