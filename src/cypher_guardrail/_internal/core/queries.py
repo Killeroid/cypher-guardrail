@@ -21,6 +21,7 @@ from cypher_guardrail._internal.core.errors import (
     CypherError,
     GraphNotFoundError,
     is_missing_graph,
+    is_resource_failure,
     missing_graph_key,
 )
 from cypher_guardrail._internal.core.io import (
@@ -32,6 +33,8 @@ from cypher_guardrail._internal.core.io import (
     RoQuery,
 )
 from cypher_guardrail.issues import (
+    SYNTAX_ERROR,
+    FailsWhenRunIssue,
     ParameterNotProvidedIssue,
     UnknownLabelIssue,
     UnknownRelationshipTypeIssue,
@@ -82,6 +85,8 @@ def provided_parameters(query: str) -> set[str]:
 # What FalkorDB says when it plans a query and needs the value of a parameter (it does on a label that has an index,
 # and in LIMIT and SKIP) and has none: the validator does not have the values, only the names
 _NEEDS_A_VALUE = ("Missing parameters", "operates only on non-negative integers")
+# What FalkorDB 6 says when the query runs and a parameter has no value (the one that ``ParameterNotProvided`` reports)
+_NO_VALUE = re.compile(r"^Parameter \S+ not found")
 
 
 def _placeholder(name: str, text: str) -> str:
@@ -201,10 +206,16 @@ def explain(
     query: str,
     read_only: bool | None = None,
     parameters: Iterable[str] | None = None,
+    check_runtime: bool = False,
 ) -> Generator[
     Request,
     Any,
-    list[ParameterNotProvidedIssue | WriteQueryErrorIssue | WriteQueryWarningIssue],
+    list[
+        ParameterNotProvidedIssue
+        | WriteQueryErrorIssue
+        | WriteQueryWarningIssue
+        | FailsWhenRunIssue
+    ],
 ]:
     """Check a query without executing it.
 
@@ -214,6 +225,8 @@ def explain(
             a query in ``GRAPH.RO_QUERY``, in which a read query is stopped after a millisecond (see ``io``).
         parameters: The names of the parameters the caller will send with the query (a dict of them will do), which
             are not reported as missing. The ones a ``CYPHER`` header gives are not either.
+        check_runtime: Also report a failure of the query when FalkorDB ran it (for a millisecond, to ask whether it
+            can write), as a warning. Needs ``read_only`` to be set, since that is the request that runs it.
 
     Returns:
         The problems found: missing parameters, and a write when ``read_only`` is not None.
@@ -224,23 +237,12 @@ def explain(
         CypherError: If the database rejects the query.
     """
     given = parameter_names(parameters)
-    try:
-        writes = yield from _explain(graph, query, read_only)
-    except CypherError as e:
-        if is_missing_graph(e):
-            raise GraphNotFoundError(graph) from e
-        # FalkorDB cannot plan the query without the value of a parameter: plan it with a placeholder for each
-        # (a missing parameter is reported below, from the text, whatever the plan says)
-        placeholders = (
-            with_placeholder_parameters(query)
-            if any(text in e.message for text in _NEEDS_A_VALUE)
-            else None
-        )
-        if placeholders is None:
-            raise
-        writes = yield from _explain(graph, placeholders, read_only)
+    writes, failure = yield from _explain_with_placeholders(graph, query, read_only)
     issues: list[
-        ParameterNotProvidedIssue | WriteQueryErrorIssue | WriteQueryWarningIssue
+        ParameterNotProvidedIssue
+        | WriteQueryErrorIssue
+        | WriteQueryWarningIssue
+        | FailsWhenRunIssue
     ] = []
     # FalkorDB only reports a missing parameter when the query runs, so detect it from the text.
     # (The caller gives some of them, and so does a ``CYPHER`` header.)
@@ -249,7 +251,30 @@ def explain(
         issues.append(_issues.parameters_not_provided(absent))
     if writes and read_only is not None:
         issues.append(_issues.write_query(read_only))
+    if failure is not None and check_runtime:
+        issues.append(_issues.fails_when_run(failure.message))
     return issues
+
+
+def _explain_with_placeholders(
+    graph: str, query: str, read_only: bool | None
+) -> Generator[Request, Any, tuple[bool, CypherError | None]]:
+    """:func:`_explain`, and when FalkorDB cannot plan the query without the value of a parameter, the same with a
+    placeholder for each (a missing parameter is reported from the text, whatever the plan says)."""
+    try:
+        return (yield from _explain(graph, query, read_only))
+    except CypherError as e:
+        if is_missing_graph(e):
+            raise GraphNotFoundError(graph) from e
+        placeholders = (
+            with_placeholder_parameters(query)
+            if any(text in e.message for text in _NEEDS_A_VALUE)
+            else None
+        )
+        if placeholders is None:
+            raise
+        writes, _ = yield from _explain(graph, placeholders, read_only)
+        return writes, None
 
 
 def graph_checked(method):
@@ -274,21 +299,35 @@ def graph_checked(method):
 
 def _explain(
     graph: str, query: str, read_only: bool | None
-) -> Generator[Request, Any, bool]:
-    """EXPLAIN ``query``, and say whether FalkorDB refused it as a write (only asked when ``read_only`` is not None)."""
+) -> Generator[Request, Any, tuple[bool, CypherError | None]]:
+    """EXPLAIN ``query``, and say whether FalkorDB refused it as a write (only asked when ``read_only`` is not None),
+    and the failure of the query when FalkorDB ran it (for a millisecond) and the plain EXPLAIN accepts it."""
     if read_only is None:
         yield Explain(graph, query)
-        return False
+        return False, None
     try:
         yield Explain(graph, query, read_only=True)
     except CypherError as e:
         if e.code == NOT_READ_ONLY:
-            return True
+            return True, None
         # Not an answer about writes (a syntax error, or something this form of the request gets
         # wrong, such as the parameters of a ``CYPHER a=1 ...`` query): the plain EXPLAIN gives the
         # database's own answer, and raises the error if there is one
         yield Explain(graph, query)
-    return False
+        return False, e if _failed_when_run(e) else None
+    return False, None
+
+
+def _failed_when_run(error: CypherError) -> bool:
+    """Whether ``error`` is a failure of the query on the data, and not a syntax error, a missing parameter or a
+    shortage of time or memory."""
+    return (
+        error.code != SYNTAX_ERROR
+        and not is_resource_failure(error)
+        and not is_missing_graph(error)
+        and not any(text in error.message for text in _NEEDS_A_VALUE)
+        and not _NO_VALUE.match(error.message)
+    )
 
 
 def plan(graph: str, query: str) -> Generator[Request, Any, list[str]]:

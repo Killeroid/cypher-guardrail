@@ -30,6 +30,8 @@ UNKNOWN_FUNCTION: Final = "cypher_guardrail.Warning.UnknownFunction"
 CARTESIAN_PRODUCT: Final = "cypher_guardrail.Warning.CartesianProduct"
 UNLABELED_NODE_SCAN: Final = "cypher_guardrail.Warning.UnlabeledNodeScan"
 UNBOUNDED_PATH: Final = "cypher_guardrail.Warning.UnboundedPath"
+# A valid query that FalkorDB failed to run on the data of the graph (``SyntaxValidator(check_runtime=True)``)
+FAILS_WHEN_RUN: Final = "cypher_guardrail.Warning.FailsWhenRun"
 # Errors raised by FalkorDB itself
 SYNTAX_ERROR: Final = "FalkorDB.ClientError.Statement.SyntaxError"
 EXECUTION_FAILED: Final = "FalkorDB.DatabaseError.Statement.ExecutionFailed"
@@ -279,6 +281,16 @@ class UnboundedPathIssue(TypedDict):
     path: str
 
 
+class FailsWhenRunIssue(TypedDict):
+    """FalkorDB accepts the query, but failed when it ran it on the graph: a divisor that is zero in a row, a value of the
+    wrong type (``sum`` of a string). ``message`` is the one of the database. It depends on the data: another graph
+    may not fail, and a query that fails after the first rows is not found."""
+
+    code: Literal["cypher_guardrail.Warning.FailsWhenRun"]
+    description: str
+    message: str
+
+
 class UnboundVariableIssue(TypedDict):
     """The query uses a variable that no clause before it defines (FalkorDB: ``'x' not defined``)."""
 
@@ -331,4 +343,5 @@ Issue = (
     | CartesianProductIssue
     | UnlabeledNodeScanIssue
     | UnboundedPathIssue
+    | FailsWhenRunIssue
 )

@@ -49,7 +49,8 @@ graph = "my_graph"
 query = "MATCH (g:Goal)-[:HAS_TARGET]->(t:Target) WHERE g.code = '1' RETURN t"
 
 # check_performance=True (optional): also warn about a valid query that may be slow
-syntax = SyntaxValidator(driver, check_performance=True)
+# check_runtime=True (optional): also warn about a valid query that fails when it runs on the data
+syntax = SyntaxValidator(driver, check_performance=True, check_runtime=True)
 is_valid, syntax_metadata = syntax.validate(query, database_name=graph)
 schema_score, schema_metadata = SchemaValidator(driver).validate(
     query, database_name=graph

@@ -27,6 +27,7 @@ from cypher_guardrail.issues import (
     CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
     EXECUTION_FAILED,
+    FAILS_WHEN_RUN,
     INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
@@ -292,6 +293,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         CARTESIAN_PRODUCT,
         CONFLICTING_VARIABLES,
         EXECUTION_FAILED,
+        FAILS_WHEN_RUN,
         INVALID_LIMIT_ERROR,
         INVALID_PROPERTY_ACCESS,
         PARAMETER_NOT_PROVIDED,
@@ -317,7 +319,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         typing.get_args(typing.get_type_hints(issues.DatabaseErrorIssue)["code"])
     )
     assert declared == constants
-    assert len(constants) == 25
+    assert len(constants) == 26
 
 
 def test_different_issues_of_one_code_are_all_reported(graphs):

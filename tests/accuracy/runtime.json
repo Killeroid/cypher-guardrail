@@ -1,0 +1,13 @@
+[
+ {"id": "runtime.fails_when_run.1", "graph": "movies", "query": "MATCH (p:Person) RETURN sum(p.name)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [{"code": "Warning.FailsWhenRun"}], "valid": true},
+ {"id": "runtime.fails_when_run.2", "graph": "movies", "query": "MATCH (m:Movie) RETURN avg(m.title)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [{"code": "Warning.FailsWhenRun"}], "valid": true},
+ {"id": "runtime.fails_when_run.3", "graph": "movies", "query": "MATCH (p:Person) RETURN p.born / (p.born - p.born)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [{"code": "Warning.FailsWhenRun"}], "valid": true},
+ {"id": "runtime.fails_when_run.4", "graph": "movies", "query": "MATCH (m:Movie) RETURN m.released / (m.released - m.released) AS x", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [{"code": "Warning.FailsWhenRun"}], "valid": true},
+ {"id": "runtime.fails_when_run.5", "graph": "movies", "query": "MATCH (p:Person) RETURN size(p.born)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [{"code": "Warning.FailsWhenRun"}], "valid": true},
+ {"id": "runtime.fails_when_run_near_miss.1", "graph": "movies", "query": "MATCH (p:Person) RETURN sum(p.born)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [], "valid": true, "near_miss": ["Warning.FailsWhenRun"]},
+ {"id": "runtime.fails_when_run_near_miss.2", "graph": "movies", "query": "MATCH (m:Movie) RETURN avg(m.rating)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [], "valid": true, "near_miss": ["Warning.FailsWhenRun"]},
+ {"id": "runtime.fails_when_run_near_miss.3", "graph": "movies", "query": "MATCH (p:Person) RETURN p.born / 2", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [], "valid": true, "near_miss": ["Warning.FailsWhenRun"]},
+ {"id": "runtime.fails_when_run_near_miss.4", "graph": "movies", "query": "MATCH (p:Person) RETURN count(p.name)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [], "valid": true, "near_miss": ["Warning.FailsWhenRun"]},
+ {"id": "runtime.fails_when_run_near_miss.5", "graph": "movies", "query": "MATCH (n:Ghost) RETURN n.x / (n.x - n.x)", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [], "valid": true, "near_miss": ["Warning.FailsWhenRun"]},
+ {"id": "runtime.fails_when_run_near_miss.6", "graph": "movies", "query": "RETURN 1 / 0", "validators": ["syntax"], "options": {"check_runtime": true}, "issues": [{"code": "Error.ArithmeticError"}], "valid": false, "near_miss": ["Warning.FailsWhenRun"]}
+]

@@ -17,6 +17,7 @@ from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
 from cypher_guardrail.issues import (
     ARITHMETIC_ERROR,
     CARTESIAN_PRODUCT,
+    FAILS_WHEN_RUN,
     SYNTAX_ERROR,
     UNBOUNDED_PATH,
     UNLABELED_NODE_SCAN,
@@ -51,6 +52,7 @@ def _together_on_a_node(labels, combinations):
 # the codes of the issues that leave a query valid
 _WARNINGS = {
     WRITE_QUERY_WARNING,
+    FAILS_WHEN_RUN,
     CARTESIAN_PRODUCT,
     UNLABELED_NODE_SCAN,
     UNBOUNDED_PATH,
@@ -71,6 +73,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
         check_performance: bool | Collection[str] = False,
+        check_runtime: bool = False,
     ) -> None:
         """
         Initialize the validator with a FalkorDB client.
@@ -95,6 +98,11 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
                 ``cypher_guardrail.Warning.UnlabeledNodeScan`` and ``cypher_guardrail.Warning.UnboundedPath``. They are
                 heuristics, so each can be chosen: ``True`` is all of them, ``{"cartesian_product", "unlabeled_scan",
                 "unbounded_path"}`` (or some of them) is those. Off by default. A warning does not make the query invalid.
+            check_runtime (bool): Also warn when FalkorDB fails to run a query that it accepts, from the millisecond
+                that it runs a read query for to ask whether it can write (so no request is added): a divisor that is
+                zero in a row, a value of the wrong type (``sum`` of a string): ``cypher_guardrail.Warning.FailsWhenRun``.
+                It depends on the data of the graph and only looks at the first rows, so it finds some of the queries that
+                fail, and another graph may not fail. Off by default. A warning does not make the query invalid.
 
         Raises:
             TypeError: If the driver is not a FalkorDB client or graph, or ``check_performance`` is a string.
@@ -111,6 +119,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
         self.check_multilabeled_nodes = check_multilabeled_nodes
         self.read_only = read_only
         self.performance = _performance.selected(check_performance)
+        self.runtime = check_runtime
 
     def _open_backend(self, driver, snapshot, verify):
         """The backend the validator runs on. The async validators override this."""
@@ -130,7 +139,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
         try:
             # Check the query plan without executing the query (GRAPH.EXPLAIN)
             notifications = yield from _queries.explain(
-                graph, query, self.read_only, parameters
+                graph, query, self.read_only, parameters, self.runtime
             )
             # EXPLAIN does not execute the query, so what it gives are a missing $parameter and a query that writes
             metadata.extend(notification.copy() for notification in notifications)
@@ -139,6 +148,15 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
             # comments (e.g. WHERE n.name = 'a / 0' or // (n:A) (n:B))
             code = strip_literals_and_comments(query)
             if (yield from self._divides_by_zero(code, graph)):
+                # FalkorDB 6 fails on it only when it runs: that is the same finding
+                metadata = [
+                    i
+                    for i in metadata
+                    if not (
+                        i["code"] == FAILS_WHEN_RUN
+                        and i["message"].startswith("Division by zero")
+                    )
+                ]
                 metadata.append(
                     _issues.database_error(ARITHMETIC_ERROR, "Division by zero.")
                 )
@@ -295,6 +313,7 @@ class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
         snapshot: SnapshotSource | None = None,
         verify: Verify | None = None,
         check_performance: bool | Collection[str] = False,
+        check_runtime: bool = False,
     ) -> None:
         """
         Initialize the validator with an async FalkorDB client.
@@ -311,6 +330,7 @@ class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
             snapshot (Snapshot | None): As for :class:`SyntaxValidator`: the hybrid mode.
             verify (str | None): As for :class:`SyntaxValidator`.
             check_performance (bool | Collection[str]): As for :class:`SyntaxValidator`.
+            check_runtime (bool): As for :class:`SyntaxValidator`.
 
         Raises:
             TypeError: If the driver is not an async FalkorDB client or graph, or ``check_performance`` is a string.
@@ -324,6 +344,7 @@ class AsyncSyntaxValidator(_SyntaxValidator[AsyncDriver]):
             snapshot=snapshot,
             verify=verify,
             check_performance=check_performance,
+            check_runtime=check_runtime,
         )
 
     def _open_backend(self, driver, snapshot, verify):

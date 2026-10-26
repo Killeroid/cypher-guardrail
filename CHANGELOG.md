@@ -4,6 +4,7 @@
 
 ### Added
 
+* **`SyntaxValidator(..., check_runtime=True)` warns about a query that FalkorDB accepts and fails to run**: `cypher_guardrail.Warning.FailsWhenRun` (`message`), for a divisor that is zero in a row of the graph, a value of the wrong type (`sum` of a string) and the like. It adds no request: it reads the failure of the millisecond that `read_only` already runs a read query for. It depends on the data of the graph and leaves the query valid. Off by default; `AsyncSyntaxValidator` has it too.
 * **A division by zero of a property of decimals is no error.** `m.rating / 0` gives `inf`, and fails only for integers (or strings): the validator asks the graph (or the snapshot, if it has the types) what the property holds, and leaves alone the property whose values are all decimals.
 
 ### Fixed

@@ -11,6 +11,7 @@ from cypher_guardrail.issues import (
     AGGREGATE_TYPE_MISMATCH,
     CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
+    FAILS_WHEN_RUN,
     INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
     PARAMETER_NOT_PROVIDED,
@@ -34,6 +35,7 @@ from cypher_guardrail.issues import (
     CartesianProductIssue,
     ConflictingVariablesIssue,
     DatabaseErrorIssue,
+    FailsWhenRunIssue,
     InvalidPropertyAccessIssue,
     Issue,
     ParameterNotProvidedIssue,
@@ -220,6 +222,17 @@ def cartesian_product(variables: list[list[str]]) -> CartesianProductIssue:
         "of one with every row of the others (a Cartesian product), so the work grows as the product of their sizes. "
         "Connect them with a relationship or a condition, or ask for them in separate queries.",
         "variables": [list(group) for group in variables],
+    }
+
+
+def fails_when_run(message: str) -> FailsWhenRunIssue:
+    """``message`` is what FalkorDB said when it ran the query."""
+    return {
+        "code": FAILS_WHEN_RUN,
+        "description": "FalkorDB accepts the query, but it failed when it ran it on the graph: "
+        f"{message.rstrip('.')}. The data decides: another graph may not fail, and this check only looks at the "
+        "first rows.",
+        "message": message,
     }
 
 

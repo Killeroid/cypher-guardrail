@@ -117,6 +117,12 @@ They are heuristics, so each can be chosen: `check_performance=True` is all of t
 
 The fourth pattern, an aggregate over a property that has strings (`sum(n.name)`), is not slow but fails when it runs (`Type mismatch`): it is `PropertiesValidator(check_types=True)`, see [Type mismatches](#type-mismatches-opt-in).
 
+### Queries that fail when they run (opt-in)
+
+`EXPLAIN` plans a query and does not run it, so what fails only on the data passes it: a divisor that is zero in a row (`RETURN 1 / (r.weight - r.weight)`), a value of the wrong type (`sum(g.title)`, `size(5)`). FalkorDB 6 moved more of these from the plan to the run than FalkorDB 4 did. `SyntaxValidator(..., check_runtime=True)` (and `AsyncSyntaxValidator`) reports the failure as a warning, `cypher_guardrail.Warning.FailsWhenRun` (field `message`: the words of the database), and leaves `is_valid` `True`.
+
+It adds no request. `read_only` (on by default) already runs a query that only reads for a millisecond at most, to ask the database whether it can write, and this reads the failure of that run when the plain `EXPLAIN` accepts the query. So it depends on the data of the graph, and only looks at the first rows: an empty label never fails, another graph may not, and a query that fails after a millisecond is not found. A parameter with no value, a timeout and a shortage of memory are not failures of the query. A division by zero that is in the text of the query is `cypher_guardrail.Error.ArithmeticError`, once.
+
 ## Schema Validator
 
 ```python

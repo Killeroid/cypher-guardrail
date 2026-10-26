@@ -11,7 +11,7 @@ A case is a JSON object:
 ``graph``      a graph of ``graphs.json``.
 ``query``      the Cypher query.
 ``validators`` which of ``"syntax"``, ``"schema"`` and ``"properties"`` run (the default of the file).
-``options``    ``read_only``, ``check_multilabeled_nodes``, ``parameters`` and ``check_performance`` (syntax), ``check_unbounded_paths`` (schema), ``check_types`` and
+``options``    ``read_only``, ``check_multilabeled_nodes``, ``parameters`` and ``check_performance`` and ``check_runtime`` (syntax), ``check_unbounded_paths`` (schema), ``check_types`` and
                ``strict`` (properties).
 ``issues``     the issues the validators must report, and no others: ``{"code": ..., <fields>}``. ``code`` is short
                (``Warning.UnknownLabel`` for ``cypher_guardrail.Warning.UnknownLabel``; a FalkorDB code is written in
@@ -53,6 +53,7 @@ CASE_FILES = (
     "udf",
     "performance",
     "aggregates",
+    "runtime",
 )
 ANY_DATABASE_ERROR = "FalkorDB.*"
 MODES = ("online", "offline", "hybrid")
@@ -227,6 +228,7 @@ def run_case(
                 check_multilabeled_nodes=options.get("check_multilabeled_nodes", True),
                 read_only=options.get("read_only", True),
                 check_performance=options.get("check_performance", False),
+                check_runtime=options.get("check_runtime", False),
             )
             outcome.valid, found = validator.validate(
                 case.query, case.graph, parameters=options.get("parameters")

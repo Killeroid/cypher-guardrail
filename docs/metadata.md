@@ -30,6 +30,7 @@ print(missing_labels)  # ['Ghost']
 | `cypher_guardrail.Warning.ParameterNotProvided` | Syntax | `parameters` (list) |
 | `cypher_guardrail.Error.WriteQuery`, `cypher_guardrail.Warning.WriteQuery` | Syntax | none: the query can modify the graph (see [Read-only queries](usage.md#read-only-queries)) |
 | `cypher_guardrail.Warning.CartesianProduct`, `cypher_guardrail.Warning.UnlabeledNodeScan`, `cypher_guardrail.Warning.UnboundedPath` | Syntax (`check_performance=True`); `UnboundedPath` also Schema (`check_unbounded_paths=True`, no database needed) | `variables` (list of lists), `variable`, `path`: valid queries that may be expensive, see [Queries that are valid and may be expensive](usage.md#queries-that-are-valid-and-may-be-expensive-opt-in) |
+| `cypher_guardrail.Warning.FailsWhenRun` | Syntax (`check_runtime=True`) | `message`: what FalkorDB said when it ran the query on the graph (a divisor that is zero in a row, a value of the wrong type). It depends on the data, and leaves the query valid |
 | `cypher_guardrail.Error.UnboundVariable` | Syntax | `variable`: the query uses a variable that no clause before it defines (FalkorDB: `'x' not defined`) |
 | `cypher_guardrail.Error.UnknownFunction` | Syntax | `name`: the database does not know a function the query calls (`Unknown function 'f'`). `cypher_guardrail.Warning.UnknownFunction` says it of a function with a dotted name, without a database |
 | `cypher_guardrail.Error.InvalidLimit` | Syntax | `clause` (`LIMIT` or `SKIP`): the value is not a positive integer |
