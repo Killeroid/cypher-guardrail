@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.0 (2026-10-26)
 
 ### Added
 
@@ -13,6 +13,10 @@
 * **The advisor and the performance warnings read the plans of FalkorDB 6.** A plan there has no `Results` operation at its top, so `AddLimit` was never suggested, and FalkorDB 6 names an anonymous element `_anon_0` (4 says `@anon_0`), which a `Cartesian Product` warning listed as a variable.
 * **A division or a modulo by a zero that is in the query is found on FalkorDB 6, and `1.0 / 0` is no longer an error.** FalkorDB 4 refused `1 / (1 - 1)`, `5 % 0` and the like when it planned the query; FalkorDB 6 fails only when it runs, so `SyntaxValidator` reported such a query as valid. `cypher_guardrail.Error.ArithmeticError` is now reported for a divisor of `/` or `%` that is made of integers and is zero (`/ 0`, `% 0`, `/ (1 - 1)`, `/ (2 * 0)`, `/ (5 / 10)`). A decimal in the division (`1.0 / 0`, `1 / 0.0`, `5 % (1 - 1.0)`) gives `inf` or `nan` and is no error, as it was not on FalkorDB 4; the validator flagged these, so a valid query was reported as invalid. A divisor that is not made of numbers (`x - x`, `abs(0)`) is still found only when the query runs.
 * **An unterminated string is a syntax error on FalkorDB 6.** FalkorDB 6 answers `Unterminated string starting at pos: N`, and `Encountered unhandled type in inlined properties` for a property in a pattern that cannot be parsed (`{name: 'x}`, `{a: 1 +}`), which were reported as `ExecutionFailed`. Both are now `FalkorDB.ClientError.Statement.SyntaxError`.
+
+### Changed
+
+* **FalkorDB 4.18, 4.22.2 and 6.0.3 are the versions it is tested on.** The tests run on a FalkorDB in Docker (6.0.3 by default; `CYPHER_GUARDRAIL_TEST_BACKEND` and `FALKORDB_IMAGE` choose another, a running server or FalkorDBLite), CI also runs them on the images 6.0.3 and v4.22.2, and a test asks FalkorDB itself about every query of the labelled corpus and about queries made from them by breaking them a little. FalkorDB 4.22 stops when it plans a variable-length path with a property of its end node (`MATCH (a)-[*2]->(b {p: 2}) RETURN 1`, `EXPLAIN` included): that is a bug of that FalkorDB, and the library cannot avoid it.
 
 ## 1.5.1 (2026-10-21)
 

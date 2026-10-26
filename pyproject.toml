@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "cypher-guardrail"
-version = "1.5.1"
+version = "1.6.0"
 description = "Parse and validate cypher queries against a given FalkorDB Knowledge Graph schema. Validates query syntax, schema validity, and property access."
 readme = "README.md"
 authors = [{ name = "Killeroid" }]
