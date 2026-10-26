@@ -22,6 +22,8 @@ A case is a JSON object:
 ``near_miss``  the codes this query is a valid look-alike of (it must not report them).
 ``known_gap``  (optional) why the library disagrees with the truth written in the case. The case is an expected
                failure: when the library gets it right, the test fails, so the label is taken out.
+``servers``    (optional) the major versions of FalkorDB the case is for (``["4"]``); the default is all. An answer of the
+               database that changed between versions has a case for each, with the same query.
 ``mode_gaps``  (optional) the same for one mode only: ``{"offline": "why"}``. The schema and properties validators also
                run offline (from a snapshot of the graph) and hybrid (a snapshot and the database); the labels are the
                same, minus what only ``SyntaxValidator`` reports, which needs the database. A snapshot never invents an
@@ -81,6 +83,7 @@ class Case:
     near_miss: list[str] = field(default_factory=list)
     known_gap: str | None = None
     mode_gaps: dict[str, str] = field(default_factory=dict)
+    servers: list[str] | None = None
 
 
 def load_graphs() -> dict[str, dict[str, Any]]:
@@ -102,15 +105,23 @@ def _case_of(raw: dict[str, Any]) -> Case:
         near_miss=raw.get("near_miss", []),
         known_gap=raw.get("known_gap"),
         mode_gaps=raw.get("mode_gaps", {}),
+        servers=raw.get("servers"),
     )
 
 
-def load_cases() -> list[Case]:
+def load_cases(server: str | None = None) -> list[Case]:
+    """The cases of the corpus; with ``server`` (a major version), the ones that are for it."""
     return [
-        _case_of(raw)
+        case
         for name in CASE_FILES
         for raw in json.loads((DIRECTORY / f"{name}.json").read_text())
+        if on_server(case := _case_of(raw), server)
     ]
+
+
+def on_server(case: Case, server: str | None) -> bool:
+    """Whether ``case`` is for FalkorDB ``server`` (a major version; None is any)."""
+    return server is None or case.servers is None or server in case.servers
 
 
 def seed(client, graphs=None) -> None:

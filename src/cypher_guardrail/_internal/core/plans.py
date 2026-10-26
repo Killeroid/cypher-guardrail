@@ -17,9 +17,10 @@ from dataclasses import dataclass, field
 import regex as re
 
 _INDENT = 4
-# the variables an operation works on: `(a:Person)`, `(a)->(b)`, `(a)-[r:KNOWS*1..INF]->(b)`; `@anon_0` is a name
-# FalkorDB made up for what the query leaves anonymous
+# the variables an operation works on: `(a:Person)`, `(a)->(b)`, `(a)-[r:KNOWS*1..INF]->(b)`; `@anon_0` (FalkorDB 4) and
+# `_anon_0` (FalkorDB 6) are names FalkorDB made up for what the query leaves anonymous
 _VARIABLE = re.compile(r"[(\[]\s*(@?[A-Za-z_]\w*)")
+_ANONYMOUS = re.compile(r"@|_anon_\d+$")
 
 
 @dataclass
@@ -52,7 +53,7 @@ class Op:
     def variables(self) -> list[str]:
         """The named variables of its detail, in order and once each (an anonymous element has none)."""
         names = (match[1] for match in _VARIABLE.finditer(self.detail))
-        return list(dict.fromkeys(name for name in names if not name.startswith("@")))
+        return list(dict.fromkeys(name for name in names if not _ANONYMOUS.match(name)))
 
 
 def parse(lines: object) -> Op | None:

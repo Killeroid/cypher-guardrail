@@ -2,8 +2,8 @@
 
 Prints, for each issue code, how many labelled issues were found (TP), missed (FN) and reported without a label (FP),
 and the precision and recall; then the same totals for each mode (online, offline from a snapshot, and hybrid), and
-the cases the library gets wrong. Needs FalkorDBLite (Python >= 3.12): the corpus runs on an embedded database that
-the script starts and removes.
+the cases the library gets wrong. The corpus runs on the FalkorDB of ``tests/servers.py`` (a Docker container, a running
+server or FalkorDBLite; ``CYPHER_GUARDRAIL_TEST_BACKEND`` chooses), which the script starts and removes.
 
 Run with: ``uv run python scripts/accuracy.py``. The exit status is 1 when a case disagrees with its labels, or when a
 case marked ``known_gap`` (or a ``mode_gaps`` entry) agrees: the mark is then out of date.
@@ -14,8 +14,11 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests" / "accuracy"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests"))
 
+import falkordb
 import harness
+from servers import Unavailable, major_version, running_falkordb
 
 
 def ratio(numerator: int, denominator: int) -> str:
@@ -33,31 +36,36 @@ def totals_of(
     )
 
 
+def run_modes(
+    client: falkordb.FalkorDB, cases: list[harness.Case]
+) -> dict[str, list[tuple[harness.Case, harness.Outcome, harness.Case]]]:
+    harness.seed(client)
+    snapshots = harness.snapshots_of(client)
+    return {
+        mode: [
+            (
+                harness.for_mode(case, mode),
+                harness.run_case(client, case, mode, snapshots),
+                case,
+            )
+            for case in cases
+            if harness.applies_to(case, mode)
+        ]
+        for mode in harness.MODES
+    }
+
+
 def main() -> int:
     try:
-        from redislite.falkordb_client import FalkorDB
-    except ImportError:
-        print("FalkorDBLite (Python >= 3.12) is needed: `uv sync` installs it.")
+        with (
+            tempfile.TemporaryDirectory() as folder,
+            running_falkordb(Path(folder)) as server,
+        ):
+            cases = harness.load_cases(major_version(server.client))
+            results = run_modes(server.client, cases)
+    except Unavailable as error:
+        print(f"No FalkorDB to measure on: {error}")
         return 2
-
-    cases = harness.load_cases()
-    with tempfile.TemporaryDirectory() as folder:
-        client = FalkorDB(str(Path(folder) / "accuracy.db"))
-        harness.seed(client)
-        snapshots = harness.snapshots_of(client)
-        results = {
-            mode: [
-                (
-                    harness.for_mode(case, mode),
-                    harness.run_case(client, case, mode, snapshots),
-                    case,
-                )
-                for case in cases
-                if harness.applies_to(case, mode)
-            ]
-            for mode in harness.MODES
-        }
-        client.close()
 
     failures, stale = [], []
     for mode, rows in results.items():

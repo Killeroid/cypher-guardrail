@@ -411,6 +411,7 @@ _RETURNS_ALL_ROWS = {
     "Limit",
     "Aggregate",
     "Distinct",
+    "Commit",
     "Create",
     "Merge",
     "Update",
@@ -428,10 +429,7 @@ def _last_return(query: str) -> str | None:
 def limit_suggestions(root: Op, query: str) -> list[Suggestion]:
     """A limit for a query that reads rows of the graph and returns every one of them."""
     reads = any("Scan" in leaf.name for leaf in root.leaves())
-    returns_all = (
-        root.name == "Results"
-        and not {op.name for op in root.walk()} & _RETURNS_ALL_ROWS
-    )
+    returns_all = not {op.name for op in root.walk()} & _RETURNS_ALL_ROWS
     text = patterns.strip_literals_and_comments(query)
     clause = _last_return(query)
     if not (reads and returns_all and clause) or len(patterns.split_union(text)) > 1:

@@ -182,7 +182,7 @@ CASES: dict[str, tuple[str, str, str, str, dict[str, Any]]] = {
     "execution failed": (
         "syntax",
         "kg",
-        "CALL db.nonexistent() YIELD x RETURN x",
+        "CALL db.labels() YIELD nope RETURN nope",
         EXECUTION_FAILED,
         {},
     ),

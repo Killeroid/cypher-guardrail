@@ -1,0 +1,12 @@
+{
+ "ambiguous": {
+  "MATCH (n:Goal RETURN n": {
+   "syntax.validate": "(False, [{'code': 'FalkorDB.ClientError.Statement.SyntaxError', 'description': \"Invalid input 'RETURN': expected ')', errCtx: MATCH (n:Goal RETURN n, pos 13\"}])"
+  }
+ },
+ "kg": {
+  "MATCH (n:Goal RETURN n": {
+   "syntax.validate": "(False, [{'code': 'FalkorDB.ClientError.Statement.SyntaxError', 'description': \"Invalid input 'RETURN': expected ')', errCtx: MATCH (n:Goal RETURN n, pos 13\"}])"
+  }
+ }
+}

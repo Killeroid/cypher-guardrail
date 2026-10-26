@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+* **On FalkorDB 6, a query that writes is no longer reported as valid.** The check that a query can write (`SyntaxValidator` with `read_only`, and `is_write`) sent `GRAPH.RO_QUERY "EXPLAIN <query>" TIMEOUT 1`, and FalkorDB 6 does not parse `EXPLAIN` as part of a query: it answered a syntax error to every such request, which was taken for "not a write", so no `WriteQuery` issue was reported (execution was never at risk: `GRAPH.RO_QUERY` still refuses a write). The request is now `GRAPH.RO_QUERY "<query>" TIMEOUT 1`, which FalkorDB 4 and 6 answer alike: a refusal for a query that can write, and a read query is stopped after a millisecond.
+* **The advisor and the performance warnings read the plans of FalkorDB 6.** A plan there has no `Results` operation at its top, so `AddLimit` was never suggested, and FalkorDB 6 names an anonymous element `_anon_0` (4 says `@anon_0`), which a `Cartesian Product` warning listed as a variable.
+
 ## 1.5.1 (2026-10-21)
 
 ### Fixed

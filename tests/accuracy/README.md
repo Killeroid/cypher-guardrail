@@ -22,7 +22,9 @@ agrees with every label.
 
 **Labels.** They are written from the Cypher and the graph, never from what the library answered. The exception is an
 issue from FalkorDB itself (`SyntaxError`, `ExecutionFailed`): the database is the judge, so those labels are what the
-embedded engine of the tests answers, and belong to its version.
+database of the tests answers, and belong to its version. An answer that changed between major versions of FalkorDB has a case
+for each, with the same query and `"servers": ["4"]` or `["6"]`; the tests and `scripts/accuracy.py` run the ones for the
+server they are on (`tests/data/golden_results_6.json` does the same for `golden_results.json`).
 
 **Known gaps.** When the library gets a case wrong, the case keeps the true label and is marked `known_gap` with the reason.
 It runs as an expected failure, so it stays in the measure, and the test fails when the library gets it right (the mark is

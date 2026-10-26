@@ -6,7 +6,8 @@ This one records what the answers should be, written by hand from the Cypher the
 matters most for generated queries. ``scripts/accuracy.py`` prints the precision and recall of each issue code.
 
 An issue that comes from FalkorDB itself (a syntax error, an execution failure) is labelled with what the database of
-the tests (FalkorDBLite) answers, so those labels belong to its version.
+the tests answers, so those labels belong to a version of it: a case that is for one major version of FalkorDB has
+`servers`, and a sibling case for the other.
 """
 
 import sys
@@ -53,7 +54,11 @@ def _params():
 
 
 @pytest.mark.parametrize("case", _params())
-def test_the_validators_agree_with_the_labels(falkordb_client, accuracy_graphs, case):
+def test_the_validators_agree_with_the_labels(
+    falkordb_client, falkordb_major, accuracy_graphs, case
+):
+    if not harness.on_server(case, falkordb_major):
+        pytest.skip(f"the case is for FalkorDB {' and '.join(case.servers or [])}")
     outcome = harness.run_case(falkordb_client, case)
 
     assert harness.disagreements(case, outcome) == [], case.query

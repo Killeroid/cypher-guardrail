@@ -13,6 +13,7 @@ import time
 from typing import cast
 
 import pytest
+from redis.exceptions import ResponseError
 from support import code_set, codes, missing_parameters
 
 from cypher_guardrail import (
@@ -132,7 +133,8 @@ class TestSyntaxValidator:
         assert not is_valid
         (error,) = metadata
         assert error["code"] == "FalkorDB.ClientError.Statement.SyntaxError"
-        assert error["description"].startswith("errMsg: Invalid input")
+        # FalkorDB 4 starts the message with "errMsg: "
+        assert error["description"].removeprefix("errMsg: ").startswith("Invalid input")
         assert "MATCH (n) EXPLAIN RETURN n" in error["description"]
 
     CONFLICT = "MATCH (g:Goal) MATCH (g:Target) RETURN g"
@@ -195,7 +197,7 @@ WRITES = [
     "CREATE (:X)",
     "MERGE (:X {a: 1})",
     "MATCH (n:Goal) REMOVE n.code",
-    "CALL db.idx.fulltext.createNodeIndex('Goal', 'title')",
+    "CALL db.idx.fulltext.drop('Goal')",
     "CREATE INDEX FOR (n:Goal) ON (n.code)",
     "DROP INDEX ON :Goal(code)",
     "CYPHER a=1 CREATE (:X)",
@@ -207,7 +209,6 @@ READS = [
     "MATCH (g:Goal) WHERE g.title = 'DELETE me' RETURN g",
     "MATCH (g:Goal) WHERE g.title = 'CREATE (:X) SET' RETURN g // DELETE n",
     "CYPHER a='1' MATCH (g:Goal) RETURN g",
-    "EXPLAIN MATCH (g:Goal) RETURN g",
     "RETURN 1",
 ]
 
@@ -231,6 +232,20 @@ def test_a_write_is_an_error_by_default(falkordb_client, run_async, query):
     assert validate_async(run_async, query) == (valid, metadata)
 
 
+def test_validating_the_writes_leaves_the_graph_as_it_was(falkordb_client, graph):
+    def contents():
+        nodes = graph.ro_query("MATCH (n) RETURN labels(n), properties(n)")
+        indexes = graph.ro_query("CALL db.indexes()")
+        return sorted(map(str, nodes.result_set)), sorted(map(str, indexes.result_set))
+
+    before = contents()
+    validator = SyntaxValidator(falkordb_client)
+    for query in WRITES:
+        validator.validate(query, "kg")
+
+    assert contents() == before
+
+
 @pytest.mark.parametrize("query", WRITES)
 def test_a_write_is_only_a_warning_when_writes_are_allowed(
     falkordb_client, run_async, query
@@ -246,6 +261,24 @@ def test_a_write_is_only_a_warning_when_writes_are_allowed(
 @pytest.mark.parametrize("read_only", [True, False])
 @pytest.mark.parametrize("query", READS)
 def test_a_read_has_no_issue(falkordb_client, run_async, query, read_only):
+    valid, metadata = SyntaxValidator(falkordb_client, read_only=read_only).validate(
+        query, "kg"
+    )
+
+    assert (valid, metadata) == (True, [])
+    assert validate_async(run_async, query, read_only=read_only) == (True, [])
+
+
+@pytest.mark.parametrize("read_only", [True, False])
+def test_a_query_that_starts_with_explain_is_valid_where_the_server_takes_it(
+    falkordb_client, run_async, read_only
+):
+    query = "EXPLAIN MATCH (g:Goal) RETURN g"
+    try:
+        falkordb_client.connection.execute_command("GRAPH.EXPLAIN", "kg", query)
+    except ResponseError:
+        pytest.skip("FalkorDB 6 and later do not take EXPLAIN as part of a query")
+
     valid, metadata = SyntaxValidator(falkordb_client, read_only=read_only).validate(
         query, "kg"
     )

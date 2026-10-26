@@ -6,6 +6,7 @@ what was recorded (the first part), ask what was recorded as asked (the second),
 too, from a snapshot of the same graph (the third).
 """
 
+import copy
 import json
 from collections import Counter
 from contextlib import suppress
@@ -45,6 +46,22 @@ from cypher_guardrail._internal.core import io as _io
 GOLDEN = json.loads(
     (Path(__file__).parent / "data" / "golden_results.json").read_text()
 )
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _golden_of_the_server(falkordb_major):
+    """What FalkorDB words differently from one major version to the next has its own file
+    (``golden_results_6.json``, for the answers of FalkorDB 6 that are not the ones recorded)."""
+    overlay = Path(__file__).parent / "data" / f"golden_results_{falkordb_major}.json"
+    if not overlay.exists():
+        yield
+        return
+    original = copy.deepcopy(GOLDEN)
+    for graph, queries in json.loads(overlay.read_text()).items():
+        for query, answers in queries.items():
+            GOLDEN[graph][query].update(answers)
+    yield
+    GOLDEN.update(original)
 
 
 # result name -> (sync call, async call)

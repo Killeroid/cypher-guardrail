@@ -86,7 +86,7 @@ class TestExecute:
 
     def test_execution_error_becomes_cypher_error(self, backend, db_name):
         with pytest.raises(CypherError) as error:
-            backend.execute("CALL db.nonexistent() YIELD x RETURN x", db_name)
+            backend.execute("CALL db.labels() YIELD nope RETURN nope", db_name)
         assert error.value.code == "FalkorDB.DatabaseError.Statement.ExecutionFailed"
 
     @pytest.mark.parametrize(
@@ -157,7 +157,11 @@ class TestExplain:
             == []
         )
 
-    def test_constant_division_by_zero_is_an_error(self, backend, db_name):
+    def test_constant_division_by_zero_is_an_error(
+        self, backend, db_name, falkordb_major
+    ):
+        if falkordb_major != "4":
+            pytest.skip("FalkorDB 6 plans RETURN 1/0 and fails only when it runs")
         with pytest.raises(CypherError):
             backend.explain("RETURN 1/0", db_name)
 
