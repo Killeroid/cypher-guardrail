@@ -718,7 +718,14 @@ def test_a_path_through_a_kind_whose_nodes_do_not_connect_is_a_maybe_and_it_is_w
         assert (answer.value, answer.reliable) == (True, False)
 
 
-def test_the_paths_with_variables_and_properties(lab, backend, resolver):
+def test_the_paths_with_variables_and_properties(
+    lab, backend, resolver, falkordb_version
+):
+    if 42200 <= falkordb_version < 42300:
+        pytest.skip(
+            "FalkorDB 4.22 stops when it plans a variable-length path with a property of its end node: "
+            "`MATCH (a)-[*2]->(b {p: 2}) RETURN 1` (not fixed in 4.22.2, the last 4.x)"
+        )
     patterns = []
     for left, kind, right, arrow in itertools.product(
         ["(a)", "(a:A)", "(a:C)", "(a {p: 1})", "(a:A {p: 99})", "(a:A {nope: 1})"],

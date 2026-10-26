@@ -10,6 +10,11 @@ a label or a property with the wrong case or the wrong name, a property of anoth
 Needs the network for the rows (a page of 100 at a time, kept in the cache folder). It is not part of the tests.
 
 Run with: ``uv run python scripts/false_positives.py [--limit N] [--show N] [--cache DIR]``.
+
+``--check`` compares what is flagged with ``tests/accuracy/false_positives_baseline.json`` (the whole test split) and
+exits with 1 when a code has more findings than the baseline, or a query makes a validator fail: a change that makes
+the validators flag more of the real queries is seen. ``--write-baseline`` records the baseline (after reading the new
+findings: a change that flags what is wrong in the gold queries is no regression).
 """
 
 import argparse
@@ -29,6 +34,12 @@ import text2cypher
 
 from cypher_guardrail import PropertiesValidator, SchemaValidator, Snapshot
 
+BASELINE = (
+    Path(__file__).resolve().parent.parent
+    / "tests"
+    / "accuracy"
+    / "false_positives_baseline.json"
+)
 API = (
     "https://datasets-server.huggingface.co/rows?dataset=neo4j%2Ftext2cypher-2025v1"
     "&config=default&split=test&offset={offset}&length=100"
@@ -92,6 +103,14 @@ def main() -> int:
         default=Path.home() / ".cache" / "cypher-guardrail" / "text2cypher",
         help="where the pages of rows are kept",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="fail when more is flagged than the baseline",
+    )
+    parser.add_argument(
+        "--write-baseline", action="store_true", help="record what is flagged now"
+    )
     args = parser.parse_args()
 
     rows = fetch(args.limit, args.cache)
@@ -136,7 +155,35 @@ def main() -> int:
             print(f"  {count:3}x {text}")
     for instance, error in crashed:
         print(f"CRASH {instance}: {error}")
+    found = {
+        "validated": validated,
+        "flagged": flagged,
+        "findings": {code: sum(counter.values()) for code, counter in groups.items()},
+    }
+    if args.write_baseline:
+        BASELINE.write_text(json.dumps(found, indent=1, sort_keys=True) + "\n")
+        print(f"recorded {BASELINE}")
+    if args.check:
+        return worse_than_the_baseline(found, len(crashed))
     return 0
+
+
+def worse_than_the_baseline(found: dict, crashed: int) -> int:
+    """1 when more is flagged than the baseline says (or a validator failed), after saying what."""
+    baseline = json.loads(BASELINE.read_text())
+    worse = [f"{crashed} quer(ies) made a validator fail"] if crashed else []
+    if found["validated"] != baseline["validated"]:
+        worse.append(
+            f"{found['validated']} rows were validated, the baseline has {baseline['validated']}: "
+            "the dataset or the reading of its schemas changed (record the baseline again)"
+        )
+    for code, count in sorted(found["findings"].items()):
+        before = baseline["findings"].get(code, 0)
+        if count > before:
+            worse.append(f"{code}: {count} findings, the baseline has {before}")
+    for line in worse:
+        print(f"WORSE: {line}")
+    return 1 if worse else 0
 
 
 if __name__ == "__main__":

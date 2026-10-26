@@ -1,0 +1,12 @@
+{
+ "findings": {
+  "InvalidPropertyAccess": 52,
+  "UnknownLabel": 23,
+  "UnknownPath": 8,
+  "UnknownPropertyKey": 14,
+  "UnknownRelationshipType": 1,
+  "WrongDirectionPath": 56
+ },
+ "flagged": 120,
+ "validated": 2783
+}

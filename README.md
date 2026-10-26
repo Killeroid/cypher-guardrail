@@ -33,6 +33,10 @@ or, with uv:
 uv add cypher-guardrail
 ```
 
+## Supported FalkorDB versions
+
+Tested on FalkorDB 4.18 (FalkorDBLite), 4.22.2 and 6.0.3.
+
 ## Quickstart
 
 ```python

@@ -1,0 +1,41 @@
+# Runs the validators on the gold queries of Neo4j's text2cypher dataset (real queries, no database needed) and fails when
+# a code has more findings than tests/accuracy/false_positives_baseline.json: a change that flags more of the real queries.
+# It needs the network for the rows, so it is a workflow of its own: on a change to the library, every week (the dataset
+# and the libraries change too), and when asked.
+name: False positives
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "scripts/false_positives.py"
+      - "tests/accuracy/**"
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  false-positives:
+    name: Gold queries of text2cypher
+    runs-on: ubuntu-latest
+    env:
+      UV_PYTHON: "3.12"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.0
+
+      - name: Install the locked environment
+        run: uv sync --locked
+
+      - name: Keep the rows of the dataset
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/cypher-guardrail/text2cypher
+          key: text2cypher-test-split
+
+      - name: Compare what is flagged with the baseline
+        run: uv run python scripts/false_positives.py --show 3 --check
