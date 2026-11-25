@@ -16,12 +16,9 @@ from cypher_guardrail.backend import get_async_backend, get_backend
 from cypher_guardrail.drivers import AsyncDriver, Driver, Verify
 from cypher_guardrail.issues import (
     ARITHMETIC_ERROR,
-    CARTESIAN_PRODUCT,
     FAILS_WHEN_RUN,
     SYNTAX_ERROR,
-    UNBOUNDED_PATH,
-    UNLABELED_NODE_SCAN,
-    WRITE_QUERY_WARNING,
+    WARNINGS,
     Issue,
 )
 from cypher_guardrail.patterns import split_union, strip_literals_and_comments
@@ -48,15 +45,6 @@ def _together_on_a_node(labels, combinations):
         all(label in combination for label in labels) for combination in combinations
     )
 
-
-# the codes of the issues that leave a query valid
-_WARNINGS = {
-    WRITE_QUERY_WARNING,
-    FAILS_WHEN_RUN,
-    CARTESIAN_PRODUCT,
-    UNLABELED_NODE_SCAN,
-    UNBOUNDED_PATH,
-}
 
 _D = TypeVar("_D")  # the kind of driver: a client or graph, sync or async
 
@@ -167,7 +155,7 @@ class _SyntaxValidator(_modes.ModeInfo, Generic[_D]):
                 metadata += yield from self._performance_warnings(graph, query)
 
             # A warning does not make the query invalid, as an error does
-            return all(i["code"] in _WARNINGS for i in metadata), metadata
+            return all(i["code"] in WARNINGS for i in metadata), metadata
         except GraphNotFoundError:
             raise  # a mistake of the caller, not an answer about the query
         except CypherError as e:

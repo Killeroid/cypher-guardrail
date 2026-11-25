@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* **`PreflightValidator`: a check of the text of a query that needs no database.** `PreflightValidator(read_only=True).validate(query)` returns `(is_valid, issues)` and reports an empty query (`cypher_guardrail.Error.EmptyQuery`), a text with no Cypher clause (`cypher_guardrail.Error.NoCypherClause`), brackets that do not match (`cypher_guardrail.Error.UnbalancedBrackets`), a query that writes (`cypher_guardrail.Error.WriteQuery`, or `cypher_guardrail.Warning.WriteQuery` with `read_only=False`) and a query with no `MATCH` (`cypher_guardrail.Warning.NoMatchClause`). A word inside a string, a comment or a quoted name, and a word that is a name (`n.delete`, `:Drop`, `$set`, `{drop: 1}`, `[:KEEP|DELETE]`), is not mistaken for a clause. It can miss a write that only FalkorDB knows (a procedure that is not the full-text index): `SyntaxValidator` stays the check for a query that is about to run. It has no async twin.
+* **`cypher_guardrail.issues.WARNINGS`**: the codes of the issues that leave a query valid, in one place. `SyntaxValidator` and `PreflightValidator` both read it. `cypher_guardrail.Warning.ParameterNotProvided` is not in it: a query that is missing a parameter has always been invalid.
+
 ## 1.6.0 (2026-10-26)
 
 ### Added

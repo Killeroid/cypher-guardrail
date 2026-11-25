@@ -123,6 +123,24 @@ The fourth pattern, an aggregate over a property that has strings (`sum(n.name)`
 
 It adds no request. `read_only` (on by default) already runs a query that only reads for a millisecond at most, to ask the database whether it can write, and this reads the failure of that run when the plain `EXPLAIN` accepts the query. So it depends on the data of the graph, and only looks at the first rows: an empty label never fails, another graph may not, and a query that fails after a millisecond is not found. A parameter with no value, a timeout and a shortage of memory are not failures of the query. A division by zero that is in the text of the query is `cypher_guardrail.Error.ArithmeticError`, once.
 
+## Preflight Validator
+
+`PreflightValidator` checks the text of a query without a database: it is the filter to run before opening a connection, or where there is none (a unit test, a pipeline that only has the query). It is **not** a replacement for `SyntaxValidator`: FalkorDB decides what is valid Cypher and what writes, and this validator only reads the query.
+
+```python
+from cypher_guardrail import PreflightValidator
+
+PreflightValidator().validate("MATCH (n:Goal) SET n.done = true")
+# (False, [{'code': 'cypher_guardrail.Error.WriteQuery', 'description': '...'}])
+PreflightValidator(read_only=False).validate("MATCH (n:Goal) SET n.done = true")
+# (True, [{'code': 'cypher_guardrail.Warning.WriteQuery', 'description': '...'}])
+```
+
+It reports, in this order: an empty query (`cypher_guardrail.Error.EmptyQuery`, and nothing else), a text with no Cypher clause (`cypher_guardrail.Error.NoCypherClause`), brackets that are not balanced or are closed by another kind (`cypher_guardrail.Error.UnbalancedBrackets`), a query that writes (`cypher_guardrail.Error.WriteQuery`, or `cypher_guardrail.Warning.WriteQuery` with `read_only=False`) and a query with no `MATCH` that does not start with `CREATE`, `MERGE`, `CALL`, `UNWIND`, `WITH` or `RETURN` (`cypher_guardrail.Warning.NoMatchClause`). A warning leaves the query valid.
+
+* **Strings, comments and quoted names are not read**, and a word that is a name is not a clause: `n.delete`, `:Drop`, `$set`, `{drop: 1}` and `[:KEEP|DELETE]` are reads, and so is `WHERE n.title = 'Drop off package'`.
+* **It can miss a write.** It knows the keywords (`CREATE`, `MERGE`, `SET`, `DELETE`, `REMOVE`, `DROP`, `FOREACH`) and the procedures that create or drop a full-text index, not other procedures that modify the graph. A reserved word used as a variable (`MATCH (set) ...`) is taken for a write. For a query that is about to run, use `SyntaxValidator(read_only=True)`, which asks FalkorDB.
+
 ## Schema Validator
 
 ```python

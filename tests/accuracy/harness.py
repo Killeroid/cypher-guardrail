@@ -10,7 +10,8 @@ A case is a JSON object:
 ``id``         a unique name, ``<file>.<group>.<n>``.
 ``graph``      a graph of ``graphs.json``.
 ``query``      the Cypher query.
-``validators`` which of ``"syntax"``, ``"schema"`` and ``"properties"`` run (the default of the file).
+``validators`` which of ``"syntax"``, ``"schema"``, ``"properties"`` and ``"preflight"`` run (the default of the file).
+               ``"preflight"`` needs no database, but runs with the online pass only, as ``"syntax"`` does.
 ``options``    ``read_only``, ``check_multilabeled_nodes``, ``parameters`` and ``check_performance`` and ``check_runtime`` (syntax), ``check_unbounded_paths`` (schema), ``check_types`` and
                ``strict`` (properties).
 ``issues``     the issues the validators must report, and no others: ``{"code": ..., <fields>}``. ``code`` is short
@@ -37,6 +38,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from cypher_guardrail import (
+    PreflightValidator,
     PropertiesValidator,
     SchemaValidator,
     Snapshot,
@@ -54,16 +56,22 @@ CASE_FILES = (
     "performance",
     "aggregates",
     "runtime",
+    "preflight",
 )
 ANY_DATABASE_ERROR = "FalkorDB.*"
 MODES = ("online", "offline", "hybrid")
-# What only SyntaxValidator reports: it needs the database, so it is not part of the other modes
+# What only SyntaxValidator and PreflightValidator report: they are not part of the other modes (the first needs the
+# database)
 SYNTAX_CODES = {
     "Error.ArithmeticError",
     "Error.ConflictingVariables",
     "Error.WriteQuery",
     "Warning.ParameterNotProvided",
     "Warning.WriteQuery",
+    "Error.EmptyQuery",
+    "Error.NoCypherClause",
+    "Error.UnbalancedBrackets",
+    "Warning.NoMatchClause",
 }
 # Issue codes that are not reported to the user: the code of an error the library raises inside
 INTERNAL_CODES = {"cypher_guardrail.Error.NotReadOnly"}
@@ -158,7 +166,7 @@ def _is_syntax_code(code: str) -> bool:
 
 def applies_to(case: Case, mode: str) -> bool:
     """Whether ``mode`` has anything to say about ``case``: the other modes run no ``SyntaxValidator``."""
-    return mode == "online" or bool(set(case.validators) - {"syntax"})
+    return mode == "online" or bool(set(case.validators) - {"syntax", "preflight"})
 
 
 def for_mode(case: Case, mode: str) -> Case:
@@ -220,9 +228,9 @@ def run_case(
         else:
             driver, held, where = client, snapshot, (case.graph,)
     for name in case.validators:
+        if name in ("syntax", "preflight") and mode != "online":
+            continue  # the other modes have no SyntaxValidator, and PreflightValidator only has the online labels
         if name == "syntax":
-            if mode != "online":
-                continue
             validator = SyntaxValidator(
                 client,
                 check_multilabeled_nodes=options.get("check_multilabeled_nodes", True),
@@ -233,6 +241,10 @@ def run_case(
             outcome.valid, found = validator.validate(
                 case.query, case.graph, parameters=options.get("parameters")
             )
+        elif name == "preflight":
+            outcome.valid, found = PreflightValidator(
+                read_only=options.get("read_only", True)
+            ).validate(case.query)
         elif name == "schema":
             outcome.scores[name], found = SchemaValidator(
                 driver,

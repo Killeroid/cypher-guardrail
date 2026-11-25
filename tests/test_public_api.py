@@ -26,13 +26,17 @@ from cypher_guardrail.issues import (
     ARITHMETIC_ERROR,
     CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
+    EMPTY_QUERY,
     EXECUTION_FAILED,
     FAILS_WHEN_RUN,
     INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
+    NO_CYPHER_CLAUSE,
+    NO_MATCH_CLAUSE,
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
     SYNTAX_ERROR,
+    UNBALANCED_BRACKETS,
     UNBOUND_VARIABLE_ERROR,
     UNBOUNDED_PATH,
     UNKNOWN_FUNCTION,
@@ -292,13 +296,17 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         ARITHMETIC_ERROR,
         CARTESIAN_PRODUCT,
         CONFLICTING_VARIABLES,
+        EMPTY_QUERY,
         EXECUTION_FAILED,
         FAILS_WHEN_RUN,
         INVALID_LIMIT_ERROR,
         INVALID_PROPERTY_ACCESS,
+        NO_CYPHER_CLAUSE,
+        NO_MATCH_CLAUSE,
         PARAMETER_NOT_PROVIDED,
         PROPERTY_TYPE_MISMATCH,
         SYNTAX_ERROR,
+        UNBALANCED_BRACKETS,
         UNBOUNDED_PATH,
         UNBOUND_VARIABLE_ERROR,
         UNKNOWN_FUNCTION,
@@ -319,7 +327,7 @@ def test_every_code_has_a_type_and_the_types_name_their_codes():
         typing.get_args(typing.get_type_hints(issues.DatabaseErrorIssue)["code"])
     )
     assert declared == constants
-    assert len(constants) == 26
+    assert len(constants) == 30
 
 
 def test_different_issues_of_one_code_are_all_reported(graphs):

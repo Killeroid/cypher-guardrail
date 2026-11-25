@@ -107,6 +107,7 @@ def test_every_case_is_well_formed():
             "syntax",
             "schema",
             "properties",
+            "preflight",
         }, where
         assert set(case.options) <= {
             "read_only",
@@ -129,7 +130,7 @@ def test_every_case_is_well_formed():
         if case.kg_valid is not None:
             assert set(case.validators) == {"syntax", "schema", "properties"}, where
         if case.valid is not None:
-            assert "syntax" in case.validators, where
+            assert {"syntax", "preflight"} & set(case.validators), where
         assert case.known_gap is None or case.known_gap.strip(), where
         for mode, reason in case.mode_gaps.items():
             assert mode in {"offline", "hybrid"} and reason.strip(), where
@@ -249,6 +250,7 @@ def test_the_other_modes_read_the_labels_without_what_only_syntax_reports():
     assert harness.applies_to(case, "offline")
     assert not harness.applies_to(_case(validators=("syntax",)), "offline")
     assert harness.applies_to(_case(validators=("syntax",)), "online")
+    assert not harness.applies_to(_case(validators=("preflight",)), "offline")
 
 
 def test_the_tally_counts_what_was_found_missed_and_made_up():

@@ -11,11 +11,15 @@ from cypher_guardrail.issues import (
     AGGREGATE_TYPE_MISMATCH,
     CARTESIAN_PRODUCT,
     CONFLICTING_VARIABLES,
+    EMPTY_QUERY,
     FAILS_WHEN_RUN,
     INVALID_LIMIT_ERROR,
     INVALID_PROPERTY_ACCESS,
+    NO_CYPHER_CLAUSE,
+    NO_MATCH_CLAUSE,
     PARAMETER_NOT_PROVIDED,
     PROPERTY_TYPE_MISMATCH,
+    UNBALANCED_BRACKETS,
     UNBOUND_VARIABLE_ERROR,
     UNBOUNDED_PATH,
     UNKNOWN_FUNCTION,
@@ -35,11 +39,15 @@ from cypher_guardrail.issues import (
     CartesianProductIssue,
     ConflictingVariablesIssue,
     DatabaseErrorIssue,
+    EmptyQueryIssue,
     FailsWhenRunIssue,
     InvalidPropertyAccessIssue,
     Issue,
+    NoCypherClauseIssue,
+    NoMatchClauseIssue,
     ParameterNotProvidedIssue,
     PropertyTypeMismatchIssue,
+    UnbalancedBracketsIssue,
     UnboundedPathIssue,
     UnknownFunctionIssue,
     UnknownIndexIssue,
@@ -311,4 +319,32 @@ def wrong_direction_variable_length_path(
         "path": path,
         "original_path": original_path,
         "suggested_path": suggested_path,
+    }
+
+
+def empty_query() -> EmptyQueryIssue:
+    return {
+        "code": EMPTY_QUERY,
+        "description": "The query is empty (it has nothing but whitespace and comments).",
+    }
+
+
+def no_cypher_clause() -> NoCypherClauseIssue:
+    return {
+        "code": NO_CYPHER_CLAUSE,
+        "description": "The query has no Cypher clause (MATCH, RETURN, CREATE, ...): it is not a Cypher query.",
+    }
+
+
+def unbalanced_brackets() -> UnbalancedBracketsIssue:
+    return {
+        "code": UNBALANCED_BRACKETS,
+        "description": "The brackets of the query are unbalanced: one is not closed, is closed by another kind, or closes nothing.",
+    }
+
+
+def no_match_clause() -> NoMatchClauseIssue:
+    return {
+        "code": NO_MATCH_CLAUSE,
+        "description": "The query has no MATCH clause, so it does not read from the graph.",
     }

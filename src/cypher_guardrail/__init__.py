@@ -10,6 +10,7 @@ from cypher_guardrail._internal.core.errors import CypherError, GraphNotFoundErr
 from cypher_guardrail.live import AsyncLiveSnapshot, LiveSnapshot, StaleSnapshotError
 from cypher_guardrail.snapshot import Snapshot, SnapshotSource
 from cypher_guardrail.validators.advisor import Advisor, AsyncAdvisor
+from cypher_guardrail.validators.preflight_validator import PreflightValidator
 from cypher_guardrail.validators.properties_validator import (
     AsyncPropertiesValidator,
     PropertiesValidator,
@@ -33,6 +34,7 @@ __all__ = [
     "CypherError",
     "GraphNotFoundError",
     "LiveSnapshot",
+    "PreflightValidator",
     "PropertiesValidator",
     "SchemaValidator",
     "Snapshot",

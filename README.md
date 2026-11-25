@@ -65,6 +65,9 @@ props_score, props_metadata = properties.validate(query, database_name=graph)
 
 kg_valid = is_valid and schema_score == 1 and props_score in (1, None)
 
+# Without a database (optional): the text of a query is a query, its brackets match, it only reads
+# from cypher_guardrail import PreflightValidator; PreflightValidator().validate(query)
+
 # Optional: say what to change in a valid query, and show it as it could be written
 for suggestion in Advisor(driver).advise(query, database_name=graph):
     print(suggestion["description"], suggestion.get("example"))

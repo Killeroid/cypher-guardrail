@@ -55,6 +55,37 @@ WRONG_DIRECTION_PATH: Final = "cypher_guardrail.Warning.WrongDirectionPath"
 WRONG_DIRECTION_VARIABLE_LENGTH_PATH: Final = (
     "cypher_guardrail.Warning.WrongDirectionVariableLengthPath"
 )
+# Found without a database (``PreflightValidator``): the query does not read from the graph, and what cannot be a query
+NO_MATCH_CLAUSE: Final = "cypher_guardrail.Warning.NoMatchClause"
+EMPTY_QUERY: Final = "cypher_guardrail.Error.EmptyQuery"
+NO_CYPHER_CLAUSE: Final = "cypher_guardrail.Error.NoCypherClause"
+UNBALANCED_BRACKETS: Final = "cypher_guardrail.Error.UnbalancedBrackets"
+
+# The codes of the issues that leave a query valid: the validators that say whether a query is valid treat every
+# other code as an error. ``PARAMETER_NOT_PROVIDED`` is not here although it is named a warning: a query that is
+# missing a parameter cannot run, so ``SyntaxValidator`` has always reported it as invalid.
+WARNINGS: Final = frozenset(
+    {
+        UNKNOWN_LABEL,
+        UNKNOWN_REL_TYPE,
+        UNKNOWN_PROPERTY,
+        UNKNOWN_INDEX,
+        UNKNOWN_FUNCTION,
+        UNKNOWN_PATH,
+        INVALID_PROPERTY_ACCESS,
+        PROPERTY_TYPE_MISMATCH,
+        AGGREGATE_TYPE_MISMATCH,
+        VARIABLE_LENGTH_PATH,
+        WRONG_DIRECTION_PATH,
+        WRONG_DIRECTION_VARIABLE_LENGTH_PATH,
+        WRITE_QUERY_WARNING,
+        CARTESIAN_PRODUCT,
+        UNLABELED_NODE_SCAN,
+        UNBOUNDED_PATH,
+        FAILS_WHEN_RUN,
+        NO_MATCH_CLAUSE,
+    }
+)
 
 
 class UnknownLabelIssue(TypedDict):
@@ -319,6 +350,35 @@ class InvalidLimitIssue(TypedDict):
     clause: Literal["LIMIT", "SKIP"]
 
 
+class NoMatchClauseIssue(TypedDict):
+    """The query has no ``MATCH``, and does not start with a clause that needs none (``CREATE``, ``MERGE``, ``CALL``,
+    ``UNWIND``, ``WITH``, ``RETURN``): it does not read from the graph."""
+
+    code: Literal["cypher_guardrail.Warning.NoMatchClause"]
+    description: str
+
+
+class EmptyQueryIssue(TypedDict):
+    """The query is empty, or has nothing but whitespace and comments."""
+
+    code: Literal["cypher_guardrail.Error.EmptyQuery"]
+    description: str
+
+
+class NoCypherClauseIssue(TypedDict):
+    """The query has no Cypher clause (``MATCH``, ``RETURN``, ``CREATE``, ...): it is not a Cypher query."""
+
+    code: Literal["cypher_guardrail.Error.NoCypherClause"]
+    description: str
+
+
+class UnbalancedBracketsIssue(TypedDict):
+    """A ``(``, ``[`` or ``{`` is not closed, is closed by another kind of bracket, or a closing one has no opening."""
+
+    code: Literal["cypher_guardrail.Error.UnbalancedBrackets"]
+    description: str
+
+
 Issue = (
     UnknownLabelIssue
     | UnknownRelationshipTypeIssue
@@ -344,4 +404,8 @@ Issue = (
     | UnlabeledNodeScanIssue
     | UnboundedPathIssue
     | FailsWhenRunIssue
+    | NoMatchClauseIssue
+    | EmptyQueryIssue
+    | NoCypherClauseIssue
+    | UnbalancedBracketsIssue
 )

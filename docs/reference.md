@@ -2,7 +2,7 @@
 
 ## Validators
 
-Each validator has an async twin for the `falkordb.asyncio` client, with the same arguments and results.
+Each validator has an async twin for the `falkordb.asyncio` client, with the same arguments and results. `PreflightValidator` has none: it asks nothing, so there is nothing to wait for.
 
 ```{eval-rst}
 .. autoclass:: cypher_guardrail.SyntaxValidator
@@ -16,6 +16,8 @@ Each validator has an async twin for the `falkordb.asyncio` client, with the sam
 .. autoclass:: cypher_guardrail.PropertiesValidator
    :members:
 .. autoclass:: cypher_guardrail.AsyncPropertiesValidator
+   :members:
+.. autoclass:: cypher_guardrail.PreflightValidator
    :members:
 .. autoclass:: cypher_guardrail.Advisor
    :members:
